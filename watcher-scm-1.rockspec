@@ -1,29 +1,19 @@
--- name of the package to be published
 package = 'watcher'
-
--- version of the package; it's mandatory, but we don't use it in Tarantool;
--- instead, provide below a specific branch in the package's repository at
--- GitHub and set version to some stub value, e.g. 'scm-1'
 version = 'scm-1'
-
--- url and branch of the package's repository at GitHub
 source  = {
-    url    = 'git://github.com/tarantool/modulekit.git';
-    branch = 'luakit';
+    url    = 'https://github.com/racherb/watcher.git';
+    branch = 'master';
 }
 
--- general information about the package;
--- for a Tarantool package, we require three fields (summary, homepage, license)
--- and more package information is always welcome
 description = {
-    summary  = "Lua module template for Tarantool";
+    summary  = "Watcher for files, directories, objects and services";
     detailed = [[
-    A ready-to-use Lua module template.
-    Clone and modify it to create new modules.
+    Watcher for files, directories, objects and services.
+    For tarantool.
     ]];
-    homepage = 'https://github.com/tarantool/modulekit.git';
-    maintainer = "Roman Tsisyk <roman@tarantool.org>";
-    license  = 'BSD2';
+    homepage = 'https://github.com/racherb/watcher.git';
+    maintainer = "Raciel Hernández <racielhb@gmail.com>";
+    license  = 'MIT';
 }
 
 -- Lua version and other packages on which this one depends;
