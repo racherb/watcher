@@ -1,0 +1,5 @@
+tarantool-watcher/
+files
+stamp-*
+*.substvars
+*.log
