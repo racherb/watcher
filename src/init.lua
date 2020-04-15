@@ -43,24 +43,6 @@ local function start()
     return false
 end
 
---[[
-start = function(self)
-    -- create spaces and indexes
-        <...>
-    -- create models
-        <...>
-    -- compile models
-        <...>
-    -- start the game
-       self.pokemon_model = compiled_pokemon
-       self.player_model = compiled_player
-       fiber.create(self.respawn, self)
-       log.info('Started')
-    -- errors if schema creation or compilation fails
-       <...>
-end
---]]
-
 start()
 
 return {
