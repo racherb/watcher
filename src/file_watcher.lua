@@ -56,8 +56,8 @@ local FW_VALUES = {
 --- Get Type for File Watcher
 -- Get the type of file, directory or link
 -- through either this function or load_local_manifest.
--- @param path string: Path or pathname for the object.
--- @return string: Posible return values are
+-- @param path string   : Path or pathname for the object.
+-- @return string       : Posible return values are
 -- FW_DIR Directory
 -- FW_FILE File
 -- FW_LINK Link
@@ -182,9 +182,9 @@ end
 
 --- Sort Files by name or date of modification
 -- Sort a list of files by name or change date
--- @param flst table: File list
--- @param sort_by string: Sorting criterion
--- @param take_n int: Return the first N elements for monitoring
+-- @param flst table        : File list
+-- @param sort_by string    : Sorting criterion
+-- @param take_n int        : Return the first N elements for monitoring
 -- @return sorted_list table: Sorted list
 -- @fixme: Sort for date modification don't work
 local function sort_files_by(
@@ -422,12 +422,12 @@ end
 -- @param path string: File Path
 -- @param maxwait number
 -- @param interval number
--- @param minsize number: Minimum expected size to validate.
+-- @param minsize number    : Minimum expected size to validate.
 -- From this value the file growth check is activated.
--- @param grow_interval: Growth check interval.
--- @param iterations number: Number of interactions to confirm stable size.
+-- @param grow_interval     : Growth check interval.
+-- @param iterations number : Number of interactions to confirm stable size.
 -- For each of these iterations the file size is the same.
--- @param novelty table: Data for archive novelty check
+-- @param novelty table     : Data for archive novelty check
 -- When the same file is overwritten, activate this option to know if it is a new creation.
 local function single_file_creation(
     --[[required]] path,
