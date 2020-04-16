@@ -25,10 +25,9 @@ strict.on()
 -- file_alteration  : File alteration watcher fio.lstat(path).mtime
 -- file_access      : File Access watcher para chequear si fue accedido en una fecha
 --                    fio.lstat(path).atime
--- file_mode        : Detecta cambio de permisos de archivo
+-- file_mode        : Detects change of file permissions
 --                    fio.lstat(path).mode
--- file_users       : Detecta cambios de uid y gid (usuario owner
---                    y grupo)
+-- file_users       : Detects uid and gid changes (user owner and group)
 --
 -- RW: Record Watcher
 -- record_deletion  : Record deletion (Registers)
@@ -93,22 +92,22 @@ end
 
 --- Watcher a Single File Delection
 -- Detects deletion of files, directories or links
--- @param path string: Ruta de archivo, directorio o link
--- @param maxwait int: Tiempo máximo de espera
--- @param interval int: Frecuencia de checkeo
--- @return ok boolean: frue or false for check deletion
--- @return mssg string: Main message code
--- FW_FILE_NOT_EXISTS: El archivo no existe al momento de verificar
--- FW_FILE_DELETED: El archivo ha sido borrado
--- FW_FILE_NOT_DELETED: El archivo no ha sido borrado en el tiempo esperado
--- FW_DIR_NOT_EXISTS: La carpera no existe al momento de verificar
--- FW_DIR_DELETED: La carpeta ha sio eliminada
--- FW_DIR_NOT_DELETED: La carpeta no ha sido eliminada en el tiempo esperado
--- FW_LINK_DELETED: El link ha sido eliminado
--- FW_LINK_NOT_EXISTS: El link no existe al momento de verificar
--- FW_LINK_NOT_DELETED: El link no ha sido eliminado en el tiempo esperado
--- FW_UNKNOW_NOT_EXISTS: El tipo incógnito no existe
--- FW_PATH_ISEMPTY
+-- @param path string   : File path, directory or link
+-- @param maxwait int   : Maximum waiting time
+-- @param interval int  : Checking frequency
+-- @return ok boolean   : frue or false for check deletion
+-- @return mssg string  : Main message code
+-- FW_FILE_NOT_EXISTS   : The file does not exist at the time of verification
+-- FW_FILE_DELETED      : The file has been deleted
+-- FW_FILE_NOT_DELETED  : The file has not been deleted in the expected time
+-- FW_DIR_NOT_EXISTS    : The folder does not exist at the time of checking
+-- FW_DIR_DELETED       : The folder has been deleted
+-- FW_DIR_NOT_DELETED   : The folder has not been deleted in the expected time
+-- FW_LINK_DELETED      : The link has been removed
+-- FW_LINK_NOT_EXISTS   : The link does not exist at the time of verification
+-- FW_LINK_NOT_DELETED  : The link has not been removed in the expected time
+-- FW_UNKNOW_NOT_EXISTS : The incognito type does not exist
+-- FW_PATH_ISEMPTY      : The folder is empty
 -- @return path string: Path for check object
 local function single_file_deletion(
     --[[required]] path,
@@ -182,10 +181,10 @@ local function take_n_items(
 end
 
 --- Sort Files by name or date of modification
--- Ordena una lista de ficheros por nombre o fecha de modificación
--- @param flst table: Lista de archivos
--- @param sort_by string: Criterio de ordenamiento
--- @param take_n int: Devolver los N primeros elementos para monitoreo
+-- Sort a list of files by name or change date
+-- @param flst table: File list
+-- @param sort_by string: Sorting criterion
+-- @param take_n int: Return the first N elements for monitoring
 -- @return sorted_list table: Sorted list
 -- @fixme: Sort for date modification don't work
 local function sort_files_by(
@@ -239,7 +238,7 @@ local function sort_files_by(
 end
 
 --- File Watcher Check End Status
--- Determina si se cumplen las condiciones de finalización del fw para el grupo
+-- Determines whether the fw completion conditions are met for the group
 -- FW_GROUP_ALL_DELETED
 -- FW_GROUP_MATCH_DELETED
 -- FW_GROUP_MATCH_NOT_DELETED
@@ -266,11 +265,11 @@ local function fw_check_end(
     end
 
     if (ntrue == #tbl) then
-        -- La totalidad del grupo ha sido eliminado
+        -- The entire group has been eliminated
         return true, "FW_ALL_DELETED", match, nomatch
 
     elseif ntrue >= nmatch then
-        -- La cantidad de eliminados es igual o mayor a lo esperado
+        -- The number of eliminations is equal to or greater than expected
         return true, "FW_MATCH_DELETED", match, nomatch
 
     elseif (ntrue > 0) and (ntrue < nmatch) then
@@ -281,7 +280,7 @@ local function fw_check_end(
     end
 end
 
--- Actualiza el estado por cada archivo de la tabla
+-- Updates the status for each file in the table
 -- ..
 local function update_exists_file(tbl)
     --TODO: @fixme: Optimizar, actualizar sólo aquellos cases
@@ -315,7 +314,7 @@ local function group_file_deletion(
 
     if p_interval > p_maxwait then p_interval = p_maxwait end
 
-    --Inicializa la lista de verificación en falso
+    --Initializes false checklist
     local lst = {}
     for _, v in pairs(grp) do
         lst[#lst+1] = {v, false} --table.insert(lst, {v, false})
@@ -376,8 +375,8 @@ local function cons_watch_listd(watch_list)
 
 end
 
--- Determina si un archivo es estable en relación a su tamaño y disposición
--- Si el tamaño no varía en las condiciones dadas, entonces devuelve true
+-- Determines if a file is stable in relation to its size and layout
+-- If the size does not vary in the given conditions, then return true
 local function is_stable_size(
     --[[require]] path,
     --[[optional]] interval,
@@ -415,22 +414,21 @@ local function is_stable_size(
             is_stable = false
             break
         end
-        r_size = f_size --Actualiza el tamaño de referencia
+        r_size = f_size --Update the reference size
     end
     return is_stable, mssg
 end
 
--- @param path string: Ruta del archivo
+-- @param path string: File Path
 -- @param maxwait number
 -- @param interval number
--- @param minsize number: Tamaño mínimo esperado para validar.
--- A partir de este valor se activa el chequeo de grow de archivo.
--- @param grow_interval: Intervalo de chequeo del crecimiento.
--- @param iterations number: Cantidad de interaciones para confirmar tamaño estable.
--- Para cada una de estas iteraciones el tamaño de archvivo es igual.
--- @param novelty table: Datos para chequeo de la novedad.
--- Cuando un mismo archivo se sobreescribe, activar esta opción permite
--- conocer si se trata de una nueva creación.
+-- @param minsize number: Minimum expected size to validate.
+-- From this value the file growth check is activated.
+-- @param grow_interval: Growth check interval.
+-- @param iterations number: Number of interactions to confirm stable size.
+-- For each of these iterations the file size is the same.
+-- @param novelty table: Data for archive novelty check
+-- When the same file is overwritten, activate this option to know if it is a new creation.
 local function single_file_creation(
     --[[required]] path,
     --[[optional]] maxwait,
@@ -601,7 +599,7 @@ local function file_deletion(
 
 end
 
---Determina si un valor existe en una tabla dada
+--Determines whether a value exists in a given table
 local function is_value_of(tbl, value)
     for _,v in pairs(tbl) do
       if v == value then
