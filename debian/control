@@ -1,16 +1,16 @@
-Source: tarantool-watcher
+Source: watcher
 Priority: optional
 Section: database
-Maintainer: Roman Tsisyk <roman@tarantool.org>
+Maintainer: Raciel Hernandez <racherb@protonmail.com>
 Build-Depends: debhelper (>= 9), tarantool (>= 1.6.8.0)
 Standards-Version: 3.9.8
-Homepage: https://github.com/tarantool/watcher
-Vcs-Git: git://github.com/tarantool/watcher.git
-Vcs-Browser: https://github.com/tarantool/watcher
+Homepage: https://github.com/racherb/watcher
+Vcs-Git: git://github.com/racherb/watcher.git
+Vcs-Browser: https://github.com/racherb/watcher
 
-Package: tarantool-watcher
+Package: watcher
 Architecture: all
 Depends: tarantool (>= 1.6.8.0), ${shlibs:Depends}, ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: Lua module template for Tarantool
- This package provides a Lua module template for Tarantool.
+Description: Watches the changes
+ Watches the changes in the file system, variables and data records.

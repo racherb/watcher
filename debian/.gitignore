@@ -1,4 +1,4 @@
-tarantool-watcher/
+watcher/
 files
 stamp-*
 *.substvars

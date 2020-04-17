@@ -1,11 +1,11 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Debianized-By: Roman Tsisyk <roman@tarantool.org>
-Upstream-Name: tarantool-modulekit
-Upstream-Contact: roman@tarantool.org
-Source: https://github.com/tarantool/modulekit
+Debianized-By: Raciel Hernández <racherb@protonmail.com>
+Upstream-Name: watcher
+Upstream-Contact: racherb@protonmail.com
+Source: https://github.com/racherb/watcher
 
 Files: *
-Copyright: 2015-2017 by Roman Tsisyk <roman@tarantool.org>
+Copyright: 2019-2023 by Raciel Hernández <racherb@protonmail.com>
 License: BSD-2-Clause
  Redistribution and use in source and binary forms, with or
  without modification, are permitted provided that the following
