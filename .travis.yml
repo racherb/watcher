@@ -13,6 +13,7 @@ git:
 env:
     global:
       - PRODUCT=tarantool-luakit
+      - CODECOV_TOKEN="0547b387-1456-4864-a201-1fd8b74bb716"
     matrix:
       - OS=el DIST=6
       - OS=el DIST=7
@@ -51,7 +52,7 @@ before_deploy:
 deploy:
   # Deploy packages to PackageCloud
   - provider: packagecloud
-    username: tarantool
+    username: racherb
     repository: "1_6"
     token: ${PACKAGECLOUD_TOKEN}
     dist: ${OS}/${DIST}
@@ -84,6 +85,6 @@ deploy:
 notifications:
   email:
     recipients:
-      - build@tarantool.org
+      - racherb@protonmail.com
     on_success: change
     on_failure: always
