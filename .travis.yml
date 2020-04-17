@@ -52,7 +52,7 @@ before_deploy:
 deploy:
   # Deploy packages to PackageCloud
   - provider: packagecloud
-    username: racherb
+    username: tarantool
     repository: "1_6"
     token: ${PACKAGECLOUD_TOKEN}
     dist: ${OS}/${DIST}
