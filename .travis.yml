@@ -13,3 +13,6 @@ before_install:
   - pip install hererocks
   - hererocks lua_install -r^ --$LUA
   - export PATH=$PATH:$PWD/lua_install/bin
+
+  after_success:
+    - bash <(curl -s https://codecov.io/bash)
