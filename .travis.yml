@@ -52,8 +52,8 @@ before_deploy:
 deploy:
   # Deploy packages to PackageCloud
   - provider: packagecloud
-    username: racherb
-    repository: "1_6"
+    username: ${PACKAGECLOUD_USER}
+    repository: ${PACKAGECLOUD_REPO}
     token: ${PACKAGECLOUD_TOKEN}
     dist: ${OS}/${DIST}
     package_glob: build/*.{deb,rpm,dsc}
@@ -62,8 +62,8 @@ deploy:
       branch: master
       condition: -n "${OS}" && -n "${DIST}" && -n "${PACKAGECLOUD_TOKEN}"
   - provider: packagecloud
-    username: racherb
-    repository: "1_7"
+    username: ${PACKAGECLOUD_USER}
+    repository: ${PACKAGECLOUD_REPO}
     token: ${PACKAGECLOUD_TOKEN}
     dist: ${OS}/${DIST}
     package_glob: build/*.{deb,rpm,dsc}
@@ -72,8 +72,8 @@ deploy:
       branch: master
       condition: -n "${OS}" && -n "${DIST}" && -n "${PACKAGECLOUD_TOKEN}"
   - provider: packagecloud
-    username: tarantool
-    repository: "1_8"
+    username: ${PACKAGECLOUD_USER}
+    repository: ${PACKAGECLOUD_REPO}
     token: ${PACKAGECLOUD_TOKEN}
     dist: ${OS}/${DIST}
     package_glob: build/*.{deb,rpm,dsc}
@@ -85,6 +85,6 @@ deploy:
 notifications:
   email:
     recipients:
-      - racherb@protonmail.com
+      - ${YO_EMAIL}
     on_success: change
     on_failure: always
