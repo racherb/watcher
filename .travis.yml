@@ -12,7 +12,7 @@ git:
 
 env:
     global:
-      - PRODUCT=tarantool-luakit
+      - PRODUCT=watcher
       - CODECOV_TOKEN="0547b387-1456-4864-a201-1fd8b74bb716"
     matrix:
       - OS=el DIST=6
@@ -52,7 +52,7 @@ before_deploy:
 deploy:
   # Deploy packages to PackageCloud
   - provider: packagecloud
-    username: tarantool
+    username: racherb
     repository: "1_6"
     token: ${PACKAGECLOUD_TOKEN}
     dist: ${OS}/${DIST}
@@ -62,7 +62,7 @@ deploy:
       branch: master
       condition: -n "${OS}" && -n "${DIST}" && -n "${PACKAGECLOUD_TOKEN}"
   - provider: packagecloud
-    username: tarantool
+    username: racherb
     repository: "1_7"
     token: ${PACKAGECLOUD_TOKEN}
     dist: ${OS}/${DIST}
