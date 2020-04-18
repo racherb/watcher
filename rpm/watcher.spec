@@ -33,5 +33,3 @@ cp -p watcher/*.lua %{buildroot}%{_datadir}/watcher
 %license LICENSE AUTHORS
 
 %changelog
-* Tue Abr 17 2020 Raciel Hernández <racherb@protonmail.com> 1.0.0-1
-- Initial version.
