@@ -18,9 +18,30 @@
 
 > :warning: *This project is under development and not yet ready for production.*
 
-## Getting Started
+# Watcher
 
 Detecting changes to the file system or data structures in memory is useful for developers of security applications, resource monitoring or process integration.
+
+## Supported Platforms
+
+### Distributions
+
+- ![Debian](https://img.shields.io/badge/Debian-wheezy::jessie::stretch::sid-inactive)
+- ![Ubuntu](https://img.shields.io/badge/Ubuntu-precise::trusty::xenial::yakkety::zesty-blueviolet)
+- ![Fedora](https://img.shields.io/badge/Fedora-24::25::rawhide-red)
+- ![Centos](https://img.shields.io/badge/Centos-6::7-blue)
+
+### Archictectures
+
+- i386
+- x86_64
+- armhf (32-bit ARM with hardware floating-point)
+- aarch64 (64-bit ARM)
+
+
+## Getting Started
+
+
 
 ### Prerequisites
 
@@ -101,7 +122,7 @@ Add additional notes about how to deploy this on a live system
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](https://gist.github.com/racherb/d42d880165cdc0f16bf25edf9e45c8cc.js) for details on our code of conduct, and the process for submitting pull requests to us.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
 ## Versioning
 
@@ -115,7 +136,7 @@ See also the list of [contributors](https://github.com/racherb/watcher/contribut
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details
 
 ## Acknowledgments
 
