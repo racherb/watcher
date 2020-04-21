@@ -6,13 +6,14 @@ source  = {
 }
 
 description = {
-    summary  = "Watcher for files, directories, objects and services";
+    summary  = "Watcher for watches the changes in the file system, variables and data records.";
     detailed = [[
-    Watcher for files, directories, objects and services.
-    For tarantool.
+    Detecting changes to the file system or data structures in memory 
+    is useful for developers of security applications, 
+    resource monitoring or process integration with Tarantool.
     ]];
     homepage = 'https://github.com/racherb/watcher.git';
-    maintainer = "Raciel Hernández <racielhb@gmail.com>";
+    maintainer = "Raciel Hernández <racielhb@protonmail.com>";
     license  = 'MIT';
 }
 
@@ -22,10 +23,6 @@ dependencies = {
     'lua == 5.1';
 }
 
--- build options and paths for the package;
--- this package distributes modules in pure Lua, so the build type = 'builtin';
--- also, specify here paths to all Lua modules within the package
--- (this package contains just one Lua module named 'watcher')
 build = {
     type = 'builtin';
     modules = {

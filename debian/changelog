@@ -1,0 +1,19 @@
+watcher (2.0.0-1) unstable; urgency=medium
+
+  * Split into luakit and ckit
+
+ -- Raciel Hernández <racherb@protonmail.com>  Sun, 19 Abr 2020 20:46:01 +0400
+
+watcher (1.0.1-1) unstable; urgency=medium
+
+  * Fix tarantool-dev and libmsgpuck-dev dependencies
+  * Set correct Architecture
+  * Update Standards-Version
+
+ -- Raciel Hernández <racherb@protonmail.com>  Sun, 19 Abr 2020 20:46:01 +0400
+
+watcher (1.0.0-1) unstable; urgency=low
+
+  * Initial release
+
+ -- Raciel Hernández <racherb@protonmail.com>  Sun, 19 Abr 2020 20:46:01 +0400

@@ -1,6 +1,6 @@
 #!/usr/bin/env tarantool
 
-local kit = require('watcher')
+local kit = require('../src/watcher')
 local tap = require('tap')
 
 local test = tap.test('watcher tests')
