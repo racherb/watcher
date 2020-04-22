@@ -1,14 +1,24 @@
 #!/usr/bin/env tarantool
 
-local kit = require('../src/watcher')
+local kit = require('watcher').file
 local tap = require('tap')
 
-local test = tap.test('watcher tests')
+local test = tap.test('test-watcher')
 test:plan(1)
 
-test:test('watcher', function(test)
+test:test('single_file_deletion_file_not_exist', function(test)
     test:plan(1)
-    test:is(kit.test(1), 11, "Lua function in init.lua")
+    test:is(kit.deletion({'/tmp/abb'}), true, "The file don't exist")
 end)
 
+ans, b, c = kit.deletion({'/tmp/abb'})
+
+print(ans)
+print(b)
+print(c)
+
 os.exit(test:check() == true and 0 or -1)
+
+return {
+    test = test
+}

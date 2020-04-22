@@ -43,10 +43,17 @@ local function start()
     return false
 end
 
-start()
+local fw = require("file_watcher")
+
+local file = {
+    deletion = fw.deletion,
+    creation = fw.creation,
+    alteration = fw.alteration
+}
 
 return {
-    start = start
+    start = start,
+    file = file
 }
 
 --file-watcher

@@ -17,7 +17,7 @@ Watches the changes in the file system, variables and data records
 %setup -q -n watcher-%{version}
 
 %check
-./test/watcher.test.lua
+./src/test.lua
 
 %install
 # Create /usr/share/watcher

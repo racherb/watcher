@@ -1,7 +1,7 @@
 package = 'watcher'
 version = 'scm-1'
 source  = {
-    url    = 'https://github.com/racherb/watcher.git';
+    url    = 'https://github.com/racherb/watcher/archive/master.zip';
     branch = 'master';
 }
 
@@ -26,7 +26,8 @@ dependencies = {
 build = {
     type = 'builtin';
     modules = {
-        ['watcher'] = 'watcher/init.lua';
+        ['watcher'] = 'watcher/watcher.lua';
+        ['file_watcher'] = 'watcher/file_watcher.lua';
     }
 }
 -- vim: syntax=lua ts=4 sts=4 sw=4 et
