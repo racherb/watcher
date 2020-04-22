@@ -26,10 +26,7 @@ Detecting changes to the file system or data structures in memory is useful for 
 
 ### Distributions
 
-- ![Debian](https://img.shields.io/badge/Debian-wheezy::jessie::stretch::sid-inactive)
-- ![Ubuntu](https://img.shields.io/badge/Ubuntu-precise::trusty::xenial::yakkety::zesty-blueviolet)
-- ![Fedora](https://img.shields.io/badge/Fedora-24::25::rawhide-red)
-- ![Centos](https://img.shields.io/badge/Centos-6::7-blue)
+- ...
 
 ### Archictectures
 
@@ -38,40 +35,65 @@ Detecting changes to the file system or data structures in memory is useful for 
 - armhf (32-bit ARM with hardware floating-point)
 - aarch64 (64-bit ARM)
 
-
 ## Getting Started
 
+Create a watcher to detect file deletion:
 
+```Lua
+--Defining file watcher for deletions
+fw = require('watcher').file
+ans, code, obj = fw.file.deletion({'/tmp/abb'})
+```
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
-
-```
-Give examples
-```
+- Requires **tarantool** >= 1.6.8.0
+- Build Requires: **tarantool-devel** >= 1.6.8.0
 
 ### Installing
 
-A step by step series of examples that tell you how to get a development env running
+#### From Luarocks
 
-Say what the step will be
-
-```
-Give the example
+```Shell
+luarocks install https://raw.githubusercontent.com/racherb/watcher/master/warcher-scm-1.rockspec --local
 ```
 
-And repeat
+#### From Linux Repository
 
-```
-until finished
+**Ubuntu** Precise | Trusty | Xenial | Yakkety | Zesty
+
+```Bash
+apt update
+apt install watcher
 ```
 
-End with an example of getting some data out of the system or using it for a little demo
+**Debian** Wheezy | Jessie | Stretch | Sid
+
+```Bash
+apt update
+apt install watcher
+```
+
+**Fedora** 24 | 25 | Rawhide
+
+```Bash
+apt update
+apt install watcher
+```
+
+**Centos** 6 | 7
+
+#### From source
+
+Download watcher from ...
 
 ## Running the tests
 
 Explain how to run the automated tests for this system
+
+```Bash
+prove -v ./test/watcher.test.lua
+```
 
 ### Break down into end to end tests
 
