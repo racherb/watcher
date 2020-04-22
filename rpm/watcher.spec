@@ -17,12 +17,12 @@ Watches the changes in the file system, variables and data records
 %setup -q -n watcher-%{version}
 
 %check
-./src/test.lua
+./test/watcher.test.lua
 
 %install
 # Create /usr/share/watcher
 mkdir -p %{buildroot}%{_datadir}/watcher
-# Copy init.lua to /usr/share/watcher/init.lua
+# Copy watcher.lua to /usr/share/watcher/watcher.lua
 cp -p watcher/*.lua %{buildroot}%{_datadir}/watcher
 
 %files
