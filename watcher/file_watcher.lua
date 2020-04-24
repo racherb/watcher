@@ -46,11 +46,12 @@ local FW_DEFAULT = {
 }
 
 local FW_VALUES = {
-    SORT =
-        {ALPHA_ASC = 'ALPHA_ASC'},
-        {ALPHA_DSC = 'ALPHA_DSC'},
-        {MTIME_ASC = 'MTIME_ASC'},
-        {MTIME_DSC = 'MTIME_DSC'}
+    SORT = {
+        ALPHA_ASC = 'ALPHA_ASC',
+        ALPHA_DSC = 'ALPHA_DSC',
+        MTIME_ASC = 'MTIME_ASC',
+        MTIME_DSC = 'MTIME_DSC'
+    }
 }
 
 --- Get Type for File Watcher
@@ -287,8 +288,10 @@ local function update_exists_file(tbl)
     --      de tbl que son false
     local answ = {}
     local fio_exists = fio.path.lexists
+    local pathf
     for k, v in pairs(tbl) do
-        if fio_exists(v[1]) then
+        if type(v[1])~='table' then pathf = v[1] else pathf = v[1][1] end
+        if fio_exists(pathf) then
             answ[k] = {v, false}
         else
             answ[k] = {v, true}
