@@ -252,11 +252,10 @@ local function fw_check_end(
     local match = {}
     local nomatch = {}
 
-    --TODO: @fixme: Implementar closure de modo que,
-    --      los casos de match no sean validados nuevamente.
-    --      Ventajas: Chequea una instantánea y evita errores en entornos
-    --      altamente dinámicos de creación y eliminación de archivos.
-    for _, v in pairs(tbl) do -- Cuenta los verdaderos
+    --TODO: @fixme: Implement closure so that match cases are not validated again.
+    --      Benefits: Checks a snapshot and avoids errors in highly dynamic
+    --      file creation and deletion environments.
+    for _, v in pairs(tbl) do -- Count the true
         if v[2] == true then
             ntrue = ntrue + 1
             match[#match+1] = v[1][1]
@@ -284,8 +283,7 @@ end
 -- Updates the status for each file in the table
 -- ..
 local function update_exists_file(tbl)
-    --TODO: @fixme: Optimizar, actualizar sólo aquellos cases
-    --      de tbl que son false
+    --TODO: @fixme: Optimize, update only those tbl cases that are false
     local answ = {}
     local fio_exists = fio.path.lexists
     local pathf
@@ -451,7 +449,7 @@ local function single_file_creation(
         p_path = string.strip(path)
     end
 
-    --TODO: Eliminar estas validaciones y delegar a la API
+    --TODO: Remove these validations and delegate to the API
     local p_maxwait = maxwait
     local p_interval = interval
     local p_minsize = minsize or 0
@@ -460,9 +458,9 @@ local function single_file_creation(
     local p_max_iterations = max_iterations or 15
     local p_novelty = novelty
 
-    --Valida los valores de p_novelty
-    -- p_novelty[1] --Fecha desde
-    -- p_novelty[2] --Fecha hasta
+    --Validates the values of p_novelty
+    -- p_novelty[1] --Date from
+    -- p_novelty[2] --Date to
 
     if interval > p_maxwait then p_interval = p_maxwait end
 
@@ -503,7 +501,7 @@ local function single_file_creation(
                 p_max_iterations
             )
             if not is_stable then
-                sufix = "INESTABLE_SIZE" --Durante p_check_interval y p_max_iterations
+                sufix = "INESTABLE_SIZE" --During p_check_interval and p_max_iterations
                 if merr then sufix = merr end
                 answ = false
             end
@@ -511,9 +509,8 @@ local function single_file_creation(
 
         --check novelty
         if p_novelty then
-            local f_lmod = fio_lstat(p_path).mtime --fecha de la última modificación
-            --TODO: @fixme: Si sólo se proporciona un valor de novelty, 
-            -- clonar el otro
+            local f_lmod = fio_lstat(p_path).mtime --last modified date
+            --TODO: @fixme: If only one novelty value is provided, then cloning the other
             if not (f_lmod >= p_novelty[1] and f_lmod <= p_novelty[2]) then
                 sufix = "NOT_NOVELTY"
                 answ = false
@@ -613,7 +610,7 @@ local function is_value_of(tbl, value)
     return false
 end
 
--- Determina si una clave existe en una tabla dada
+-- Determines if a key exists in a given table
 --local function is_key_of(tbl, key)
 --    for k,_ in pairs(tbl) do
 --      if k == key then
@@ -634,8 +631,8 @@ local function group_file_creation(
     novelty,
     nmatch)
 
-    local ilst = {} --Lista de archivos
-    local plst = {} --Lista de patrones
+    local ilst = {} --File list
+    local plst = {} --List of patterns
 
     --Separate patters and items hard files
     for _,v in pairs(wlst) do
@@ -655,8 +652,7 @@ local function group_file_creation(
     local function fw_fib_consumer(ch)
         fiber.sleep(0)
         local task = ch:get()
-        --TODO: @fixme: Publicar resultado en BD
-        --      e implementar lógica de salida
+        --TODO: @fixme: Publish result in DB and implement output logic
 
         if task[1] then
             match[#match+1] = {task[3], task[2]}
@@ -673,7 +669,7 @@ local function group_file_creation(
         end
     end
 
-    local ini = os_time() --Inicio del intervalo
+    local ini = os_time() --Beginning of the interval
 
     local function fw_fib_producer(ch, path)
         local task = single_file_creation(
@@ -702,13 +698,13 @@ local function group_file_creation(
 
     end
 
-    --Solución a los items que son patrones
+    --Solution to the items that are patterns
     if #plst~=0 then
         local nchan = 100
         local fw_chanel_p = fiber.channel(nchan)
 
         --Get files from all partters
-        local nitems = {} --Nuevos archivos detectados
+        local nitems = {} --New files detected
         while (os_time() - ini < maxwait) do
             for _,v in pairs(plst) do
                 local pttrn_result = fio_glob(v)
@@ -727,8 +723,8 @@ local function group_file_creation(
             end
         end
 
-        --TODO: @fixme: Cómo resumir este resultado en la salida
-        --      Es decir, los patterns sin resultado de watcher
+        --TODO: @fixme: How to summarize this result in the output, 
+        -- i.e. patterns with no watcher result
         if #nitems==0 then
             print('No pattern math file watchers')
         end
@@ -839,8 +835,6 @@ local function file_creation(
         p_novelty,
         p_nmatch
     )
-
-    print("Pasó la otRa mOna")
 
     print(fwid)
 
