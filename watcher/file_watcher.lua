@@ -38,7 +38,7 @@ local FW_DEFAULT = {
     PREFIX = 'FW',
     ACTION = 'CREATION',
     MAXWAIT = 120,
-    INTERVAL = 10,
+    INTERVAL = 1,
     SORT = 'NO_SORT',
     CHECK_STABLE_SIZE = 'YES',
     CHECK_INTERVAL = 1,
@@ -556,6 +556,7 @@ local function file_deletion(
     assert(is_valid_interval, "FW_INTERVAL_NOT_VALID")
 
     local p_options = options or {sort=FW_VALUES.SORT.ALPHA_ASC, cases = "ALL", match = 'ALL'}
+
     local p_sort = p_options[1] or FW_DEFAULT.SORT
     local p_cases = p_options[2] or "ALL"
     local p_match = p_options[3] or "ALL"
