@@ -1,7 +1,15 @@
+#!/usr/bin/env tarantool
+------------
+-- Schema Definition for Watchers
+-- ...
+-- @module entity watcher
+-- @author hernandez, raciel
+-- @license MIT
+-- @copyright Raciel Hernández 2020
 
--- Schema Definition for Active Watchers
+--avro-schema
 local schema = {
-    awatchers = {
+    awatcher = {
         name = "awatcher",
         type = "record",
         fields = {
@@ -9,11 +17,11 @@ local schema = {
             {name="type", type="string" },
             {name="what", type="string"},
             {name="dini", type="number"},
-            {name="dend", type="number"},
+            {name="dend", type="number*"},
             {
                 name = "object",
                 type = {
-                    type = "record",
+                    type = "record*",
                     name = "object_schema",
                     fields = {
                         {name="fid", type="number"},
@@ -27,3 +35,6 @@ local schema = {
     }
 }
 
+return {
+    schema = schema
+}
