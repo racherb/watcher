@@ -12,22 +12,24 @@ local schema = {
     awatcher = {
         name = "awatcher",
         type = "record",
+        default = {dend=0},
         fields = {
             {name="wid", type="int" },
             {name="type", type="string" },
             {name="what", type="string"},
-            {name="dini", type="number"},
-            {name="dend", type="number*"},
+            {name="dini", type="int"},
+            {name="dend", type="int*"},
             {
-                name = "object",
+                name = "watchables",
                 type = {
                     type = "record*",
-                    name = "object_schema",
+                    name = "objects",
+                    default = {ans=false, msg=''},
                     fields = {
-                        {name="fid", type="number"},
-                        {name="answ", type="boolean"},
-                        {name="mssg", type="string"},
-                        {name="value", type="string"}
+                        {name="fid", type="int"},
+                        {name="ans", type="boolean*"},
+                        {name="msg", type="string*"},
+                        {name="object", type="string"}
                     }
                 }
             }
