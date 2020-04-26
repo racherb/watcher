@@ -22,14 +22,17 @@ local schema = {
             {
                 name = "watchables",
                 type = {
-                    type = "record*",
-                    name = "objects",
-                    default = {ans=false, msg=''},
-                    fields = {
-                        {name="fid", type="int"},
-                        {name="ans", type="boolean*"},
-                        {name="msg", type="string*"},
-                        {name="object", type="string"}
+                    type = "array",
+                    items = {
+                        name = "objects",
+                        type = "record",
+                        default = {ans=false, msg=''},
+                        fields = {
+                            {name="fid", type="int"},
+                            {name="ans", type="boolean*"},
+                            {name="msg", type="string*"},
+                            {name="object", type="string"}
+                        }
                     }
                 }
             }
