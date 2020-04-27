@@ -14,11 +14,11 @@ local schema = {
         type = "record",
         default = {dend=0},
         fields = {
-            {name="wid", type="int" },
+            {name="wid", type="long" },
             {name="type", type="string" },
             {name="what", type="string"},
-            {name="dini", type="int"},
-            {name="dend", type="int*"},
+            {name="dini", type="long"},
+            {name="dend", type="long*"},
             {
                 name = "watchables",
                 type = {
@@ -39,6 +39,8 @@ local schema = {
         }
     }
 }
+
+--local x = {wid=1, type='FILE_DELETION', what='/tmp/tisfile.txt', dini=200425, dend=0, watchables={{fid=109, ans=false, msg='', object='/tmp/thisfile.txt'}}}
 
 return {
     schema = schema
