@@ -20,16 +20,16 @@ local function start()
     box.once('init', function()
         box.schema.create_space('awatcher')
         box.space.awatcher:create_index(
-            "primary", {type = 'hash', parts = {1, 'unsigned'}}
+            "pk", {type = 'hash', parts = {1, 'unsigned'}}
         )
         box.space.awatcher:create_index(
-            "status", {type = "tree", parts = {2, 'str'}}
+            "ak_what", {type = "tree", parts = {3, 'str'}, unique = false}
         )
     end)
 end
 
 -- Id Generator for awatcher table
-local function idgen()
+local function wid()
     local nid = clock.realtime64()/1e3
     while box.space.awatcher:get(nid) do
         nid = nid + 1
@@ -37,13 +37,13 @@ local function idgen()
     return nid
 end
 
--- Register a watcher
-local function add(what, kind, watchables)
+-- Register a new watcher
+local function new(what, kind, watchables)
     local p_what = what or assert(false, "WHAT_PARAM_IS_REQUIRED")
     local p_kind = kind
     local p_watchables = watchables
 
-    local id = idgen()
+    local id = wid()
 
     local n_watcher = {
         wid = id,
@@ -66,7 +66,7 @@ local function get(wid)
     return box.space.awatcher:get(wid)
 end
 
-local function remove(wid)
+local function delete(wid)
     return box.space.awatcher:delete(wid)
 end
 
@@ -75,15 +75,15 @@ local function truncate()
     box.space.awatcher:truncate()
 end
 
-local function update()
+local function update(wid, fid, object, ans, msg)
 
 end
 
 local awatcher = {
-    idgen = idgen,
-    add = add,
+    wid = wid,
+    new = new,
     get = get,
-    remove = remove,
+    delete = delete,
     update = update,
     truncate = truncate
 }
@@ -92,3 +92,7 @@ return {
     start = start,
     awatcher = awatcher
 }
+
+--db = require('db.engine')
+--db.start()
+--db.awatcher.new('/tmp/*', 'FD', {{fid=1, ans=false, msg='', object='/tmp/file_1.txt'}})
