@@ -9,21 +9,24 @@
 
 local strict = require("strict")
 local clock = require("clock")
-local entty = require('db.entity').awatcher()
+local fiber = require("fiber")
 
 strict.on()
 
-local entty = require("db.entity").awatcher()
+local enty = require("db.entity")
+local awa = enty.awatcher()
+local wat = enty.watchables()
 
 local function start()
     box.cfg{}
     box.once('init', function()
         box.schema.create_space('awatcher')
+        box.schema.create_space('watchables')
         box.space.awatcher:create_index(
-            "pk", {type = 'hash', parts = {1, 'unsigned'}}
+            "awa_pk", {type = 'hash', parts = {1, 'unsigned'}}
         )
-        box.space.awatcher:create_index(
-            "ak_what", {type = "tree", parts = {3, 'str'}, unique = false}
+        box.space.watchables:create_index(
+            "wat_fk", {type = 'hash', parts = {1, 'unsigned'}}
         )
     end)
 end
@@ -38,28 +41,58 @@ local function wid()
 end
 
 -- Register a new watcher
-local function new(what, kind, watchables)
+local function create(what, kind)
     local p_what = what or assert(false, "WHAT_PARAM_IS_REQUIRED")
     local p_kind = kind
-    local p_watchables = watchables
 
     local id = wid()
 
-    local n_watcher = {
+    local nawa = {
         wid = id,
         type = p_kind,
         what = p_what,
         dini = clock.realtime64(),
-        dend = 0,
-        watchables = p_watchables
-    }
-    local is_ok, n_watcher_avro = entty.flatten(n_watcher)
-    if is_ok then
-        box.space.awatcher:insert(n_watcher_avro)
+        dend = 0
+        }
+
+    local ok, tuple = awa.flatten(nawa)
+    if ok then
+        box.space.awatcher:insert(tuple)
         return true, id
     else
-        return false, n_watcher_avro
+        return false, tuple
     end
+end
+
+--Add watchables
+local function subscribe(wid, fid, object)
+--TODO: Validate if exist wid in active watchers
+--      & not finish yet
+    local wtchble = {
+        wid = wid,
+        fid = fid,
+        object = object,
+        ans = false,
+        msg = ' '
+    }
+
+    local ok, tuple = wat.flatten(wtchble)
+    if ok then
+        box.space.watchables:insert(tuple)
+        return true, object
+    else
+        return false, tuple
+    end
+
+end
+
+local function close(wid)
+    local t_watcher = get(wid)
+    local ans, watcher = entty.unflaten(t_watcher)
+    local v_end = clock.realtime64()
+    --box.space.awatcher:update(
+    --    wid, {{'=', dend, v_end}}
+    --)
 end
 
 local function get(wid)
@@ -81,7 +114,8 @@ end
 
 local awatcher = {
     wid = wid,
-    new = new,
+    create = create,
+    subscribe = subscribe,
     get = get,
     delete = delete,
     update = update,
@@ -95,4 +129,4 @@ return {
 
 --db = require('db.engine')
 --db.start()
---db.awatcher.new('/tmp/*', 'FD', {{fid=1, ans=false, msg='', object='/tmp/file_1.txt'}})
+--db.awatcher.create('/tmp/*', 'FD')
