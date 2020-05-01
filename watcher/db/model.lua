@@ -12,33 +12,26 @@ local schema = {
     awatcher = {
         name = "awatcher",
         type = "record",
-        default = {dend=0},
         fields = {
-            {name="wid", type="long" },
-            {name="type", type="string" },
+            {name="wid", type="long"},
+            {name="type", type="string"},
             {name="what", type="string"},
             {name="dini", type="long"},
-            {name="dend", type="long*"},
-            {
-                name = "watchables",
-                type = {
-                    type = "array",
-                    items = {
-                        name = "objects",
-                        type = "record",
-                        default = {ans=false, msg=''},
-                        fields = {
-                            {name="fid", type="int"},
-                            {name="ans", type="boolean*"},
-                            {name="msg", type="string*"},
-                            {name="object", type="string"}
-                        }
-                    }
-                }
+            {name="dend", type="long*"}
+        }
+    },
+    watchables = {
+            name = "watchables",
+            type = "record",
+            fields = {
+                {name="wid", type="long"},
+                {name="fid", type="int"},
+                {name="ans", type="boolean*"},
+                {name="msg", type="string*"},
+                {name="object", type="string"}
             }
         }
     }
-}
 
 --local x = {wid=1, type='FILE_DELETION', what='/tmp/tisfile.txt', dini=200425, dend=0, watchables={{fid=109, ans=false, msg='', object='/tmp/thisfile.txt'}}}
 
