@@ -29,6 +29,21 @@ local function mk_awatcher()
     end
 end
 
+local function mk_watchables()
+    local s_ok, s_watchables = avro.create(schema.watchables)
+    if s_ok then
+        local c_ok, c_watchables = avro.compile(s_watchables)
+        if c_ok then
+            return c_watchables
+        else
+            log.error('Schema compilation failed for Watchables')
+        end
+    else
+        log.error('Schema creation failed for Watchables')
+    end
+end
+
 return {
-    awatcher = mk_awatcher
+    awatcher = mk_awatcher,
+    watchables = mk_watchables
 }
