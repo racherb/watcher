@@ -26,9 +26,9 @@ local schema = {
             fields = {
                 {name="wid", type="long"},
                 {name="fid", type="int"},
+                {name="object", type="string"},
                 {name="ans", type="boolean*"},
-                {name="msg", type="string*"},
-                {name="object", type="string"}
+                {name="msg", type="string*"}
             }
         }
     }
