@@ -22,11 +22,18 @@ local function start()
     box.once('init', function()
         box.schema.create_space('awatcher')
         box.schema.create_space('watchables')
-        box.space.awatcher:create_index(
-            "awa_pk", {type = 'hash', parts = {1, 'unsigned'}}
+        box.space.awatcher:create_index("awa_pk",
+            {
+                type = 'hash',
+                parts = {1, 'unsigned'}
+            }
         )
-        box.space.watchables:create_index(
-            "wat_fk", {type = 'hash', parts = {1, 'unsigned'}}
+        box.space.watchables:create_index("wat_uk",
+            {
+                type = 'tree',
+                parts = {{1, 'unsigned'}, {3, 'str'}},
+                unique = true
+            }
         )
     end)
 end
@@ -47,6 +54,7 @@ local function create(what, kind)
 
     local id = wid()
 
+    --New active watcher definition
     local nawa = {
         wid = id,
         type = p_kind,
@@ -56,6 +64,7 @@ local function create(what, kind)
         }
 
     local ok, tuple = awa.flatten(nawa)
+
     if ok then
         box.space.awatcher:insert(tuple)
         return true, id
@@ -64,25 +73,32 @@ local function create(what, kind)
     end
 end
 
+local function get(wid)
+    return box.space.awatcher:get(wid)
+end
+
 --Add watchables
 local function subscribe(wid, fid, object)
---TODO: Validate if exist wid in active watchers
---      & not finish yet
-    local wtchble = {
-        wid = wid,
-        fid = fid,
-        object = object,
-        ans = false,
-        msg = ' '
-    }
+    local thewatcher = get(wid)
+    -- Subscribe if wid exist and not finish yet
+    if thewatcher and thewatcher[6]==0 then
+        local wtchble = {
+            wid = wid,
+            fid = fid,
+            object = object,
+            ans = false,
+            msg = ''
+        }
 
-    local ok, tuple = wat.flatten(wtchble)
-    if ok then
-        box.space.watchables:insert(tuple)
-        return true, object
-    else
-        return false, tuple
+        local ok, tuple = wat.flatten(wtchble)
+        if ok then
+            box.space.watchables:insert(tuple)
+            return true, object
+        else
+            return false, tuple
+        end
     end
+    return false, 'WID_OPEN_IS_REQUIRED'
 
 end
 
@@ -93,10 +109,6 @@ local function close(wid)
     --box.space.awatcher:update(
     --    wid, {{'=', dend, v_end}}
     --)
-end
-
-local function get(wid)
-    return box.space.awatcher:get(wid)
 end
 
 local function delete(wid)
