@@ -17,7 +17,7 @@ local schema = {
             {name="type", type="string"},
             {name="what", type="string"},
             {name="dini", type="long"},
-            {name="dend", type="long*"}
+            {name="dend", type="long"}
         }
     },
     watchables = {
@@ -28,7 +28,7 @@ local schema = {
                 {name="fid", type="int"},
                 {name="object", type="string"},
                 {name="ans", type="boolean*"},
-                {name="msg", type="string*"}
+                {name="msg", type="string"}
             }
         }
     }
