@@ -48,6 +48,13 @@ local function start()
         local ok = create_spaces()
         if not ok then box.space._schema:delete('onceinit') end
     end)
+
+    --User spaces initialization
+    local plugin = require('plugins.default')
+    box.once('init_default', function()
+        local ok = plugin.user_spaces_def()
+        if not ok then box.space._schema:delete('onceinit_default') end
+    end)
 end
 
 -- Id Generator for awatcher table
@@ -60,7 +67,7 @@ local function wid()
 end
 
 -- Register a new watcher
-local function create(what, kind)
+local function new(what, kind)
     local p_what = what or assert(false, "WHAT_PARAM_IS_REQUIRED")
     local p_kind = kind
 
@@ -90,10 +97,10 @@ local function get(wid)
 end
 
 --Add watchables
-local function subscribe(wid, fid, object)
-    local thewatcher = get(wid)
+local function add(wid, fid, object)
+    local the_watcher = get(wid)
     -- Subscribe if wid exist and not finish yet
-    if thewatcher and thewatcher[5]==0 then
+    if the_watcher and the_watcher[5]==0 then
         local wtchble = {
             wid = wid,
             fid = fid,
@@ -120,7 +127,7 @@ local function close(wid)
         --Kill all fibers opened by watchables
         local sel = box.space.watchables.index.wat_uk:select(wid)
         for _,v in pairs(sel) do
-            pcall(fiber.kill, v[2], nil)
+            if v[2] then pcall(fiber.kill, v[2]) end
         end
         local v_end = clock.realtime64()
         box.space.awatcher:update(
@@ -130,27 +137,39 @@ local function close(wid)
 end
 
 local function delete(wid)
-    return box.space.awatcher:delete(wid)
+    local s = box.space.watchables.index.wat_uk
+    local sel = s:select(wid)
+    for _,v in pairs(sel) do
+        s:delete({wid, v[3]})
+    end
+    box.space.awatcher:delete(wid)
 end
 
 -- Truncate watcher table
 local function truncate()
+    box.space.watchables:truncate()
     box.space.awatcher:truncate()
 end
 
-local function update(wid, fid, object, ans, msg)
-
+local function update(wid, object, ans, msg)
+    box.space.watchables.index.wat_uk:update(
+        {wid, object},
+        {
+            {'=', 5, ans},
+            {'=', 6, msg}
+        }
+    )
 end
 
 local awatcher = {
-    wid = wid,
-    create = create,
-    subscribe = subscribe,
-    get = get,
-    delete = delete,
-    update = update,
-    truncate = truncate,
-    close = close
+    wid = wid,        --Generate a Watcher Id
+    new = new,        --Create a new Watcher
+    add = add,        --Add watchables to Watcher
+    get = get,        --Get the active watcher from wid
+    close = close,    --Close Watcher and watchables
+    update = update,  --Update watchables data
+    delete = delete,  --Delete active watchers and watchables by wid
+    truncate = truncate
 }
 
 return {
