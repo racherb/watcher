@@ -17,17 +17,20 @@ local enty = require("db.entity")
 local awa = enty.awatcher()
 local wat = enty.watchables()
 
-local function start()
-    box.cfg{}
-    box.once('init', function()
-        box.schema.create_space('awatcher')
-        box.schema.create_space('watchables')
+local function create_spaces()
+    if not pcall(box.schema.create_space, 'awatcher') then
+        return false
+    else
         box.space.awatcher:create_index("awa_pk",
-            {
-                type = 'hash',
-                parts = {1, 'unsigned'}
-            }
-        )
+        {
+            type = 'hash',
+            parts = {1, 'unsigned'}
+        }
+    )
+    end
+    if not pcall(box.schema.create_space, 'watchables') then
+        return false
+    else
         box.space.watchables:create_index("wat_uk",
             {
                 type = 'tree',
@@ -35,6 +38,15 @@ local function start()
                 unique = true
             }
         )
+    end
+    return true
+end
+
+local function start()
+    box.cfg{}
+    box.once('init', function()
+        local ok = create_spaces()
+        if not ok then box.space._schema:delete('onceinit') end
     end)
 end
 
@@ -81,7 +93,7 @@ end
 local function subscribe(wid, fid, object)
     local thewatcher = get(wid)
     -- Subscribe if wid exist and not finish yet
-    if thewatcher and thewatcher[6]==0 then
+    if thewatcher and thewatcher[5]==0 then
         local wtchble = {
             wid = wid,
             fid = fid,
@@ -104,11 +116,17 @@ end
 
 local function close(wid)
     local t_watcher = get(wid)
-    local ans, watcher = entty.unflaten(t_watcher)
-    local v_end = clock.realtime64()
-    --box.space.awatcher:update(
-    --    wid, {{'=', dend, v_end}}
-    --)
+    if t_watcher then
+        --Kill all fibers opened by watchables
+        local sel = box.space.watchables.index.wat_uk:select(wid)
+        for _,v in pairs(sel) do
+            pcall(fiber.kill, v[2], nil)
+        end
+        local v_end = clock.realtime64()
+        box.space.awatcher:update(
+            wid, {{'=', 5, v_end}}
+        )
+    end
 end
 
 local function delete(wid)
@@ -131,7 +149,8 @@ local awatcher = {
     get = get,
     delete = delete,
     update = update,
-    truncate = truncate
+    truncate = truncate,
+    close = close
 }
 
 return {
