@@ -21,19 +21,17 @@ local schema = {
         }
     },
     watchables = {
-            name = "watchables",
-            type = "record",
-            fields = {
-                {name="wid", type="long"},
-                {name="fid", type="int"},
-                {name="object", type="string"},
-                {name="ans", type="boolean*"},
-                {name="msg", type="string"}
-            }
+        name = "watchables",
+        type = "record",
+        fields = {
+            {name="wid", type="long"},
+            {name="obj", type="string"},
+            {name="fid", type="int"},
+            {name="ans", type="boolean"},
+            {name="msg", type="string"}
         }
     }
-
---local x = {wid=1, type='FILE_DELETION', what='/tmp/tisfile.txt', dini=200425, dend=0, watchables={{fid=109, ans=false, msg='', object='/tmp/thisfile.txt'}}}
+}
 
 return {
     schema = schema
