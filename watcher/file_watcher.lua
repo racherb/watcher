@@ -16,6 +16,11 @@ local os_time = os.time
 local fib_sleep = fiber.sleep
 local fio_glob = fio.glob
 
+local db = require('db.engine')
+local ut = require('util')
+
+db.start()
+
 strict.on()
 
 -- FW: File Watcher
@@ -37,12 +42,12 @@ strict.on()
 local FW_DEFAULT = {
     PREFIX = 'FW',
     ACTION = 'CREATION',
-    MAXWAIT = 120,
-    INTERVAL = 1,
+    MAXWAIT = 60,
+    INTERVAL = 0.5,
     SORT = 'NO_SORT',
     CHECK_STABLE_SIZE = 'YES',
-    CHECK_INTERVAL = 1,
-    ITERATIONS = 15
+    CHECK_INTERVAL = 0.5,
+    ITERATIONS = 10
 }
 
 local FW_VALUES = {
@@ -634,7 +639,11 @@ local function group_file_creation(
     local ilst = {} --File list
     local plst = {} --List of patterns
 
-    --Separate patters and items hard files
+    local what = ut.tostring(wlst)
+    local ok, wid = db.awatcher.new(what, "FWC")
+    assert(ok, 'FW_ERR_WID_NOT_CREATED')
+
+    --Separate patterns and items hard files
     for _,v in pairs(wlst) do
         if fw_get_type(v)~="FW_PATTERN" then
             ilst[#ilst+1]=v
@@ -652,16 +661,15 @@ local function group_file_creation(
     local function fw_fib_consumer(ch)
         fiber.sleep(0)
         local task = ch:get()
-        --TODO: @fixme: Publish result in DB and implement output logic
-
-        if task[1] then
-            match[#match+1] = {task[3], task[2]}
-            tmatch=tmatch+1
-            print('Match: ' .. #match .. " >> " .. task[3] .. " " .. task[2])
-        else
-            nomatch[#nomatch+1] = {task[3], task[2]}
-            print("No match: " .. #nomatch .. " >> " .. task[3] .. " " .. task[2])
-        end
+        db.awatcher.update(wid, task[3], task[1], task[2])
+        --if task[1] then
+        --    match[#match+1] = {task[3], task[2]}
+        --    tmatch=tmatch+1
+        --    print('Match: ' .. #match .. " >> " .. task[3] .. " " .. task[2])
+        --else
+        --    nomatch[#nomatch+1] = {task[3], task[2]}
+        --    print("No match: " .. #nomatch .. " >> " .. task[3] .. " " .. task[2])
+        --end
         if tmatch>=p_match then
             answ = true
             --TODO: Definir salida
@@ -693,7 +701,9 @@ local function group_file_creation(
 
         for _,v in pairs(ilst) do
             fiber.create(fw_fib_consumer, fw_chanel)
-            fiber.create(fw_fib_producer, fw_chanel, v)
+            local fob = fiber.create(fw_fib_producer, fw_chanel, v)
+            local ok = db.awatcher.add(wid, fob:id(), v)
+            assert(ok, 'FW_ERR_CANT_ADD_WATCHABLE')
         end
 
     end
@@ -703,7 +713,7 @@ local function group_file_creation(
         local nchan = 100
         local fw_chanel_p = fiber.channel(nchan)
 
-        --Get files from all partters
+        --Get files from all patterns
         local nitems = {} --New files detected
         while (os_time() - ini < maxwait) do
             for _,v in pairs(plst) do
@@ -716,21 +726,23 @@ local function group_file_creation(
                             --TODO: @fixme: Controler n fiber creation
                             --      for mem consumer
                             fiber.create(fw_fib_consumer, fw_chanel_p)
-                            fiber.create(fw_fib_producer, fw_chanel_p, p)
+                            local fob = fiber.create(fw_fib_producer, fw_chanel_p, p)
+                            local ok = db.awatcher.add(wid, fob:id(), v)
+                            assert(ok, 'FW_ERR_CANT_ADD_WATCHABLE')
                         end
                     end
                 end
             end
         end
 
-        --TODO: @fixme: How to summarize this result in the output, 
+        --TODO: @fixme: How to summarize this result in the output,
         -- i.e. patterns with no watcher result
         if #nitems==0 then
             print('No pattern math file watchers')
         end
     end
 
-    return 11011
+    return wid
 
 end
 
@@ -804,7 +816,7 @@ local function file_creation(
         end
     end
 
-    -- Remove duplicate item lis from input watch_list
+    -- Remove duplicate item list from input watch_list
     local c_watch_list = remove_duplicates(watch_list)
     local nitems = #c_watch_list
 
