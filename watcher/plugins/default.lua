@@ -9,7 +9,7 @@
 
 -- User space definition
 local function user_spaces_def()
-    print('USER SPACE DEFINITION')
+    --print('USER SPACE DEFINITION FOR DEFAULT PLUGIN')
     return true
 end
 
