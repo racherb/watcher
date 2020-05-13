@@ -34,7 +34,7 @@ local function create_spaces()
         box.space.watchables:create_index("wat_uk",
             {
                 type = 'tree',
-                parts = {{1, 'unsigned'}, {3, 'str'}},
+                parts = {{1, 'unsigned'}, {2, 'str'}},
                 unique = true
             }
         )
@@ -98,27 +98,29 @@ end
 
 --Add watchables
 local function add(wid, fid, object)
+
     local the_watcher = get(wid)
     -- Subscribe if wid exist and not finish yet
     if the_watcher and the_watcher[5]==0 then
-        local wtchble = {
+        local watchb = {
             wid = wid,
+            obj = object,
             fid = fid,
-            object = object,
             ans = false,
-            msg = ''
+            msg = 'FW_ACTIVE'
         }
 
-        local ok, tuple = wat.flatten(wtchble)
+        local ok, tuple = wat.flatten(watchb)
+
         if ok then
             box.space.watchables:insert(tuple)
             return true, object
         else
             return false, tuple
         end
+    else
+        return false, 'WID_OPEN_IS_REQUIRED'
     end
-    return false, 'WID_OPEN_IS_REQUIRED'
-
 end
 
 local function close(wid)
@@ -152,11 +154,15 @@ local function truncate()
 end
 
 local function update(wid, object, ans, msg)
+    print(wid)
+    print(object)
+    print(ans)
+    print(msg)
     box.space.watchables.index.wat_uk:update(
         {wid, object},
         {
-            {'=', 5, ans},
-            {'=', 6, msg}
+            {'=', 4, ans},
+            {'=', 5, msg}
         }
     )
 end
