@@ -653,27 +653,16 @@ local function group_file_creation(
     end
 
     local p_match = nmatch or (#ilst + #plst)
-    local match = {}
-    local nomatch = {}
-    local answ = false
     local tmatch = 0
 
     local function fw_fib_consumer(ch)
         fiber.sleep(0)
         local task = ch:get()
         db.awatcher.update(wid, task[3], task[1], task[2])
-        --if task[1] then
-        --    match[#match+1] = {task[3], task[2]}
-        --    tmatch=tmatch+1
-        --    print('Match: ' .. #match .. " >> " .. task[3] .. " " .. task[2])
-        --else
-        --    nomatch[#nomatch+1] = {task[3], task[2]}
-        --    print("No match: " .. #nomatch .. " >> " .. task[3] .. " " .. task[2])
-        --end
+        tmatch=tmatch+1
         if tmatch>=p_match then
-            answ = true
-            --TODO: Definir salida
-            return answ
+            db.awatcher.close(wid)
+            return
         end
     end
 
