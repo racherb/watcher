@@ -98,7 +98,6 @@ end
 
 --Add watchables
 local function add(wid, fid, object)
-
     local the_watcher = get(wid)
     -- Subscribe if wid exist and not finish yet
     if the_watcher and the_watcher[5]==0 then
@@ -154,10 +153,6 @@ local function truncate()
 end
 
 local function update(wid, object, ans, msg)
-    print(wid)
-    print(object)
-    print(ans)
-    print(msg)
     box.space.watchables.index.wat_uk:update(
         {wid, object},
         {
