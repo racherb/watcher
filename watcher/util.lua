@@ -35,8 +35,30 @@ local function val_to_str(v)
     return "{" .. table.concat(result, ",") .. "}"
   end
 
+  --Determines whether a value exists in a given table
+local function is_valof(tbl, value)
+  for _,v in pairs(tbl) do
+    if v == value then
+      return true
+    end
+  end
+  return false
+end
+
+-- Determines if a key exists in a given table
+local function is_keyof(tbl, key)
+    for k,_ in pairs(tbl) do
+      if k == key then
+        return true
+      end
+    end
+    return false
+end
+
   local util = {
-    tostring = tostring
+    tostring = tostring,
+    is_valof = is_valof,
+    is_keyof = is_keyof
   }
 
   return util
