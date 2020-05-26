@@ -539,6 +539,114 @@ local function single_file_creation(
 
 end
 
+local function bulk_file_ceation(
+    bulk,
+    maxwait,
+    interval,
+    minsize,
+    stability,
+    novelty)
+
+    local fio_lexists = fio.path.lexists
+    local fio_lstat = fio.lstat
+
+    local ini = os_time()
+
+    local niw = #bulk
+    local nfy = bulk --not_found_yet
+    local fnd = {}   --founded
+    local nff = 0
+    local nfp = 0
+
+    local BULK_CAPACITY = 1000000
+
+    local ch_cff = fiber.channel(BULK_CAPACITY)
+
+    local function check_files_found(
+        ch,
+        _minsize,
+        _stability,
+        _novelty
+    )
+        while true do
+            local data = ch:get()
+            if data == nil then
+                break
+            end
+            if _novelty then
+                local lmod = fio_lstat(data).mtime
+                if not (lmod >= novelty[1] and lmod <= novelty[2]) then
+                    print("_CREATED_BUT_NOT_NOVELTY")
+                    break
+                end
+            end
+            if _stability then
+                fiber.create(
+                    function()
+                        local stble, merr = is_stable_size(data,
+                        stability[1],
+                        stability[2])
+                        if not stble then
+                            print("INESTABLE_SIZE")
+                            if merr then
+                                print(merr)
+                            end
+                            return
+                        end
+                        if _minsize then
+                            if not (fio_lstat(data).size >= minsize) then
+                                print("_CREATED_BUT_SIZE_NOT_EXPECTED")
+                            end
+                        end
+                    end
+                )
+            end
+        end
+    end
+
+    local fib_check = fiber.create(
+        check_files_found,
+        ch_cff,
+        minsize,
+        stability,
+        novelty
+    )
+
+    local has_pttn = false
+    while (os_time() - ini < maxwait) do
+        for k,v in pairs(nfy) do
+            if fw_get_type(v)~="FW_PATTERN" then
+                if fio_lexists(v) then
+                    fnd[#fnd+1]=v
+                    nfy[k] = nil
+                    nff = nff + 1
+                    if stability or minsize or novelty then
+                        ch_cff:put(v, 0)
+                    end
+                end
+            else
+                has_pttn = true
+                local pit = fio_glob(v) --pattern_items
+                if #pit~=0 then
+                    for _,u in pairs(pit) do
+                        if not ut.is_valof(fnd, u) then
+                            fnd[#fnd+1]=u
+                            nfp = nfp + 1
+                            if stability or minsize or novelty then
+                                ch_cff:put(u, 0)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        if not has_pttn and nff==niw then
+            break
+        end
+        fib_sleep(interval)
+    end
+end
+
 --local fib=fiber.create(single_file_deletion,'/tmp/example.txt', 60, 1)
 
 -- FW API ===================================================================
@@ -605,26 +713,6 @@ local function file_deletion(
 
 end
 
---Determines whether a value exists in a given table
-local function is_value_of(tbl, value)
-    for _,v in pairs(tbl) do
-      if v == value then
-        return true
-      end
-    end
-    return false
-end
-
--- Determines if a key exists in a given table
---local function is_key_of(tbl, key)
---    for k,_ in pairs(tbl) do
---      if k == key then
---        return true
---      end
---    end
---    return false
---end
-
 local function group_file_creation(
     wlst,
     maxwait,
@@ -659,6 +747,7 @@ local function group_file_creation(
         fiber.sleep(0)
         local task = ch:get()
         db.awatcher.update(wid, task[3], task[1], task[2])
+        print(task[3])
         tmatch=tmatch+1
         if tmatch>=p_match then
             db.awatcher.close(wid)
@@ -709,7 +798,7 @@ local function group_file_creation(
                 local pttrn_result = fio_glob(v)
                 if #pttrn_result~=0 then
                     for _,p in pairs(pttrn_result) do
-                        if not is_value_of(nitems, p) then
+                        if not ut.is_valof(nitems, p) then
                             nitems[#nitems+1]=p
                             --Create consumer
                             --TODO: @fixme: Controler n fiber creation
@@ -855,5 +944,6 @@ end
 return {
     deletion = file_deletion,
     creation = file_creation,
-    alteration = file_alteration
+    alteration = file_alteration,
+    bfc = bulk_file_ceation
 }
