@@ -59,6 +59,8 @@ local FW_VALUES = {
     }
 }
 
+local BULK_CAPACITY = 100000
+
 --- Get Type for File Watcher
 -- Get the type of file, directory or link
 -- through either this function or load_local_manifest.
@@ -558,8 +560,6 @@ local function bulk_file_ceation(
     local nff = 0
     local nfp = 0
 
-    local BULK_CAPACITY = 1000000
-
     local ch_cff = fiber.channel(BULK_CAPACITY)
 
     local function check_files_found(
@@ -576,8 +576,7 @@ local function bulk_file_ceation(
             if _novelty then
                 local lmod = fio_lstat(data).mtime
                 if not (lmod >= novelty[1] and lmod <= novelty[2]) then
-                    print("_CREATED_BUT_NOT_NOVELTY")
-                    break
+                    print('CREATED_BUT_NOT_NOVELTY', data)
                 end
             end
             if _stability then
@@ -587,15 +586,17 @@ local function bulk_file_ceation(
                         stability[1],
                         stability[2])
                         if not stble then
-                            print("INESTABLE_SIZE")
+                            --print("INESTABLE_SIZE")
+                            print("CREATE_BUT_INESTABLE_SIZE", data)
                             if merr then
-                                print(merr)
+                                print(merr, data)
                             end
                             return
                         end
                         if _minsize then
                             if not (fio_lstat(data).size >= minsize) then
-                                print("_CREATED_BUT_SIZE_NOT_EXPECTED")
+                                --print("_CREATED_BUT_SIZE_NOT_EXPECTED")
+                                print("CREATED_BUT_SIZE_NOT_EXPECTED", data)
                             end
                         end
                     end
@@ -604,7 +605,7 @@ local function bulk_file_ceation(
         end
     end
 
-    local fib_check = fiber.create(
+    fiber.create(
         check_files_found,
         ch_cff,
         minsize,
@@ -713,116 +714,6 @@ local function file_deletion(
 
 end
 
-local function group_file_creation(
-    wlst,
-    maxwait,
-    interval,
-    minsize,
-    check_stable_size,
-    check_interval,
-    max_iterations,
-    novelty,
-    nmatch)
-
-    local ilst = {} --File list
-    local plst = {} --List of patterns
-
-    local what = ut.tostring(wlst)
-    local ok, wid = db.awatcher.new(what, "FWC")
-    assert(ok, 'FW_ERR_WID_NOT_CREATED')
-
-    --Separate patterns and items hard files
-    for _,v in pairs(wlst) do
-        if fw_get_type(v)~="FW_PATTERN" then
-            ilst[#ilst+1]=v
-        else
-            plst[#plst+1]=v
-        end
-    end
-
-    local p_match = nmatch or (#ilst + #plst)
-    local tmatch = 0
-
-    local function fw_fib_consumer(ch)
-        fiber.sleep(0)
-        local task = ch:get()
-        db.awatcher.update(wid, task[3], task[1], task[2])
-        print(task[3])
-        tmatch=tmatch+1
-        if tmatch>=p_match then
-            db.awatcher.close(wid)
-            return
-        end
-    end
-
-    local ini = os_time() --Beginning of the interval
-
-    local function fw_fib_producer(ch, path)
-        local task = single_file_creation(
-            path,
-            maxwait,
-            interval,
-            minsize,
-            check_stable_size,
-            check_interval,
-            max_iterations,
-            novelty,
-            ini
-            )
-            ch:put(task)
-    end
-
-    if #ilst~=0 then
-
-        local nitems = #ilst
-        local fw_chanel = fiber.channel(nitems)
-
-        for _,v in pairs(ilst) do
-            fiber.create(fw_fib_consumer, fw_chanel)
-            local fob = fiber.create(fw_fib_producer, fw_chanel, v)
-            local ok = db.awatcher.add(wid, fob:id(), v)
-            assert(ok, 'FW_ERR_CANT_ADD_WATCHABLE')
-        end
-
-    end
-
-    --Solution to the items that are patterns
-    if #plst~=0 then
-        local nchan = 100
-        local fw_chanel_p = fiber.channel(nchan)
-
-        --Get files from all patterns
-        local nitems = {} --New files detected
-        while (os_time() - ini < maxwait) do
-            for _,v in pairs(plst) do
-                local pttrn_result = fio_glob(v)
-                if #pttrn_result~=0 then
-                    for _,p in pairs(pttrn_result) do
-                        if not ut.is_valof(nitems, p) then
-                            nitems[#nitems+1]=p
-                            --Create consumer
-                            --TODO: @fixme: Controler n fiber creation
-                            --      for mem consumer
-                            fiber.create(fw_fib_consumer, fw_chanel_p)
-                            local fob = fiber.create(fw_fib_producer, fw_chanel_p, p)
-                            local ok = db.awatcher.add(wid, fob:id(), v)
-                            assert(ok, 'FW_ERR_CANT_ADD_WATCHABLE')
-                        end
-                    end
-                end
-            end
-        end
-
-        --TODO: @fixme: How to summarize this result in the output,
-        -- i.e. patterns with no watcher result
-        if #nitems==0 then
-            print('No pattern math file watchers')
-        end
-    end
-
-    return wid
-
-end
 
 --- File Watch for File Creations
 --
