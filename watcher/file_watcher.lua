@@ -541,7 +541,7 @@ local function single_file_creation(
 
 end
 
-local function bulk_file_ceation(
+local function bulk_file_creation(
     bulk,
     maxwait,
     interval,
@@ -573,35 +573,37 @@ local function bulk_file_ceation(
             if data == nil then
                 break
             end
-            if _novelty then
-                local lmod = fio_lstat(data).mtime
-                if not (lmod >= novelty[1] and lmod <= novelty[2]) then
-                    print('CREATED_BUT_NOT_NOVELTY', data)
-                end
-            end
-            if _stability then
-                fiber.create(
-                    function()
-                        local stble, merr = is_stable_size(data,
-                        stability[1],
-                        stability[2])
+            fiber.create(
+                function()
+                    if _novelty then
+                        local lmod = fio_lstat(data).mtime
+                        if not (lmod >= novelty[1] and lmod <= novelty[2]) then
+                            print('CREATED_BUT_NOT_NOVELTY', data)
+                            return
+                        end
+                    end
+                    if _stability then
+                        local stble, merr = is_stable_size(
+                            data,
+                            stability[1],
+                            stability[2]
+                        )
                         if not stble then
-                            --print("INESTABLE_SIZE")
                             print("CREATE_BUT_INESTABLE_SIZE", data)
                             if merr then
                                 print(merr, data)
                             end
                             return
                         end
-                        if _minsize then
-                            if not (fio_lstat(data).size >= minsize) then
-                                --print("_CREATED_BUT_SIZE_NOT_EXPECTED")
-                                print("CREATED_BUT_SIZE_NOT_EXPECTED", data)
-                            end
+                    end
+                    if _minsize then
+                        if not (fio_lstat(data).size >= minsize) then
+                            print("CREATED_BUT_SIZE_NOT_EXPECTED", data)
+                            return
                         end
                     end
-                )
-            end
+                end
+            )
         end
     end
 
@@ -717,9 +719,8 @@ end
 
 --- File Watch for File Creations
 --
--- fw.file_creation({'/tmp/file_d'}, 10, 1, 0, {"YES", 1, 15}, nil)
 local function file_creation(
-    --[[required]] watch_list,
+    --[[required]] wlist,
     --[[optional]] maxwait,
     --[[optional]] interval,
     --[[optional]] minsize,
@@ -727,97 +728,99 @@ local function file_creation(
     --[[optional]] novelty,
     --[[optional]] nmatch)
 
-    local is_valid_wlst = watch_list and (type(watch_list)=="table") and (#watch_list~=0)
-    assert(is_valid_wlst, "FW_WATCHLIST_NOT_VALID")
+    assert(
+        wlist and (type(wlist)=="table") and (#wlist~=0),
+        "ERR_WATCHLIST_NOT_VALID"
+    )
 
-    local p_maxwait = maxwait or FW_DEFAULT.MAXWAIT
-    local is_valid_maxwait = type(p_maxwait)=="number" and p_maxwait > 0 and p_maxwait < 1000000
-    assert(is_valid_maxwait, "FW_MAXWAIT_NOT_VALID")
+    local wmaxwait = maxwait or FW_DEFAULT.MAXWAIT
+    assert(
+        type(wmaxwait)=="number" and wmaxwait > 0,
+        "ERR_MAXWAIT_NOT_VALID"
+    )
 
-    local p_interval = interval or FW_DEFAULT.INTERVAL
-    local is_valid_interval = type(p_interval)=="number" and p_interval > 0 and p_interval < 1000000
-    assert(is_valid_interval, "FW_INTERVAL_NOT_VALID")
+    local winterval = interval or FW_DEFAULT.INTERVAL
+    assert(
+        type(winterval)=="number" and winterval > 0,
+        "ERR_INTERVAL_NOT_VALID"
+    )
 
-    local p_minsize = minsize or 0
-    local is_valid_minsize = type(p_minsize)=="number" and p_interval >= 0
-    assert(is_valid_minsize, "FW_MINSIZE_NOT_VALID")
+    local fminsize = minsize or 0
+    assert(
+        fminsize and type(fminsize)=="number" and fminsize >= 0,
+        "ERR_MINSIZE_NOT_VALID"
+    )
 
-    local p_check_stable_size, p_check_interval, p_max_iterations
     if stability then
-        local p_stability = stability
-        local is_valid_stability = type(p_stability)=="table" and (#p_stability~=0)
-        assert(is_valid_stability, "FW_STABILITY_NOT_VALID")
-        if p_stability[1] then
-            p_check_stable_size = p_stability[1]
-        else
-            p_check_stable_size = FW_DEFAULT.CHECK_STABLE_SIZE
-        end
-        if p_stability[2] then
-            p_check_interval = p_stability[2]
-            local is_valid_check_interval = type(p_check_interval)=="number" and (p_check_interval>0)
-            assert(is_valid_check_interval, "CHECK_INTERVAL_NOT_VALID")
-        else
-            p_check_interval = FW_DEFAULT.CHECK_INTERVAL
-        end
-        if p_stability[3] then
-            p_max_iterations = p_stability[3]
-            local is_valid_max_iterations = type(p_max_iterations)=="number" and (p_max_iterations>0)
-            assert(is_valid_max_iterations, "ITERATIONS_NOT_VALID")
-        else
-            p_max_iterations = FW_DEFAULT.ITERATIONS
-        end
-    end
-
-    local p_novelty, p_time_from, p_time_until
-    if novelty then
-        p_novelty = novelty
-        local is_valid_novelty = type(p_novelty)=="table" and (#p_novelty~=0)
-        assert(is_valid_novelty, "FW_NOVELTY_NOT_VALID")
-        if p_novelty[1] then
-            p_time_from = p_novelty[1]
-            local is_valid_time_from = type(p_time_from)=="number"
-            assert(is_valid_time_from, "FW_TME_FROM_NOT_VALID")
-        end
-        if p_novelty[2] then
-            p_time_until = p_novelty[2]
-            local is_valid_time_until = type(p_time_until)=="number"
-            assert(is_valid_time_until, "FW_TME_UNTIL_NOT_VALID")
-        end
-    end
-
-    -- Remove duplicate item list from input watch_list
-    local c_watch_list = remove_duplicates(watch_list)
-    local nitems = #c_watch_list
-
-    if nitems==1 and fw_get_type(c_watch_list[1])~="FW_PATTERN" then
-        return single_file_creation(
-            c_watch_list[1],
-            p_maxwait,
-            p_interval,
-            p_minsize,
-            p_check_stable_size,
-            p_check_interval,
-            p_max_iterations,
-            p_novelty
+        assert(
+            stability and type(stability)=="table" and #stability~=0,
+            "ERR_STABILITY_NOT_VALID"
+        )
+        assert(
+            stability[1] and type(stability[1])=="number" and stability[1]>0,
+            "ERR_CHECK_INTERVAL_NOT_VALID"
+        )
+        assert(
+            stability[2] and type(stability[2])=="number" and stability[2]>0,
+            "ERR_ITERATIONS_NOT_VALID"
         )
     end
 
-    -- For Bulk file creation
-    local p_nmatch = nmatch or nitems -- match for all cases
+    if novelty then
+        assert(
+            type(novelty)=="table" and #novelty~=0,
+            "ERR_NOVELTY_NOT_VALID"
+        )
+        assert(
+            novelty[1] and type(novelty[1])=="number",
+            "ERR_DATE_FROM_NOT_VALID"
+        )
+        assert(
+            novelty[2] and type(novelty[2])=="number",
+            "ERR_DATE_UNTIL_NOT_VALID"
+        )
+    end
 
-    local fwid = group_file_creation(
-        c_watch_list,
-        p_maxwait,
-        p_interval,
-        p_minsize,
-        p_check_stable_size,
-        p_check_interval,
-        p_max_iterations,
-        p_novelty,
-        p_nmatch
-    )
+    local cwlist = remove_duplicates(wlist)
+    local nfiles = #cwlist
+    local ematch = nmatch or nfiles -- match for all cases
 
-    print(fwid)
+    if nfiles <= BULK_CAPACITY then
+
+        local fbc = fiber.create(
+            bulk_file_creation,
+            cwlist,
+            wmaxwait,
+            winterval,
+            fminsize,
+            stability,
+            novelty
+        )
+
+        print(fbc)
+
+    else
+        BULK_CAPACITY = 2
+        local nbulks = math.floor(nfiles/BULK_CAPACITY)
+        local pos = 0
+        for i=1,nbulks do
+            local bulk = {}
+            local val
+            for j=pos,BULK_CAPACITY do
+                pos = pos + 1
+                val = cwlist[pos]
+                if val then bulk[j]=val else break end
+            end
+            local fbc = fiber.create(
+            bulk_file_creation,
+            bulk,
+            wmaxwait,
+            winterval,
+            fminsize,
+            stability,
+            novelty)
+        end
+    end
 
     --//TODO: Me quedé por acá
     --  Hay que verificar la salida según match esperado.
@@ -835,6 +838,5 @@ end
 return {
     deletion = file_deletion,
     creation = file_creation,
-    alteration = file_alteration,
-    bfc = bulk_file_ceation
+    alteration = file_alteration
 }
