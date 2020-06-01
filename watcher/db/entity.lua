@@ -20,6 +20,7 @@ local function mk_awatcher()
     if s_ok then
         local c_ok, c_awatcher = avro.compile(s_awatcher)
         if c_ok then
+            log.info('Schema compilation is ok for awatcher')
             return c_awatcher
         else
             log.error('Schema compilation failed for aWatcher')
@@ -34,6 +35,7 @@ local function mk_watchables()
     if s_ok then
         local c_ok, c_watchables = avro.compile(s_watchables)
         if c_ok then
+            log.info('Schema compilation is ok for watchables')
             return c_watchables
         else
             log.error('Schema compilation failed for Watchables')
