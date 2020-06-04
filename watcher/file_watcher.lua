@@ -59,7 +59,7 @@ local FW_VALUES = {
     }
 }
 
-local BULK_CAPACITY = 100000
+local BULK_CAPACITY = 1000000
 
 --- Get Type for File Watcher
 -- Get the type of file, directory or link
@@ -444,7 +444,6 @@ local function bulk_file_creation(
 
     local ini = os_time()
 
-    local niw = #bulk
     local nfy = bulk --not_found_yet
     local fnd = {}   --founded
     local nff = 0
@@ -543,7 +542,7 @@ local function bulk_file_creation(
             end
         end
         --Exit as soon as posible
-        if (not has_pttn and nff==niw) or (db.awatcher.match(wid)>=nmatch) then
+        if (not has_pttn and nff>=nmatch) or db.awatcher.match(wid)>=nmatch then
             break
         end
         fib_sleep(interval)
@@ -559,16 +558,22 @@ local function file_deletion(
     --[[optional]] interval,
     --[[optional]] options)
 
-    local is_valid_wlst = watch_list and (type(watch_list)=="table") and (#watch_list~=0)
-    assert(is_valid_wlst, "FW_WATCHLIST_NOT_VALID")
+    assert(
+        watch_list and (type(watch_list)=="table") and (#watch_list~=0),
+        "FW_WATCHLIST_NOT_VALID"
+    )
 
     local p_maxwait = maxwait or FW_DEFAULT.MAXWAIT
-    local is_valid_maxwait = type(p_maxwait)=="number" and p_maxwait > 0 and p_maxwait < 1000000
-    assert(is_valid_maxwait, "FW_MAXWAIT_NOT_VALID")
+    assert(
+        type(p_maxwait)=="number" and p_maxwait > 0,
+        "FW_MAXWAIT_NOT_VALID"
+    )
 
     local p_interval = interval or FW_DEFAULT.INTERVAL
-    local is_valid_interval = type(p_interval)=="number" and p_interval > 0 and p_interval < 1000000
-    assert(is_valid_interval, "FW_INTERVAL_NOT_VALID")
+    assert(
+        type(p_interval)=="number" and p_interval > 0,
+        "FW_INTERVAL_NOT_VALID"
+    )
 
     local p_options = options or {sort=FW_VALUES.SORT.ALPHA_ASC, cases = "ALL", match = 'ALL'}
 
@@ -614,7 +619,6 @@ local function file_deletion(
     )
 
 end
-
 
 --- File Watch for File Creations
 --
@@ -717,14 +721,15 @@ local function file_creation(
         bulk_fibs[i] = bfid
     end
 
-    fiber.sleep(1)
+    --fiber.sleep(1)
     bfc_end:wait()
-    print("WID-BFC-ENDED")
 
+    --Cancel fibers
     for _, fib in pairs(bulk_fibs) do
         local fid = fiber.id(fib)
         pcall(fiber.cancel, fid)
     end
+    db.awatcher.wend(wid)
 
 end
 
