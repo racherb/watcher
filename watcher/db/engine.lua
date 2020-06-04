@@ -41,6 +41,13 @@ local function create_spaces()
                 unique = true
             }
         )
+        box.space.watchables:create_index("wat_ak_mssg",
+            {
+                type = 'tree',
+                parts = {{1, 'unsigned'}, {5, 'str'}},
+                unique = false
+            }
+        )
     end
     return true
 end
@@ -67,7 +74,7 @@ local function start()
 end
 
 -- Id Generator for awatcher table
-local function wid()
+local function wig()
     local nid = clock.realtime64()/1e3
     while box.space.awatcher:get(nid) do
         nid = nid + 1
@@ -77,7 +84,7 @@ end
 
 -- Register a new watcher
 local function new(what, kind)
-    local id = wid()
+    local id = wig()
 
     --New active watcher definition
     local nawa = {
@@ -205,32 +212,36 @@ local function upd(wid, object, ans, msg)
     )
 end
 
-local function stats(wid)
+local function match(wid)
+    return box.space.watchables.index.wat_ak_mssg:count(
+        {wid, 'CREATED_OK'}
+    )
+end
+
+local function stat(wid)
     return {
-    --total = box.space.queue:len(),
-    --ready = box.space.queue.index.status:count({STATUS.READY}),
-    --waiting = box.space.queue.index.status:count({STATUS.WAITING}),
-    --taken = box.space.queue.index.status:count({STATUS.TAKEN}),
+        total = box.space.watchables:len(),
+        match = box.space.watchables.index.wat_ak_mssg:count(
+            {wid, 'CREATED_OK'}
+        )
     }
-    end
+end
 
 local awatcher = {
-    wid = wid,        --Generate a Watcher Id
+    wig = wig,        --Generate a Watcher Id
     new = new,        --Create a new Watcher
     add = add,        --Add watchables to Watcher
     put = put,
     get = get,        --Get the active watcher from wid
     close = close,    --Close Watcher and watchables
-    upd = upd,  --Update watchables data
-    del = del,  --Delete active watchers and watchables by wid
-    trun = trun
+    upd = upd,        --Update watchables data
+    del = del,        --Delete active watchers and watchables by wid
+    trun = trun,
+    stat = stat,
+    match = match
 }
 
 return {
     start = start,
     awatcher = awatcher
 }
-
---db = require('db.engine')
---db.start()
---db.awatcher.create('/tmp/*', 'FD')
