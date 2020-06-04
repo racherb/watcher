@@ -427,127 +427,17 @@ local function is_stable_size(
     return is_stable, mssg
 end
 
--- @param path string: File Path
--- @param maxwait number
--- @param interval number
--- @param minsize number    : Minimum expected size to validate.
--- From this value the file growth check is activated.
--- @param grow_interval     : Growth check interval.
--- @param iterations number : Number of interactions to confirm stable size.
--- For each of these iterations the file size is the same.
--- @param novelty table     : Data for archive novelty check
--- When the same file is overwritten, activate this option to know if it is a new creation.
-local function single_file_creation(
-    --[[required]] path,
-    --[[optional]] maxwait,
-    --[[optional]] interval,
-    --[[optional]] minsize,
-    --[[optional]] check_stable_size,
-    --[[optional]] check_interval,
-    --[[optional]] max_iterations,
-    --[[optional]] novelty,
-    --[[optional]] initio)
-
-    --Validate path input
-    local p_path
-    if not path or string.strip(path) == "" then
-        return false, "FW_PATH_IS_EMPTY", path
-    else
-        p_path = string.strip(path)
-    end
-
-    --TODO: Remove these validations and delegate to the API
-    local p_maxwait = maxwait
-    local p_interval = interval
-    local p_minsize = minsize or 0
-    local p_check_stable_size = check_stable_size or FW_DEFAULT.CHECK_STABLE_SIZE
-    local p_check_interval = check_interval or 1
-    local p_max_iterations = max_iterations or 15
-    local p_novelty = novelty
-
-    --Validates the values of p_novelty
-    -- p_novelty[1] --Date from
-    -- p_novelty[2] --Date to
-
-    if interval > p_maxwait then p_interval = p_maxwait end
-
-    local fio_lexists = fio.path.lexists
-    local fio_lstat = fio.lstat
-
-    local prefix = ""
-    local sufix = ""
-    local answ
-
-    -- Supouse that not exists
-    --  then watch for creation
-    local ini = initio or os_time()
-
-    while (os_time() - ini < p_maxwait) do
-        if not fio_lexists(p_path) then
-            answ = false
-            prefix = "NOT_CREATED"
-            sufix = "YET"
-        else
-            prefix = "CREATED"
-            if fio_lstat(p_path).size >= p_minsize then
-                answ = true
-                sufix = "MIN_SIZE_OK"
-                break
-            else
-                sufix = "SIZE_NOT_EXPECTED"
-                answ = false
-            end
-        end
-        fib_sleep(p_interval)
-    end
-    -- check size
-    if answ == true then -- when the file has been created
-        if p_check_stable_size == "YES" then
-            local is_stable, merr = is_stable_size(p_path,
-                p_check_interval,
-                p_max_iterations
-            )
-            if not is_stable then
-                sufix = "INESTABLE_SIZE" --During p_check_interval and p_max_iterations
-                if merr then sufix = merr end
-                answ = false
-            end
-        end
-
-        --check novelty
-        if p_novelty then
-            local f_lmod = fio_lstat(p_path).mtime --last modified date
-            --TODO: @fixme: If only one novelty value is provided, then cloning the other
-            if not (f_lmod >= p_novelty[1] and f_lmod <= p_novelty[2]) then
-                sufix = "NOT_NOVELTY"
-                answ = false
-            else
-                answ = true
-            end
-        end
-    end
-
-    local fw_gettype = fw_get_type
-    --local mssg = fw_gettype(p_path) .. "_" .. prefix .. "_" .. sufix
-    local mssg_fmt = "%s_%s_%s"
-    local mssg = mssg_fmt:format(
-        fw_gettype(p_path),
-        prefix,
-        sufix
-    )
-    mssg = mssg:gsub("s_+", "") --Delete the last _ if exists
-
-    return {answ, mssg, p_path}
-
-end
+local bfc_end = fiber.cond() --Bulk file creacion end
 
 local function bulk_file_creation(
+    wid,
     bulk,
     maxwait,
     interval,
     minsize,
     stability,
-    novelty)
+    novelty,
+    nmatch)
 
     local fio_lexists = fio.path.lexists
     local fio_lstat = fio.lstat
@@ -578,7 +468,8 @@ local function bulk_file_creation(
                     if _novelty then
                         local lmod = fio_lstat(data).mtime
                         if not (lmod >= novelty[1] and lmod <= novelty[2]) then
-                            print('CREATED_BUT_NOT_NOVELTY', data)
+                            --"CREATED_BUT_NOT_NOVELTY"
+                            db.awatcher.upd(wid, data, false, 'CREATED_BUT_NOT_NOVELTY')
                             return
                         end
                     end
@@ -589,19 +480,22 @@ local function bulk_file_creation(
                             stability[2]
                         )
                         if not stble then
-                            print("CREATE_BUT_INESTABLE_SIZE", data)
+                            --"CREATE_BUT_INESTABLE_SIZE"
+                            db.awatcher.upd(wid, data, false, 'CREATE_BUT_INESTABLE_SIZE')
                             if merr then
-                                print(merr, data)
+                                db.awatcher.upd(wid, data, false, merr)
                             end
                             return
                         end
                     end
                     if _minsize then
                         if not (fio_lstat(data).size >= minsize) then
-                            print("CREATED_BUT_SIZE_NOT_EXPECTED", data)
+                            --"CREATED_BUT_SIZE_NOT_EXPECTED"
+                            db.awatcher.upd(wid, data, false, "CREATED_BUT_SIZE_NOT_EXPECTED")
                             return
                         end
                     end
+                    db.awatcher.upd(wid, data, true, "CREATED_OK")
                 end
             )
         end
@@ -616,7 +510,7 @@ local function bulk_file_creation(
     )
 
     local has_pttn = false
-    while (os_time() - ini < maxwait) do
+    while ((os_time() - ini) < maxwait) do
         for k,v in pairs(nfy) do
             if fw_get_type(v)~="FW_PATTERN" then
                 if fio_lexists(v) then
@@ -625,6 +519,8 @@ local function bulk_file_creation(
                     nff = nff + 1
                     if stability or minsize or novelty then
                         ch_cff:put(v, 0)
+                    else
+                        db.awatcher.upd(wid, v, true, "CREATED_OK")
                     end
                 end
             else
@@ -636,24 +532,27 @@ local function bulk_file_creation(
                             fnd[#fnd+1]=u
                             nfp = nfp + 1
                             if stability or minsize or novelty then
+                                db.awatcher.add(wid, u)
                                 ch_cff:put(u, 0)
+                            else
+                                db.awatcher.put(wid, u)
                             end
                         end
                     end
                 end
             end
         end
-        if not has_pttn and nff==niw then
+        --Exit as soon as posible
+        if (not has_pttn and nff==niw) or (db.awatcher.match(wid)>=nmatch) then
             break
         end
         fib_sleep(interval)
     end
+    --"MAXWAIT_TIMEOUT"
+    bfc_end:signal()
 end
 
---local fib=fiber.create(single_file_deletion,'/tmp/example.txt', 60, 1)
-
--- FW API ===================================================================
--- options = {"SORT_FILE_ASC", "ALL", "ALL"}
+--API Definition
 local function file_deletion(
     --[[required]] watch_list,
     --[[optional]] maxwait,
@@ -730,18 +629,18 @@ local function file_creation(
 
     assert(
         wlist and (type(wlist)=="table") and (#wlist~=0),
-        "ERR_WATCHLIST_NOT_VALID"
+        "WATCHER(ERR):WATCHLIST_NOT_VALID"
     )
 
-    local wmaxwait = maxwait or FW_DEFAULT.MAXWAIT
+    local w_maxwait = maxwait or FW_DEFAULT.MAXWAIT
     assert(
-        type(wmaxwait)=="number" and wmaxwait > 0,
-        "ERR_MAXWAIT_NOT_VALID"
+        type(w_maxwait)=="number" and w_maxwait > 0,
+        "WATCHER(ERR):MAXWAIT_NOT_VALID"
     )
 
-    local winterval = interval or FW_DEFAULT.INTERVAL
+    local w_interval = interval or FW_DEFAULT.INTERVAL
     assert(
-        type(winterval)=="number" and winterval > 0,
+        type(w_interval)=="number" and w_interval > 0,
         "ERR_INTERVAL_NOT_VALID"
     )
 
@@ -785,50 +684,49 @@ local function file_creation(
     local nfiles = #cwlist
     local ematch = nmatch or nfiles -- match for all cases
 
-    if nfiles <= BULK_CAPACITY then
+    local _, wid = db.awatcher.new(ut.tostring(cwlist), "FWC")
 
-        local fbc = fiber.create(
-            bulk_file_creation,
-            cwlist,
-            wmaxwait,
-            winterval,
-            fminsize,
-            stability,
-            novelty
-        )
-
-        print(fbc)
-
-    else
-        BULK_CAPACITY = 2
-        local nbulks = math.floor(nfiles/BULK_CAPACITY)
-        local pos = 0
-        for i=1,nbulks do
-            local bulk = {}
-            local val
-            for j=pos,BULK_CAPACITY do
-                pos = pos + 1
-                val = cwlist[pos]
-                if val then bulk[j]=val else break end
+    local nbulks = math.floor(1 + nfiles/BULK_CAPACITY)
+    local bulk_fibs = {} --Fiber list
+    local pos = 0
+    for i = 1, nbulks do
+        local bulk = {}
+        local val
+        for j = pos, BULK_CAPACITY do
+            pos = pos + 1
+            val = cwlist[pos]
+            if val then
+                bulk[j] = val
+                db.awatcher.add(wid, val)
+            else
+                break
             end
-            local fbc = fiber.create(
+        end
+        local bfid = fiber.create(
             bulk_file_creation,
+            wid,
             bulk,
-            wmaxwait,
-            winterval,
+            w_maxwait,
+            w_interval,
             fminsize,
             stability,
-            novelty)
-        end
+            novelty,
+            ematch
+        )
+        bfid:name('file-watcher-bulk-c')
+        bulk_fibs[i] = bfid
     end
 
-    --//TODO: Me quedé por acá
-    --  Hay que verificar la salida según match esperado.
-    -- Esto puede ser en una fibra consumidora.
+    fiber.sleep(1)
+    bfc_end:wait()
+    print("WID-BFC-ENDED")
+
+    for _, fib in pairs(bulk_fibs) do
+        local fid = fiber.id(fib)
+        pcall(fiber.cancel, fid)
+    end
 
 end
-
---file_creation({'/tmp/file_d','/tmp/file_c'}, 3, 1, 0, {"NO", 1, 15})
 
 local function file_alteration(x)
     print(x)
