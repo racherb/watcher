@@ -276,17 +276,17 @@ local function fw_check_end(
 
     if (ntrue == #tbl) then
         -- The entire group has been eliminated
-        return true, 'FW_ALL_DELETED', match, nomatch
+        return true, OUTPUT.ALL_DELETED, match, nomatch
 
     elseif ntrue >= nmatch then
         -- The number of eliminations is equal to or greater than expected
-        return true, 'FW_MATCH_DELETED', match, nomatch
+        return true, OUTPUT.MATCH_DELETED, match, nomatch
 
     elseif (ntrue > 0) and (ntrue < nmatch) then
-        return false, 'FW_MATCH_NOT_DELETED', match, nomatch
+        return false, OUTPUT.MATCH_NOT_DELETED, match, nomatch
 
     else
-        return false, 'FW_NOTHING_DELETED', match, nomatch
+        return false, OUTPUT.NOTHING_DELETED, match, nomatch
     end
 end
 
@@ -566,19 +566,19 @@ local function file_deletion(
 
     assert(
         watch_list and (type(watch_list)=='table') and (#watch_list~=0),
-        'FW_WATCHLIST_NOT_VALID'
+        OUTPUT.WATCH_LIST_NOT_VALID
     )
 
     local p_maxwait = maxwait or FW_DEFAULT.MAXWAIT
     assert(
         type(p_maxwait)=='number' and p_maxwait > 0,
-        'FW_MAXWAIT_NOT_VALID'
+        OUTPUT.MAXWAIT_NOT_VALID
     )
 
     local p_interval = interval or FW_DEFAULT.INTERVAL
     assert(
         type(p_interval)=='number' and p_interval > 0,
-        'FW_INTERVAL_NOT_VALID'
+        OUTPUT.INTERVAL_NOT_VALID
     )
 
     local p_options = options or {sort=FW_VALUES.SORT.ALPHA_ASC, cases = 'ALL', match = 'ALL'}
@@ -602,8 +602,8 @@ local function file_deletion(
     if p_cases=='ALL' then p_cases = nitems end
     if p_match=='ALL' then p_match = nitems end
 
-    assert(tonumber(p_cases), 'FW_NCASES_NOT_VALID')
-    assert(tonumber(p_match), 'FW_NMATCH_NOT_VALID')
+    assert(tonumber(p_cases), OUTPUT.N_CASES_NOT_VALID)
+    assert(tonumber(p_match), OUTPUT.N_MATCH_NOT_VALID)
 
     if p_sort==FW_DEFAULT.SORT and (p_cases=='ALL' or p_cases==#watch_list_cons) then
         return group_file_deletion(
