@@ -7,14 +7,14 @@
 -- @license MIT
 -- @copyright Raciel Hernández 2020
 
-local strict = require("strict")
-local clock = require("clock")
-local fiber = require("fiber")
-local log = require("log")
+local strict = require('strict')
+local clock = require('clock')
+local fiber = require('fiber')
+local log = require('log')
 
 strict.on()
 
-local enty = require("db.entity")
+local enty = require('db.entity')
 local awa = enty.awatcher()
 local wat = enty.watchables()
 
@@ -24,8 +24,8 @@ local function create_spaces()
     if not pcall(box.schema.create_space, 'awatcher') then
         return false
     else
-        log.info("The awatcher scheme has been successfully created")
-        box.space.awatcher:create_index("awa_pk",
+        log.info('The awatcher scheme has been successfully created')
+        box.space.awatcher:create_index('awa_pk',
         {
             type = 'hash',
             parts = {1, 'unsigned'}
@@ -35,15 +35,15 @@ local function create_spaces()
     if not pcall(box.schema.create_space, 'watchables') then
         return false
     else
-        log.info("The watchables scheme has been successfully created")
-        box.space.watchables:create_index("wat_uk",
+        log.info('The watchables scheme has been successfully created')
+        box.space.watchables:create_index('wat_uk',
             {
                 type = 'tree',
                 parts = {{1, 'unsigned'}, {2, 'str'}},
                 unique = true
             }
         )
-        box.space.watchables:create_index("wat_ak_mssg",
+        box.space.watchables:create_index('wat_ak_mssg',
             {
                 type = 'tree',
                 parts = {{1, 'unsigned'}, {5, 'str'}},
@@ -60,7 +60,7 @@ local function start()
         local ok = create_spaces()
         if not ok then
             box.space._schema:delete('onceinit')
-            log.error("The base schemes for watcher could not be generated")
+            log.error('The base schemes for watcher could not be generated')
         end
     end)
 
@@ -70,7 +70,7 @@ local function start()
         local ok = plugin.user_spaces_def()
         if not ok then
             box.space._schema:delete('onceinit_default')
-            log.error("The plugin schemes could not be generated")
+            log.error('The plugin schemes could not be generated')
         end
     end)
 end
@@ -123,7 +123,7 @@ local function add(
     -- Subscribe if wid exist and not finish yet
     if the_watcher and the_watcher[5]==0 then
         local _answer = answer or false
-        local _message = message or CREATION.NOT_YET_CREATED --"FILE_NOT_CREATED_YET"
+        local _message = message or CREATION.NOT_YET_CREATED --'FILE_NOT_CREATED_YET'
         --CREATION.FILE_PATTERN
         local watchb = {
             wid = wid,
@@ -157,7 +157,7 @@ local function put(wid, object)
             obj = object,
             dre = dreg,
             ans = true,
-            msg = "FILE_CREATED",
+            msg = CREATION.HAS_BEEN_CREATED,
             den = dreg
         }
 
