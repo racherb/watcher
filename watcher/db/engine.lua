@@ -224,7 +224,8 @@ local function endw(wid, dmatch)
             wid, {{'=', 5, v_end}}
         )
     end
-    if dmatch >= match(wid) then
+
+    if match(wid) >= dmatch then
         return true
     else
         return false
