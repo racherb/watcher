@@ -18,6 +18,8 @@ local enty = require("db.entity")
 local awa = enty.awatcher()
 local wat = enty.watchables()
 
+local CREATION = require('types.file').CREATION
+
 local function create_spaces()
     if not pcall(box.schema.create_space, 'awatcher') then
         return false
@@ -121,7 +123,8 @@ local function add(
     -- Subscribe if wid exist and not finish yet
     if the_watcher and the_watcher[5]==0 then
         local _answer = answer or false
-        local _message = message or "WATCHER_FILE_ACTIVE"
+        local _message = message or CREATION.NOT_YET_CREATED --"FILE_NOT_CREATED_YET"
+        --CREATION.FILE_PATTERN
         local watchb = {
             wid = wid,
             obj = object,
@@ -171,14 +174,10 @@ local function put(wid, object)
     end
 end
 
-local function close(wid)
+-- Close wid
+local function wend(wid)
     local t_watcher = get(wid)
     if t_watcher then
-        --Kill all fibers opened by watchables
-        local sel = box.space.watchables.index.wat_uk:select(wid)
-        for _,v in pairs(sel) do
-            if v[2] then pcall(fiber.kill, v[2]) end
-        end
         local v_end = clock.realtime64()
         box.space.awatcher:update(
             wid, {{'=', 5, v_end}}
@@ -214,7 +213,7 @@ end
 
 local function match(wid)
     return box.space.watchables.index.wat_ak_mssg:count(
-        {wid, 'CREATED_OK'}
+        {wid, CREATION.HAS_BEEN_CREATED}
     )
 end
 
@@ -222,7 +221,7 @@ local function stat(wid)
     return {
         total = box.space.watchables:len(),
         match = box.space.watchables.index.wat_ak_mssg:count(
-            {wid, 'CREATED_OK'}
+            {wid, CREATION.HAS_BEEN_CREATED}
         )
     }
 end
@@ -233,7 +232,7 @@ local awatcher = {
     add = add,        --Add watchables to Watcher
     put = put,
     get = get,        --Get the active watcher from wid
-    close = close,    --Close Watcher and watchables
+    wend = wend,      --Close Watcher and watchables
     upd = upd,        --Update watchables data
     del = del,        --Delete active watchers and watchables by wid
     trun = trun,
