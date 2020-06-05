@@ -20,7 +20,6 @@ end
 
 local TEST = {
     id1 = '[FW_PATH_ISEMPTY]        Nothing for watch',
-    id2 = '{CHECK MSSG CODE}        The message is correct',
     id3 = "[FW_UNKNOWN_NOT_EXISTS]  The file don't exist",
     id4 = '{NO WAIT MAXWAIT}        No wait if file not exist',
     id5 = "[FW_UNKNOWN_NOT_EXISTS]  The path don't exist",
@@ -43,14 +42,12 @@ local test = tap.test('test-file-watcher')
 test:plan(4)
 local pini = os.time()
 test:test('single_file_deletion:file_not_exist', function(test)
-    test:plan(6)
+    test:plan(4)
     local ans, mssg = fwt.deletion({''})
     test:is(ans, false, TEST.id1)
-    test:is(mssg, 'FW_PATH_ISEMPTY', TEST.id2)
     local file_not_exist_yet = '_THIS.NOT$_?EXIST%'
-    local ans, mssg, _ = fwt.deletion({file_not_exist_yet})
+    local ans = fwt.deletion({file_not_exist_yet})
     test:is(ans, true, TEST.id3)
-    test:is(mssg, 'FW_UNKNOWN_NOT_EXISTS', TEST.id2)
     local MAXWAIT = 5
     local tini = os.time()
     local _ = fwt.deletion({'/tmp/' .. file_not_exist_yet}, MAXWAIT)
@@ -62,12 +59,11 @@ test:test('single_file_deletion:file_not_exist', function(test)
 end)
 
 test:test('single_file_deletion:file_exist_not_deleted', function(test)
-    test:plan(3)
+    test:plan(2)
     local MAXWAIT = 10
     local this_file_exist = os.tmpname()
     local ans, mssg, _ = fwt.deletion({this_file_exist}, MAXWAIT)
     test:is(ans, false, TEST.id6)
-    test:is(mssg, 'FW_FILE_NOT_DELETED', TEST.id2)
 
     local MAXWAIT = 5
     fiber.create(remove_file, this_file_exist, 10)
@@ -76,34 +72,31 @@ test:test('single_file_deletion:file_exist_not_deleted', function(test)
 end)
 
 test:test('single_file_deletion:file_exist_deleted', function(test)
-    test:plan(2)
+    test:plan(1)
     local MAXWAIT = 10
     local this_file_exist = os.tmpname()
     fiber.create(remove_file, this_file_exist, 5)
-    local ans, mssg, _ = fwt.deletion({this_file_exist}, MAXWAIT)
+    local ans = fwt.deletion({this_file_exist}, MAXWAIT)
     test:is(ans, true, TEST.id8)
-    test:is(mssg, 'FW_FILE_DELETED', TEST.id2)
 end)
 
 test:test('multiple_file_deletion:list_experiments', function(test)
-    test:plan(19)
+    test:plan(10)
     local MAXWAIT = 3
     local INTERVAL = 0.5
     local f1 = os.tmpname()
     local f2 = os.tmpname()
     local f3 = os.tmpname()
     local file_list = {f1, f2, f3}
-    local ans, mssg = fwt.deletion(file_list, MAXWAIT, INTERVAL)
+    local ans = fwt.deletion(file_list, MAXWAIT, INTERVAL)
     test:is(ans, false, TEST.id9)
-    test:is(mssg, 'FW_NOTHING_DELETED', TEST.id2)
 
     local MAXWAIT = 8
     fiber.create(remove_file, f1, 1)
     fiber.create(remove_file, f2, 2)
     fiber.create(remove_file, f3, 3)
-    local ans, mssg = fwt.deletion(file_list, MAXWAIT, INTERVAL)
+    local ans = fwt.deletion(file_list, MAXWAIT, INTERVAL)
     test:is(ans, true, TEST.id10)
-    test:is(mssg, 'FW_ALL_DELETED', TEST.id2)
 
     local f4 = os.tmpname()
     local f5 = os.tmpname()
@@ -114,9 +107,8 @@ test:test('multiple_file_deletion:list_experiments', function(test)
     local file_list_2 = {f4, f5, f6, f7, f8, f9}
     fiber.create(remove_file, f4, 1)
     fiber.create(remove_file, f5, 3)
-    local ans, mssg = fwt.deletion(file_list_2, MAXWAIT, INTERVAL)
+    local ans = fwt.deletion(file_list_2, MAXWAIT, INTERVAL)
     test:is(ans, false, TEST.id11)
-    test:is(mssg, 'FW_MATCH_NOT_DELETED', TEST.id2)
 
     local MAXWAIT = 10
     local file_list_3 = {f6, f7, f8, f9}
@@ -124,22 +116,19 @@ test:test('multiple_file_deletion:list_experiments', function(test)
     fiber.create(remove_file, f7, 3)
     fiber.create(remove_file, f9, 1)
     local options = {nil, 3, 2}
-    local ans, mssg = fwt.deletion(file_list_3, MAXWAIT, INTERVAL, options)
+    local ans = fwt.deletion(file_list_3, MAXWAIT, INTERVAL, options)
     test:is(ans, true, TEST.id12)
-    test:is(mssg, 'FW_MATCH_DELETED', TEST.id2)
 
     for _=1,10 do os.tmpname() end
     local file_pattern = {'/tmp/*'}
-    local ans, mssg = fwt.deletion(file_pattern, MAXWAIT, INTERVAL)
+    local ans = fwt.deletion(file_pattern, MAXWAIT, INTERVAL)
     test:is(ans, false, TEST.id13)
-    test:is(mssg, 'FW_NOTHING_DELETED', TEST.id2)
 
     local MAXWAIT = 5
     for _=1,9 do os.tmpname() end
     fiber.create(remove_tmp_files, 3)
-    local ans, mssg = fwt.deletion(file_pattern, MAXWAIT, INTERVAL)
+    local ans = fwt.deletion(file_pattern, MAXWAIT, INTERVAL)
     test:is(ans, true, TEST.id14)
-    test:is(mssg, 'FW_ALL_DELETED', TEST.id2)
 
     local folder = {'/tmp/thefolder'}
     os.execute('mkdir /tmp/thefolder')
@@ -147,9 +136,8 @@ test:test('multiple_file_deletion:list_experiments', function(test)
     os.execute('touch /tmp/thefolder/tst2.txt')
     os.execute('touch /tmp/thefolder/tst3.txt')
     fiber.create(remove_tmp_files, 3)
-    local ans, mssg = fwt.deletion(folder, MAXWAIT, INTERVAL)
+    local ans = fwt.deletion(folder, MAXWAIT, INTERVAL)
     test:is(ans, true, TEST.id15)
-    test:is(mssg, 'FW_DIR_DELETED', TEST.id2)
 
     os.execute('touch /tmp/tst1.txt')
     os.execute('touch /tmp/tst2.txt')
@@ -164,9 +152,8 @@ test:test('multiple_file_deletion:list_experiments', function(test)
     end
     fiber.create(remove_pattrn, '/tmp/tst*.txt', 3)
     fiber.create(remove_file, '/tmp/tst6.abc', 1)
-    local ans, mssg = fwt.deletion(watcher_mix, MAXWAIT, INTERVAL)
+    local ans = fwt.deletion(watcher_mix, MAXWAIT, INTERVAL)
     test:is(ans, true, TEST.id16)
-    test:is(mssg, 'FW_ALL_DELETED', TEST.id2)
 
     local MAXWAIT = 7
     local INTERVAL = 0.5
@@ -182,7 +169,6 @@ test:test('multiple_file_deletion:list_experiments', function(test)
     local options = {'MTIME_ASC', 3, n_match}
     local ans, mssg, obj = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, options)
     test:is(ans, true, TEST.id17)
-    test:is(mssg, 'FW_MATCH_DELETED', TEST.id2)
     test:is(#obj, n_match, TEST.id18)
 
 end)
