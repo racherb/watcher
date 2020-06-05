@@ -19,6 +19,8 @@ local fio_glob = fio.glob
 local db = require('db.engine')
 local ut = require('util')
 
+local CREATION = require('types.file').CREATION
+
 db.start()
 
 strict.on()
@@ -418,7 +420,7 @@ local function is_stable_size(
             end
         else
             --File dissapear
-            mssg = "DISAPPEARED_UNEXPECTEDLY"
+            mssg = CREATION.DISAPPEARED_UNEXPECTEDLY
             is_stable = false
             break
         end
@@ -467,8 +469,9 @@ local function bulk_file_creation(
                     if _novelty then
                         local lmod = fio_lstat(data).mtime
                         if not (lmod >= novelty[1] and lmod <= novelty[2]) then
-                            --"CREATED_BUT_NOT_NOVELTY"
-                            db.awatcher.upd(wid, data, false, 'CREATED_BUT_NOT_NOVELTY')
+                            db.awatcher.upd(
+                                wid, data, false, CREATION.IS_NOT_NOVELTY
+                            )
                             return
                         end
                     end
@@ -479,8 +482,9 @@ local function bulk_file_creation(
                             stability[2]
                         )
                         if not stble then
-                            --"CREATE_BUT_INESTABLE_SIZE"
-                            db.awatcher.upd(wid, data, false, 'CREATE_BUT_INESTABLE_SIZE')
+                            db.awatcher.upd(
+                                wid, data, false, CREATION.UNSTABLE_SIZE
+                            )
                             if merr then
                                 db.awatcher.upd(wid, data, false, merr)
                             end
@@ -489,12 +493,11 @@ local function bulk_file_creation(
                     end
                     if _minsize then
                         if not (fio_lstat(data).size >= minsize) then
-                            --"CREATED_BUT_SIZE_NOT_EXPECTED"
-                            db.awatcher.upd(wid, data, false, "CREATED_BUT_SIZE_NOT_EXPECTED")
+                            db.awatcher.upd(wid, data, false, CREATION.UNEXPECTED_SIZE)
                             return
                         end
                     end
-                    db.awatcher.upd(wid, data, true, "CREATED_OK")
+                    db.awatcher.upd(wid, data, true, CREATION.HAS_BEEN_CREATED)
                 end
             )
         end
@@ -519,7 +522,9 @@ local function bulk_file_creation(
                     if stability or minsize or novelty then
                         ch_cff:put(v, 0)
                     else
-                        db.awatcher.upd(wid, v, true, "CREATED_OK")
+                        db.awatcher.upd(
+                            wid, v, true, CREATION.HAS_BEEN_CREATED
+                        )
                     end
                 end
             else
@@ -701,7 +706,13 @@ local function file_creation(
             val = cwlist[pos]
             if val then
                 bulk[j] = val
-                db.awatcher.add(wid, val)
+                if not string.find(val, "*") then
+                    db.awatcher.add(wid, val)
+                else
+                    db.awatcher.add(
+                        wid, val, false, CREATION.FILE_PATTERN
+                    )
+                end
             else
                 break
             end
@@ -721,7 +732,6 @@ local function file_creation(
         bulk_fibs[i] = bfid
     end
 
-    --fiber.sleep(1)
     bfc_end:wait()
 
     --Cancel fibers
