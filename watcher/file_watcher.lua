@@ -8,9 +8,9 @@
 -- @license MIT
 -- @copyright Raciel Hernández 2019
 
-local strict = require("strict")
-local fiber = require("fiber")
-local fio = require("fio")
+local strict = require('strict')
+local fiber = require('fiber')
+local fio = require('fio')
 
 local os_time = os.time
 local fib_sleep = fiber.sleep
@@ -78,25 +78,25 @@ local function fw_get_type(path)
     local fio_stat = fio.stat
     local FW_PREFIX = FW_DEFAULT.PREFIX
     if fio_path.is_dir(path) then
-        return (FW_PREFIX .. "_DIR")
+        return (FW_PREFIX .. '_DIR')
     elseif fio_path.is_file(path) then
-        return (FW_PREFIX .. "_FILE")
+        return (FW_PREFIX .. '_FILE')
     elseif fio_path.is_link(path) then
-        return (FW_PREFIX .. "_LINK")
+        return (FW_PREFIX .. '_LINK')
     elseif fio_stat(path) and fio_stat(path):is_sock() then
-        return (FW_PREFIX .. "_SOCK")
+        return (FW_PREFIX .. '_SOCK')
     elseif fio_stat(path) and fio_stat(path):is_reg() then
-        return (FW_PREFIX .. "_REG")
+        return (FW_PREFIX .. '_REG')
     elseif fio_stat(path) and fio_stat(path):is_fifo() then
-        return (FW_PREFIX .. "_FIFO")
+        return (FW_PREFIX .. '_FIFO')
     elseif fio_stat(path) and fio_stat(path):is_blk() then
-        return (FW_PREFIX .. "_BLOCK")
+        return (FW_PREFIX .. '_BLOCK')
     elseif fio_stat(path) and fio_stat(path):is_chr() then
-        return (FW_PREFIX .. "_CHR")
-    elseif string.find(path, "*") then
-        return (FW_PREFIX .. "_PATTERN")
+        return (FW_PREFIX .. '_CHR')
+    elseif string.find(path, '*') then
+        return (FW_PREFIX .. '_PATTERN')
     else --Desconocido o no determindado (porque no existe)
-        return (FW_PREFIX .. "_UNKNOWN")
+        return (FW_PREFIX .. '_UNKNOWN')
     end
 end
 
@@ -127,8 +127,8 @@ local function single_file_deletion(
     --Validate path input
     local p_path
     local str_strip = string.strip
-    if not path or str_strip(path) == "" then
-        return false, "FW_PATH_ISEMPTY", path
+    if not path or str_strip(path) == '' then
+        return false, 'FW_PATH_ISEMPTY', path
     else
         p_path = str_strip(path)
     end
@@ -142,16 +142,16 @@ local function single_file_deletion(
     local fio_exists = fio.path.lexists
 
     if not fio_exists(p_path) then
-        return true, fw_type .. "_NOT_EXISTS", p_path
+        return true, fw_type .. '_NOT_EXISTS', p_path
     else
         --Exists, then watch for deletion
         local answ = false
-        local mssg = fw_type .. "_NOT_DELETED"
+        local mssg = fw_type .. '_NOT_DELETED'
         local ini = os_time()
         while (os_time() - ini < p_maxwait) do
             if not fio_exists(p_path) then
                 answ = true
-                mssg = fw_type .. "_DELETED"
+                mssg = fw_type .. '_DELETED'
                 break
             end
             fib_sleep(p_interval)
@@ -275,17 +275,17 @@ local function fw_check_end(
 
     if (ntrue == #tbl) then
         -- The entire group has been eliminated
-        return true, "FW_ALL_DELETED", match, nomatch
+        return true, 'FW_ALL_DELETED', match, nomatch
 
     elseif ntrue >= nmatch then
         -- The number of eliminations is equal to or greater than expected
-        return true, "FW_MATCH_DELETED", match, nomatch
+        return true, 'FW_MATCH_DELETED', match, nomatch
 
     elseif (ntrue > 0) and (ntrue < nmatch) then
-        return false, "FW_MATCH_NOT_DELETED", match, nomatch
+        return false, 'FW_MATCH_NOT_DELETED', match, nomatch
 
     else
-        return false, "FW_NOTHING_DELETED", match, nomatch
+        return false, 'FW_NOTHING_DELETED', match, nomatch
     end
 end
 
@@ -315,7 +315,7 @@ local function group_file_deletion(
     --[[optional]] nmatch)
 
     if #grp == 0 then
-        return false, "FW_GROUP_IS_NULL"
+        return false, 'FW_GROUP_IS_NULL'
     end
 
     local p_maxwait = maxwait or FW_DEFAULT.MAXWAIT
@@ -370,7 +370,7 @@ local function cons_watch_listd(watch_list)
     local fw_gettype = fw_get_type
 
     for _,v in pairs(p_watch_list) do
-        if fw_gettype(v)=="FW_PATTERN" then
+        if fw_gettype(v)=='FW_PATTERN' then
             local pattern_result = fio_glob(v)
             --Merge pattern items result with t
             for _,nv in ipairs(pattern_result) do
@@ -514,7 +514,7 @@ local function bulk_file_creation(
     local has_pttn = false
     while ((os_time() - ini) < maxwait) do
         for k,v in pairs(nfy) do
-            if fw_get_type(v)~="FW_PATTERN" then
+            if fw_get_type(v)~='FW_PATTERN' then
                 if fio_lexists(v) then
                     fnd[#fnd+1]=v
                     nfy[k] = nil
@@ -552,7 +552,7 @@ local function bulk_file_creation(
         end
         fib_sleep(interval)
     end
-    --"MAXWAIT_TIMEOUT"
+    --'MAXWAIT_TIMEOUT'
     bfc_end:signal()
 end
 
@@ -564,27 +564,27 @@ local function file_deletion(
     --[[optional]] options)
 
     assert(
-        watch_list and (type(watch_list)=="table") and (#watch_list~=0),
-        "FW_WATCHLIST_NOT_VALID"
+        watch_list and (type(watch_list)=='table') and (#watch_list~=0),
+        'FW_WATCHLIST_NOT_VALID'
     )
 
     local p_maxwait = maxwait or FW_DEFAULT.MAXWAIT
     assert(
-        type(p_maxwait)=="number" and p_maxwait > 0,
-        "FW_MAXWAIT_NOT_VALID"
+        type(p_maxwait)=='number' and p_maxwait > 0,
+        'FW_MAXWAIT_NOT_VALID'
     )
 
     local p_interval = interval or FW_DEFAULT.INTERVAL
     assert(
-        type(p_interval)=="number" and p_interval > 0,
-        "FW_INTERVAL_NOT_VALID"
+        type(p_interval)=='number' and p_interval > 0,
+        'FW_INTERVAL_NOT_VALID'
     )
 
-    local p_options = options or {sort=FW_VALUES.SORT.ALPHA_ASC, cases = "ALL", match = 'ALL'}
+    local p_options = options or {sort=FW_VALUES.SORT.ALPHA_ASC, cases = 'ALL', match = 'ALL'}
 
     local p_sort = p_options[1] or FW_DEFAULT.SORT
-    local p_cases = p_options[2] or "ALL"
-    local p_match = p_options[3] or "ALL"
+    local p_cases = p_options[2] or 'ALL'
+    local p_match = p_options[3] or 'ALL'
 
     -- Consolidate the input watch list
     local watch_list_cons = cons_watch_listd(watch_list)
@@ -598,13 +598,13 @@ local function file_deletion(
         )
     end
 
-    if p_cases=="ALL" then p_cases = nitems end
-    if p_match=="ALL" then p_match = nitems end
+    if p_cases=='ALL' then p_cases = nitems end
+    if p_match=='ALL' then p_match = nitems end
 
-    assert(tonumber(p_cases), "FW_NCASES_NOT_VALID")
-    assert(tonumber(p_match), "FW_NMATCH_NOT_VALID")
+    assert(tonumber(p_cases), 'FW_NCASES_NOT_VALID')
+    assert(tonumber(p_match), 'FW_NMATCH_NOT_VALID')
 
-    if p_sort==FW_DEFAULT.SORT and (p_cases=="ALL" or p_cases==#watch_list_cons) then
+    if p_sort==FW_DEFAULT.SORT and (p_cases=='ALL' or p_cases==#watch_list_cons) then
         return group_file_deletion(
             watch_list_cons,
             p_maxwait,
@@ -637,55 +637,55 @@ local function file_creation(
     --[[optional]] nmatch)
 
     assert(
-        wlist and (type(wlist)=="table") and (#wlist~=0),
-        "WATCHER(ERR):WATCHLIST_NOT_VALID"
+        wlist and (type(wlist)=='table') and (#wlist~=0),
+        'WATCHER(ERR):WATCHLIST_NOT_VALID'
     )
 
     local w_maxwait = maxwait or FW_DEFAULT.MAXWAIT
     assert(
-        type(w_maxwait)=="number" and w_maxwait > 0,
-        "WATCHER(ERR):MAXWAIT_NOT_VALID"
+        type(w_maxwait)=='number' and w_maxwait > 0,
+        'WATCHER(ERR):MAXWAIT_NOT_VALID'
     )
 
     local w_interval = interval or FW_DEFAULT.INTERVAL
     assert(
-        type(w_interval)=="number" and w_interval > 0,
-        "ERR_INTERVAL_NOT_VALID"
+        type(w_interval)=='number' and w_interval > 0,
+        'ERR_INTERVAL_NOT_VALID'
     )
 
     local fminsize = minsize or 0
     assert(
-        fminsize and type(fminsize)=="number" and fminsize >= 0,
-        "ERR_MINSIZE_NOT_VALID"
+        fminsize and type(fminsize)=='number' and fminsize >= 0,
+        'ERR_MINSIZE_NOT_VALID'
     )
 
     if stability then
         assert(
-            stability and type(stability)=="table" and #stability~=0,
-            "ERR_STABILITY_NOT_VALID"
+            stability and type(stability)=='table' and #stability~=0,
+            'ERR_STABILITY_NOT_VALID'
         )
         assert(
-            stability[1] and type(stability[1])=="number" and stability[1]>0,
-            "ERR_CHECK_INTERVAL_NOT_VALID"
+            stability[1] and type(stability[1])=='number' and stability[1]>0,
+            'ERR_CHECK_INTERVAL_NOT_VALID'
         )
         assert(
-            stability[2] and type(stability[2])=="number" and stability[2]>0,
-            "ERR_ITERATIONS_NOT_VALID"
+            stability[2] and type(stability[2])=='number' and stability[2]>0,
+            'ERR_ITERATIONS_NOT_VALID'
         )
     end
 
     if novelty then
         assert(
-            type(novelty)=="table" and #novelty~=0,
-            "ERR_NOVELTY_NOT_VALID"
+            type(novelty)=='table' and #novelty~=0,
+            'ERR_NOVELTY_NOT_VALID'
         )
         assert(
-            novelty[1] and type(novelty[1])=="number",
-            "ERR_DATE_FROM_NOT_VALID"
+            novelty[1] and type(novelty[1])=='number',
+            'ERR_DATE_FROM_NOT_VALID'
         )
         assert(
-            novelty[2] and type(novelty[2])=="number",
-            "ERR_DATE_UNTIL_NOT_VALID"
+            novelty[2] and type(novelty[2])=='number',
+            'ERR_DATE_UNTIL_NOT_VALID'
         )
     end
 
@@ -693,7 +693,7 @@ local function file_creation(
     local nfiles = #cwlist
     local ematch = nmatch or nfiles -- match for all cases
 
-    local _, wid = db.awatcher.new(ut.tostring(cwlist), "FWC")
+    local _, wid = db.awatcher.new(ut.tostring(cwlist), 'FWC')
 
     local nbulks = math.floor(1 + nfiles/BULK_CAPACITY)
     local bulk_fibs = {} --Fiber list
@@ -706,7 +706,7 @@ local function file_creation(
             val = cwlist[pos]
             if val then
                 bulk[j] = val
-                if not string.find(val, "*") then
+                if not string.find(val, '*') then
                     db.awatcher.add(wid, val)
                 else
                     db.awatcher.add(
