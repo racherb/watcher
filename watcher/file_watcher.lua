@@ -20,6 +20,7 @@ local db = require('db.engine')
 local ut = require('util')
 
 local CREATION = require('types.file').CREATION
+local OUTPUT = require('types.file').OUTPUT
 
 db.start()
 
@@ -638,54 +639,54 @@ local function file_creation(
 
     assert(
         wlist and (type(wlist)=='table') and (#wlist~=0),
-        'WATCHER(ERR):WATCHLIST_NOT_VALID'
+        OUTPUT.WATCH_LIST_NOT_VALID
     )
 
     local w_maxwait = maxwait or FW_DEFAULT.MAXWAIT
     assert(
         type(w_maxwait)=='number' and w_maxwait > 0,
-        'WATCHER(ERR):MAXWAIT_NOT_VALID'
+        OUTPUT.MAXWAIT_NOT_VALID
     )
 
     local w_interval = interval or FW_DEFAULT.INTERVAL
     assert(
         type(w_interval)=='number' and w_interval > 0,
-        'ERR_INTERVAL_NOT_VALID'
+        OUTPUT.INTERVAL_NOT_VALID
     )
 
     local fminsize = minsize or 0
     assert(
         fminsize and type(fminsize)=='number' and fminsize >= 0,
-        'ERR_MINSIZE_NOT_VALID'
+        OUTPUT.MINSIZE_NOT_VALID
     )
 
     if stability then
         assert(
             stability and type(stability)=='table' and #stability~=0,
-            'ERR_STABILITY_NOT_VALID'
+            OUTPUT.STABILITY_NOT_VALID
         )
         assert(
             stability[1] and type(stability[1])=='number' and stability[1]>0,
-            'ERR_CHECK_INTERVAL_NOT_VALID'
+            OUTPUT.CHECK_SIZE_INTERVAL_NOT_VALID
         )
         assert(
             stability[2] and type(stability[2])=='number' and stability[2]>0,
-            'ERR_ITERATIONS_NOT_VALID'
+            OUTPUT.ITERATIONS_NOT_VALID
         )
     end
 
     if novelty then
         assert(
             type(novelty)=='table' and #novelty~=0,
-            'ERR_NOVELTY_NOT_VALID'
+            OUTPUT.NOVELTY_NOT_VALID
         )
         assert(
             novelty[1] and type(novelty[1])=='number',
-            'ERR_DATE_FROM_NOT_VALID'
+            OUTPUT.DATE_FROM_NOT_VALID
         )
         assert(
             novelty[2] and type(novelty[2])=='number',
-            'ERR_DATE_UNTIL_NOT_VALID'
+            OUTPUT.DATE_UNTIL_NOT_VALID
         )
     end
 
