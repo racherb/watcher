@@ -739,7 +739,8 @@ local function file_creation(
         local fid = fiber.id(fib)
         pcall(fiber.cancel, fid)
     end
-    db.awatcher.wend(wid)
+
+    return db.awatcher.endw(wid, ematch)
 
 end
 
