@@ -174,17 +174,6 @@ local function put(wid, object)
     end
 end
 
--- Close wid
-local function wend(wid)
-    local t_watcher = get(wid)
-    if t_watcher then
-        local v_end = clock.realtime64()
-        box.space.awatcher:update(
-            wid, {{'=', 5, v_end}}
-        )
-    end
-end
-
 local function del(wid)
     local s = box.space.watchables.index.wat_uk
     local sel = s:select(wid)
@@ -226,13 +215,29 @@ local function stat(wid)
     }
 end
 
+-- Close and end watcher wid
+local function endw(wid, dmatch)
+    local t_watcher = get(wid)
+    if t_watcher then
+        local v_end = clock.realtime64()
+        box.space.awatcher:update(
+            wid, {{'=', 5, v_end}}
+        )
+    end
+    if dmatch >= match(wid) then
+        return true
+    else
+        return false
+    end
+end
+
 local awatcher = {
     wig = wig,        --Generate a Watcher Id
     new = new,        --Create a new Watcher
     add = add,        --Add watchables to Watcher
     put = put,
     get = get,        --Get the active watcher from wid
-    wend = wend,      --Close Watcher and watchables
+    endw = endw,      --Close Watcher and watchables
     upd = upd,        --Update watchables data
     del = del,        --Delete active watchers and watchables by wid
     trun = trun,
