@@ -13,13 +13,15 @@ local fiber = require('fiber')
 local fio = require('fio')
 
 local os_time = os.time
+local string_find = string.find
 local fib_sleep = fiber.sleep
 local fio_glob = fio.glob
 
 local db = require('db.engine')
 local ut = require('util')
 
-local CREATION = require('types.file').CREATION
+local FILE = require('types.file').FILE
+local DELETION = require('types.file').DELETION
 local OUTPUT = require('types.file').OUTPUT
 
 db.start()
@@ -48,18 +50,15 @@ local FW_DEFAULT = {
     MAXWAIT = 60,
     INTERVAL = 0.5,
     SORT = 'NO_SORT',
-    CHECK_STABLE_SIZE = 'YES',
     CHECK_INTERVAL = 0.5,
     ITERATIONS = 10
 }
 
-local FW_VALUES = {
-    SORT = {
-        ALPHA_ASC = 'ALPHA_ASC',
-        ALPHA_DSC = 'ALPHA_DSC',
-        MTIME_ASC = 'MTIME_ASC',
-        MTIME_DSC = 'MTIME_DSC'
-    }
+local SORT_BY = {
+    ALPHA_ASC = 'AA',
+    ALPHA_DSC = 'AD',
+    MTIME_ASC = 'MA',
+    MTIME_DSC = 'MD'
 }
 
 local BULK_CAPACITY = 1000000
@@ -208,7 +207,7 @@ local function sort_files_by(
 
     if sort_by == FW_DEFAULT.SORT then
         return take_n_items(flst, take_n)
-    elseif sort_by == FW_VALUES.SORT.ALPHA_ASC then
+    elseif sort_by == SORT_BY.ALPHA_ASC then
         table.sort(
             flst,
             function(a, b)
@@ -217,7 +216,7 @@ local function sort_files_by(
         )
         return take_n_items(flst, take_n)
 
-    elseif sort_by == FW_VALUES.SORT.ALPHA_DSC then
+    elseif sort_by == SORT_BY.ALPHA_DSC then
         table.sort(
             flst,
             function(a, b)
@@ -226,7 +225,7 @@ local function sort_files_by(
         )
         return take_n_items(flst, take_n)
 
-    elseif sort_by == FW_VALUES.SORT.MTIME_ASC then
+    elseif sort_by == SORT_BY.MTIME_ASC then
         local flst_ex = add_lst_modif(flst)
         table.sort(
             flst_ex,
@@ -236,7 +235,7 @@ local function sort_files_by(
         )
         return take_n_items(flst_ex, take_n)
 
-    elseif sort_by == FW_VALUES.SORT.MTIME_DSC then
+    elseif sort_by == SORT_BY.MTIME_DSC then
         local flst_ex = add_lst_modif(flst)
         table.sort(
             flst_ex,
@@ -290,52 +289,30 @@ local function fw_check_end(
     end
 end
 
--- Updates the status for each file in the table
--- ..
-local function update_exists_file(tbl)
-    --TODO: @fixme: Optimize, update only those tbl cases that are false
-    local answ = {}
+--- Watcher for Bulk File Deletion
+local function bulk_file_deletion(
+    wid,
+    bulk,
+    maxwait,
+    interval,
+    nmatch
+)
+
     local fio_exists = fio.path.lexists
-    local pathf
-    for k, v in pairs(tbl) do
-        if type(v[1])~='table' then pathf = v[1] else pathf = v[1][1] end
-        if fio_exists(pathf) then
-            answ[k] = {v, false}
-        else
-            answ[k] = {v, true}
-        end
-    end
-    return answ
-end
-
---- Watcher for Group File Deletion
-local function group_file_deletion(
-    --[[required]] grp,
-    --[[optional]] maxwait,
-    --[[optional]] interval,
-    --[[optional]] nmatch)
-
-    if #grp == 0 then
-        return false, 'FW_GROUP_IS_NULL'
-    end
-
-    local p_maxwait = maxwait or FW_DEFAULT.MAXWAIT
-    local p_interval = interval or FW_DEFAULT.INTERVAL
-    local p_nmatch = nmatch or #grp
-
-    if p_interval > p_maxwait then p_interval = p_maxwait end
-
-    --Initializes false checklist
-    local lst = {}
-    for _, v in pairs(grp) do
-        lst[#lst+1] = {v, false} --table.insert(lst, {v, false})
-    end
-
-    local answ, mssg, match, nomatch
     local ini = os_time()
-    while (os_time() - ini < p_maxwait) do
-        local lstupd = update_exists_file(lst)
-        answ, mssg, match, nomatch = fw_check_end(lstupd, p_nmatch)
+    local notdel = bulk
+
+    while (os_time() - ini) < maxwait do
+        for i=1,#notdel do
+            local file = notdel[i]
+            if not fio_exists(file) then
+                db.awatcher.upd(
+                    wid, file, true, DELETION.DELETED
+                )
+                notdel[i] = nil
+            end
+        end
+        fw_check_end(lstupd, p_nmatch)
         if answ then
             break
         else
@@ -368,10 +345,9 @@ local function cons_watch_listd(watch_list)
     local p_watch_list = remove_duplicates(watch_list)
 
     local t = {}
-    local fw_gettype = fw_get_type
 
     for _,v in pairs(p_watch_list) do
-        if fw_gettype(v)=='FW_PATTERN' then
+        if string_find(v, '*') then
             local pattern_result = fio_glob(v)
             --Merge pattern items result with t
             for _,nv in ipairs(pattern_result) do
@@ -421,7 +397,7 @@ local function is_stable_size(
             end
         else
             --File dissapear
-            mssg = CREATION.DISAPPEARED_UNEXPECTEDLY
+            mssg = FILE.DISAPPEARED_UNEXPECTEDLY
             is_stable = false
             break
         end
@@ -471,7 +447,7 @@ local function bulk_file_creation(
                         local lmod = fio_lstat(data).mtime
                         if not (lmod >= novelty[1] and lmod <= novelty[2]) then
                             db.awatcher.upd(
-                                wid, data, false, CREATION.IS_NOT_NOVELTY
+                                wid, data, false, FILE.IS_NOT_NOVELTY
                             )
                             return
                         end
@@ -484,7 +460,7 @@ local function bulk_file_creation(
                         )
                         if not stble then
                             db.awatcher.upd(
-                                wid, data, false, CREATION.UNSTABLE_SIZE
+                                wid, data, false, FILE.UNSTABLE_SIZE
                             )
                             if merr then
                                 db.awatcher.upd(wid, data, false, merr)
@@ -494,11 +470,11 @@ local function bulk_file_creation(
                     end
                     if _minsize then
                         if not (fio_lstat(data).size >= minsize) then
-                            db.awatcher.upd(wid, data, false, CREATION.UNEXPECTED_SIZE)
+                            db.awatcher.upd(wid, data, false, FILE.UNEXPECTED_SIZE)
                             return
                         end
                     end
-                    db.awatcher.upd(wid, data, true, CREATION.HAS_BEEN_CREATED)
+                    db.awatcher.upd(wid, data, true, FILE.HAS_BEEN_CREATED)
                 end
             )
         end
@@ -515,7 +491,7 @@ local function bulk_file_creation(
     local has_pttn = false
     while ((os_time() - ini) < maxwait) do
         for k,v in pairs(nfy) do
-            if fw_get_type(v)~='FW_PATTERN' then
+            if not string_find(v, '*') then
                 if fio_lexists(v) then
                     fnd[#fnd+1]=v
                     nfy[k] = nil
@@ -524,7 +500,7 @@ local function bulk_file_creation(
                         ch_cff:put(v, 0)
                     else
                         db.awatcher.upd(
-                            wid, v, true, CREATION.HAS_BEEN_CREATED
+                            wid, v, true, FILE.HAS_BEEN_CREATED
                         )
                     end
                 end
@@ -581,7 +557,7 @@ local function file_deletion(
         OUTPUT.INTERVAL_NOT_VALID
     )
 
-    local p_options = options or {sort=FW_VALUES.SORT.ALPHA_ASC, cases = 'ALL', match = 'ALL'}
+    local p_options = options or {sort = SORT_BY.ALPHA_ASC, cases = 'ALL', match = 'ALL'}
 
     local p_sort = p_options[1] or FW_DEFAULT.SORT
     local p_cases = p_options[2] or 'ALL'
@@ -707,11 +683,11 @@ local function file_creation(
             val = cwlist[pos]
             if val then
                 bulk[j] = val
-                if not string.find(val, '*') then
+                if not string_find(val, '*') then
                     db.awatcher.add(wid, val)
                 else
                     db.awatcher.add(
-                        wid, val, false, CREATION.FILE_PATTERN
+                        wid, val, false, FILE.IS_PATTERN
                     )
                 end
             else
