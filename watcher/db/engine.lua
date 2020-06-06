@@ -18,7 +18,7 @@ local enty = require('db.entity')
 local awa = enty.awatcher()
 local wat = enty.watchables()
 
-local CREATION = require('types.file').CREATION
+local FILE = require('types.file').FILE
 
 local function create_spaces()
     if not pcall(box.schema.create_space, 'awatcher') then
@@ -123,8 +123,8 @@ local function add(
     -- Subscribe if wid exist and not finish yet
     if the_watcher and the_watcher[5]==0 then
         local _answer = answer or false
-        local _message = message or CREATION.NOT_YET_CREATED --'FILE_NOT_CREATED_YET'
-        --CREATION.FILE_PATTERN
+        local _message = message or FILE.NOT_YET_CREATED --'FILE_NOT_CREATED_YET'
+        --FILE.IS_PATTERN
         local watchb = {
             wid = wid,
             obj = object,
@@ -157,7 +157,7 @@ local function put(wid, object)
             obj = object,
             dre = dreg,
             ans = true,
-            msg = CREATION.HAS_BEEN_CREATED,
+            msg = FILE.HAS_BEEN_CREATED,
             den = dreg
         }
 
@@ -202,7 +202,7 @@ end
 
 local function match(wid)
     return box.space.watchables.index.wat_ak_mssg:count(
-        {wid, CREATION.HAS_BEEN_CREATED}
+        {wid, FILE.HAS_BEEN_CREATED}
     )
 end
 
@@ -210,7 +210,7 @@ local function stat(wid)
     return {
         total = box.space.watchables:len(),
         match = box.space.watchables.index.wat_ak_mssg:count(
-            {wid, CREATION.HAS_BEEN_CREATED}
+            {wid, FILE.HAS_BEEN_CREATED}
         )
     }
 end
