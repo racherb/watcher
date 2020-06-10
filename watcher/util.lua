@@ -22,7 +22,7 @@ local function val_to_str(v)
 
   local function tostring(tbl)
     local result, done = {}, {}
-    for k, v in ipairs( tbl ) do
+    for k, v in ipairs(tbl) do
       table.insert(result, val_to_str(v))
       done[k] = true
     end
