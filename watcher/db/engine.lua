@@ -19,6 +19,7 @@ local awa = enty.awatcher()
 local wat = enty.watchables()
 
 local FILE = require('types.file').FILE
+local WATCHER = require('types.file').WATCHER
 
 local function create_spaces()
     if not pcall(box.schema.create_space, 'awatcher') then
@@ -98,7 +99,6 @@ local function new(what, kind)
         }
 
     local ok, tuple = awa.flatten(nawa)
-    print(ok)
 
     if ok then
         box.space.awatcher:insert(tuple)
@@ -200,10 +200,17 @@ local function upd(wid, object, ans, msg)
     )
 end
 
-local function match(wid)
-    return box.space.watchables.index.wat_ak_mssg:count(
-        {wid, FILE.HAS_BEEN_CREATED}
-    )
+local function match(wid, wtype)
+    local _wtype = wtype or WATCHER.FILE_CREATION --File Watcher Creation is Default
+    if _wtype == WATCHER.FILE_CREATION then
+        return box.space.watchables.index.wat_ak_mssg:count(
+            {wid, FILE.HAS_BEEN_CREATED}
+        )
+    elseif _wtype == WATCHER.FILE_DELETION then
+        return box.space.watchables.index.wat_ak_mssg:count(
+            {wid, FILE.DELETED}
+        )
+    end
 end
 
 local function stat(wid)
