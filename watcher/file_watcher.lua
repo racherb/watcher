@@ -21,7 +21,7 @@ local db = require('db.engine')
 local ut = require('util')
 
 local FILE = require('types.file').FILE
-local DELETION = require('types.file').DELETION
+local WATCHER = require('types.file').WATCHER
 local OUTPUT = require('types.file').OUTPUT
 
 db.start()
@@ -49,12 +49,12 @@ local FW_DEFAULT = {
     ACTION = 'CREATION',
     MAXWAIT = 60,
     INTERVAL = 0.5,
-    SORT = 'NO_SORT',
     CHECK_INTERVAL = 0.5,
     ITERATIONS = 10
 }
 
 local SORT_BY = {
+    NO_SORT = 'NS',
     ALPHA_ASC = 'AA',
     ALPHA_DSC = 'AD',
     MTIME_ASC = 'MA',
@@ -97,66 +97,6 @@ local function fw_get_type(path)
         return (FW_PREFIX .. '_PATTERN')
     else --Desconocido o no determindado (porque no existe)
         return (FW_PREFIX .. '_UNKNOWN')
-    end
-end
-
---- Watcher a Single File Delection
--- Detects deletion of files, directories or links
--- @param path string   : File path, directory or link
--- @param maxwait int   : Maximum waiting time
--- @param interval int  : Checking frequency
--- @return ok boolean   : frue or false for check deletion
--- @return mssg string  : Main message code
--- FW_FILE_NOT_EXISTS   : The file does not exist at the time of verification
--- FW_FILE_DELETED      : The file has been deleted
--- FW_FILE_NOT_DELETED  : The file has not been deleted in the expected time
--- FW_DIR_NOT_EXISTS    : The folder does not exist at the time of checking
--- FW_DIR_DELETED       : The folder has been deleted
--- FW_DIR_NOT_DELETED   : The folder has not been deleted in the expected time
--- FW_LINK_DELETED      : The link has been removed
--- FW_LINK_NOT_EXISTS   : The link does not exist at the time of verification
--- FW_LINK_NOT_DELETED  : The link has not been removed in the expected time
--- FW_UNKNOW_NOT_EXISTS : The incognito type does not exist
--- FW_PATH_ISEMPTY      : The folder is empty
--- @return path string: Path for check object
-local function single_file_deletion(
-    --[[required]] path,
-    --[[optional]] maxwait,
-    --[[optional]] interval)
-
-    --Validate path input
-    local p_path
-    local str_strip = string.strip
-    if not path or str_strip(path) == '' then
-        return false, 'FW_PATH_ISEMPTY', path
-    else
-        p_path = str_strip(path)
-    end
-
-    local p_maxwait = maxwait
-    local p_interval = interval
-
-    if interval > p_maxwait then p_interval = p_maxwait end
-
-    local fw_type = fw_get_type(p_path)
-    local fio_exists = fio.path.lexists
-
-    if not fio_exists(p_path) then
-        return true, fw_type .. '_NOT_EXISTS', p_path
-    else
-        --Exists, then watch for deletion
-        local answ = false
-        local mssg = fw_type .. '_NOT_DELETED'
-        local ini = os_time()
-        while (os_time() - ini < p_maxwait) do
-            if not fio_exists(p_path) then
-                answ = true
-                mssg = fw_type .. '_DELETED'
-                break
-            end
-            fib_sleep(p_interval)
-        end
-        return answ, mssg, p_path
     end
 end
 
@@ -205,7 +145,7 @@ local function sort_files_by(
     if take_n == 0 then return {} end
     if take_n > #flst then take_n = #flst end
 
-    if sort_by == FW_DEFAULT.SORT then
+    if sort_by == SORT_BY.NO_SORT then
         return take_n_items(flst, take_n)
     elseif sort_by == SORT_BY.ALPHA_ASC then
         table.sort(
@@ -247,47 +187,7 @@ local function sort_files_by(
     end
 end
 
---- File Watcher Check End Status
--- Determines whether the fw completion conditions are met for the group
--- FW_GROUP_ALL_DELETED
--- FW_GROUP_MATCH_DELETED
--- FW_GROUP_MATCH_NOT_DELETED
--- FW_GROUP_NOTHING_DELETED
-local function fw_check_end(
-    --[[required]] tbl,
-    --[[required]] nmatch)
-
-    local ntrue = 0
-    local match = {}
-    local nomatch = {}
-
-    --TODO: @fixme: Implement closure so that match cases are not validated again.
-    --      Benefits: Checks a snapshot and avoids errors in highly dynamic
-    --      file creation and deletion environments.
-    for _, v in pairs(tbl) do -- Count the true
-        if v[2] == true then
-            ntrue = ntrue + 1
-            match[#match+1] = v[1][1]
-        else
-            nomatch[#nomatch+1] = v[1][1]
-        end
-    end
-
-    if (ntrue == #tbl) then
-        -- The entire group has been eliminated
-        return true, OUTPUT.ALL_DELETED, match, nomatch
-
-    elseif ntrue >= nmatch then
-        -- The number of eliminations is equal to or greater than expected
-        return true, OUTPUT.MATCH_DELETED, match, nomatch
-
-    elseif (ntrue > 0) and (ntrue < nmatch) then
-        return false, OUTPUT.MATCH_NOT_DELETED, match, nomatch
-
-    else
-        return false, OUTPUT.NOTHING_DELETED, match, nomatch
-    end
-end
+local bfd_end = fiber.cond() --Bulk file deletion end
 
 --- Watcher for Bulk File Deletion
 local function bulk_file_deletion(
@@ -297,29 +197,28 @@ local function bulk_file_deletion(
     interval,
     nmatch
 )
-
+    fib_sleep(0.1)
     local fio_exists = fio.path.lexists
     local ini = os_time()
-    local notdel = bulk
+    local notdelyet = bulk
 
     while (os_time() - ini) < maxwait do
-        for i=1,#notdel do
-            local file = notdel[i]
+        for i=1,#notdelyet do
+            local file = notdelyet[i]
+            if not file then break end
             if not fio_exists(file) then
                 db.awatcher.upd(
-                    wid, file, true, DELETION.DELETED
+                    wid, file, true, FILE.DELETED
                 )
-                notdel[i] = nil
+                notdelyet[i] = nil
             end
         end
-        fw_check_end(lstupd, p_nmatch)
-        if answ then
+        if db.awatcher.match(wid, WATCHER.FILE_DELETION)>=nmatch then
             break
-        else
-            fib_sleep(p_interval)
         end
+        fib_sleep(interval)
     end
-    return answ, mssg, match, nomatch
+    bfd_end:signal()
 end
 
 -- Remove duplicate values from a table
@@ -340,13 +239,13 @@ end
 
 --- Consolidate the watch list items
 -- Expand patterns types if exists and Remove duplicates for FW Deletion
-local function cons_watch_listd(watch_list)
+local function cons_watch_listd(wlist)
 
-    local p_watch_list = remove_duplicates(watch_list)
+    local p_wlist = remove_duplicates(wlist)
 
     local t = {}
 
-    for _,v in pairs(p_watch_list) do
+    for _,v in pairs(p_wlist) do
         if string_find(v, '*') then
             local pattern_result = fio_glob(v)
             --Merge pattern items result with t
@@ -418,6 +317,7 @@ local function bulk_file_creation(
     novelty,
     nmatch)
 
+    fib_sleep(0.1)
     local fio_lexists = fio.path.lexists
     local fio_lstat = fio.lstat
 
@@ -535,13 +435,13 @@ end
 
 --API Definition
 local function file_deletion(
-    --[[required]] watch_list,
+    --[[required]] wlist,
     --[[optional]] maxwait,
     --[[optional]] interval,
     --[[optional]] options)
 
     assert(
-        watch_list and (type(watch_list)=='table') and (#watch_list~=0),
+        wlist and (type(wlist)=='table') and (#wlist~=0),
         OUTPUT.WATCH_LIST_NOT_VALID
     )
 
@@ -557,48 +457,63 @@ local function file_deletion(
         OUTPUT.INTERVAL_NOT_VALID
     )
 
-    local p_options = options or {sort = SORT_BY.ALPHA_ASC, cases = 'ALL', match = 'ALL'}
-
-    local p_sort = p_options[1] or FW_DEFAULT.SORT
-    local p_cases = p_options[2] or 'ALL'
-    local p_match = p_options[3] or 'ALL'
-
     -- Consolidate the input watch list
-    local watch_list_cons = cons_watch_listd(watch_list)
-    local nitems = #watch_list_cons
+    local cwlist = cons_watch_listd(wlist)
+    local nfiles = #cwlist
 
-    if nitems==1 then
-        return single_file_deletion(
-            watch_list_cons[1],
-            p_maxwait,
-            p_interval
-        )
-    end
+    local p_options = options or {sort = SORT_BY.NO_SORT, cases = 0, match = 0}
 
-    if p_cases=='ALL' then p_cases = nitems end
-    if p_match=='ALL' then p_match = nitems end
+    local p_sort = p_options[1] or SORT_BY.NO_SORT
+    local p_cases = p_options[2] or 0
+    local p_match = p_options[3] or 0
+
+    if p_cases==0 then p_cases = nfiles end
+    if p_match==0 then p_match = nfiles end
 
     assert(tonumber(p_cases), OUTPUT.N_CASES_NOT_VALID)
     assert(tonumber(p_match), OUTPUT.N_MATCH_NOT_VALID)
 
-    if p_sort==FW_DEFAULT.SORT and (p_cases=='ALL' or p_cases==#watch_list_cons) then
-        return group_file_deletion(
-            watch_list_cons,
-            p_maxwait,
-            p_interval,
+    local cwlist_o = sort_files_by(cwlist, p_sort, p_cases)
+
+    local _, wid = db.awatcher.new(ut.tostring(cwlist), 'FWD')
+
+    local nbulks = math.floor(1 + nfiles/BULK_CAPACITY)
+    local bulk_fibs = {} --Fiber list
+    local pos = 0
+    for i = 1, nbulks do
+        local bulk = {}
+        local val
+        for j = 1, BULK_CAPACITY do
+            pos = pos + 1
+            val = cwlist_o[pos]
+            if val then
+                bulk[j] = val
+                db.awatcher.add(wid, val, false, FILE.NOT_YET_DELETED)
+            else
+                break
+            end
+        end
+        local bfid = fiber.create(
+            bulk_file_deletion,
+            wid,
+            bulk,
+            maxwait,
+            interval,
             p_match
         )
+        bfid:name('file-watcher-bulk-d')
+        bulk_fibs[i] = bfid
     end
 
-    local watch_list_ord
-    watch_list_ord = sort_files_by(watch_list_cons, p_sort, p_cases)
+    bfd_end:wait()
 
-    return group_file_deletion(
-        watch_list_ord,
-        p_maxwait,
-        p_interval,
-        p_match
-    )
+    --Cancel fibers
+    for _, fib in pairs(bulk_fibs) do
+        local fid = fiber.id(fib)
+        pcall(fiber.cancel, fid)
+    end
+
+    return db.awatcher.endw(wid, p_match)
 
 end
 
@@ -678,7 +593,7 @@ local function file_creation(
     for i = 1, nbulks do
         local bulk = {}
         local val
-        for j = pos, BULK_CAPACITY do
+        for j = 1, BULK_CAPACITY do
             pos = pos + 1
             val = cwlist[pos]
             if val then
