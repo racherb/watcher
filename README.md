@@ -42,7 +42,7 @@ Create a watcher to detect file deletion:
 ```Lua
 --Defining file watcher for deletions
 fw = require('watcher').file
-ans, code, obj = fw.file.deletion({'/tmp/abb'})
+fw.deletion({'/path/to/file'})
 ```
 
 ### Prerequisites
