@@ -7,10 +7,27 @@
 -- @author hernandez, raciel
 -- @license MIT
 -- @copyright Raciel Hernández 2019
+------------
+-- FW: File Watcher
+-- File Watchers for files, folders, links and registers
+-- file_deletion    : File delection watcher
+-- file_creation    : File creation watcher
+-- file_alteration  : File alteration watcher fio.lstat(path).mtime
+-- file_access      : File Access watcher para chequear si fue accedido en una fecha
+--                    fio.lstat(path).atime
+-- file_mode        : Detects change of file permissions
+--                    fio.lstat(path).mode
+-- file_users       : Detects uid and gid changes (user owner and group)
+--
+-- RW: Record Watcher
+-- record_deletion  : Record deletion (Registers)
+-- record_creation  : Record creation
+-- record_alteration: Record alter
 
 local strict = require('strict')
 local fiber = require('fiber')
 local fio = require('fio')
+local dig = require('digest')
 
 local os_time = os.time
 local string_find = string.find
@@ -27,22 +44,6 @@ local OUTPUT = require('types.file').OUTPUT
 db.start()
 
 strict.on()
-
--- FW: File Watcher
--- File Watchers for files, folders, links and registers
--- file_deletion    : File delection watcher
--- file_creation    : File creation watcher
--- file_alteration  : File alteration watcher fio.lstat(path).mtime
--- file_access      : File Access watcher para chequear si fue accedido en una fecha
---                    fio.lstat(path).atime
--- file_mode        : Detects change of file permissions
---                    fio.lstat(path).mode
--- file_users       : Detects uid and gid changes (user owner and group)
---
--- RW: Record Watcher
--- record_deletion  : Record deletion (Registers)
--- record_creation  : Record creation
--- record_alteration: Record alter
 
 local FW_DEFAULT = {
     PREFIX = 'FW',
@@ -219,6 +220,98 @@ local function bulk_file_deletion(
         fib_sleep(interval)
     end
     bfd_end:signal()
+end
+
+local bfa_end = fiber.cond() --Bulk file alteration end
+
+--- Watcher for Bulk File Alteration
+local function bulk_file_alteration(
+    wid,
+    bulk,
+    awhat,
+    maxwait,
+    interval,
+    nmatch
+)
+    fib_sleep(0.1)
+
+    local fio_exists = fio.path.lexists
+    local fio_lstat = fio.lstat
+    local dig_sha256 = dig.sha256
+
+    local io_open = io.open
+    local fio_is_dir = fio.path.is_dir
+    local fio_listdir = fio.listdir
+
+    local ini = os_time()
+    local not_alter_yet = bulk
+    while (os_time() - ini) < maxwait do
+        for i=1,#not_alter_yet do
+            if not_alter_yet[i] then
+                local file = not_alter_yet[i][1]
+                local attr = not_alter_yet[i][2]
+                if not file then break end
+                if not fio_exists(file) then
+                    db.awatcher.upd(
+                        wid, file, true, FILE.DISAPPEARED_UNEXPECTEDLY
+                    )
+                    not_alter_yet[i] = nil
+                else
+                    local alter_lst = ''
+                    local flf = fio_lstat(file)
+                    local sha256
+                    if not fio_is_dir(file) then
+                        if flf.size ~= 0 then
+                            local fh = io_open(file, 'r')
+                            local cn = fh:read()
+                            sha256 = dig_sha256(cn)
+                            fh:close()
+                        else
+                            sha256 = ''
+                        end
+                    else
+                        sha256 = dig_sha256(ut.tostring(fio_listdir(file)))
+                    end
+                    if sha256 ~= attr.sha256 then
+                        alter_lst = alter_lst .. FILE.CONTENT_ALTERATION
+                    end
+                    if flf.size ~= attr.size then
+                        alter_lst = alter_lst .. FILE.SIZE_ALTERATION
+                    end
+                    if flf.ctime ~= attr.ctime then
+                        alter_lst = alter_lst .. FILE.CHANGE_TIME_ALTERATION
+                    end
+                    if flf.mtime ~= attr.mtime then
+                        alter_lst = alter_lst .. FILE.MODIFICATION_TIME_ALTERATION
+                    end
+                    if flf.uid ~= attr.uid then
+                        alter_lst = alter_lst .. FILE.OWNER_ALTERATION
+                    end
+                    if flf.gid ~= attr.gid then
+                        alter_lst = alter_lst .. FILE.GROUP_ALTERATION
+                    end
+                    if flf.inode ~= attr.inode then
+                        if flf.gid ~= attr.gid then
+                            alter_lst = alter_lst .. FILE.INODE_ALTERATION
+                        end
+                    end
+                    print(alter_lst)
+                    if awhat == '1' and alter_lst ~= '' then
+                        not_alter_yet[i] = nil
+                    else
+                        if string_find(alter_lst, awhat) then
+                            not_alter_yet[i] = nil
+                        end
+                    end
+                end
+                --if db.awatcher.match(wid, awhat)>=nmatch then
+                --    break
+                --end
+                fib_sleep(interval)
+            end
+        end
+    end
+    bfa_end:signal()
 end
 
 -- Remove duplicate values from a table
@@ -636,8 +729,121 @@ local function file_creation(
 
 end
 
-local function file_alteration(x)
-    print(x)
+local function file_alteration(
+    --[[required]] wlist,
+    --[[optional]] maxwait,
+    --[[optional]] interval,
+    --[[optional]] awhat,
+    --[[optional]] nmatch
+)
+
+    assert(
+        wlist and (type(wlist)=='table') and (#wlist~=0),
+        OUTPUT.WATCH_LIST_NOT_VALID
+    )
+
+    local _maxwait = maxwait or FW_DEFAULT.MAXWAIT
+    assert(
+        type(_maxwait)=='number' and _maxwait > 0,
+        OUTPUT.MAXWAIT_NOT_VALID
+    )
+
+    local _interval = interval or FW_DEFAULT.INTERVAL
+    assert(
+        type(_interval)=='number' and _interval > 0,
+        OUTPUT.INTERVAL_NOT_VALID
+    )
+
+    local _awhat = awhat or '1'
+    assert(
+        tonumber(_awhat) and _awhat <= '8',
+        OUTPUT.ALTER_WATCH_NOT_VALID
+    )
+
+    -- Consolidate the input watch list
+    local cwlist = cons_watch_listd(wlist)
+    local nfiles = #cwlist
+    local _match = nmatch or nfiles
+
+    local _, wid = db.awatcher.new(ut.tostring(cwlist), 'FWA')
+
+    local fio_lstat = fio.lstat
+    local dig_sha256 = dig.sha256
+    local io_open = io.open
+    local fio_is_dir = fio.path.is_dir
+    local fio_listdir = fio.listdir
+    local fio_exists = fio.path.lexists
+
+    local nbulks = math.floor(1 + nfiles/BULK_CAPACITY)
+    local bulk_fibs = {} --Fiber list
+    local pos = 0
+    for i = 1, nbulks do
+        local bulk = {}
+        local val
+        for j = 1, BULK_CAPACITY do
+            pos = pos + 1
+            val = cwlist[pos]
+            local _sha256
+            if val then
+                if fio_exists(val) then
+                    local flf = fio_lstat(val)
+                    if not fio_is_dir(val) then
+                        if flf.size ~= 0 then
+                            local fh = io_open(val, 'r')
+                            local cn = fh:read()
+                            _sha256 = dig_sha256(cn)
+                            fh:close()
+                        else
+                            _sha256 = ''
+                        end
+                    else
+                        _sha256 = dig_sha256(ut.tostring(fio_listdir(val)))
+                    end
+                    local as = {
+                        sha256 = _sha256,
+                        size = flf.size,
+                        ctime = flf.ctime,
+                        mtime = flf.mtime,
+                        uid = flf.uid,
+                        gid = flf.gid,
+                        inode = flf.inode
+                    }
+                    bulk[j] = {val, as}
+                    db.awatcher.add(wid, val, false, FILE.NO_ALTERATION)
+                else
+                    db.awatcher.add(wid, val, false, FILE.NOT_EXISTS)
+                end
+            else
+                break
+            end
+        end
+        if bulk[1] then
+            local bfid = fiber.create(
+                bulk_file_alteration,
+                wid,
+                bulk,
+                _awhat,
+                _maxwait,
+                _interval,
+                _match
+            )
+            bfid:name('file-watcher-bulk-a')
+            bulk_fibs[i] = bfid
+        end
+    end
+
+    if bulk_fibs[1] then
+        bfa_end:wait()
+
+        --Cancel fibers
+        for _, fib in pairs(bulk_fibs) do
+            local fid = fiber.id(fib)
+            pcall(fiber.cancel, fid)
+        end
+
+        return db.awatcher.endw(wid, _match)
+    end
+    return
 end
 
 -- Export API functions
