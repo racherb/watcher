@@ -17,11 +17,10 @@ local function remove_tmp_files(waitfor)
     os.execute('rm -rf /tmp/*')
 end
 
-
 local TEST = {
     id1 = '[FW_PATH_ISEMPTY]        Nothing for watch',
     id3 = "[FW_UNKNOWN_NOT_EXISTS]  The file don't exist",
-    id4 = '{NO WAIT MAXWAIT}        No wait if file not exist',
+    id4 = '[NO WAIT MAXWAIT]        No wait if file not exist',
     id5 = "[FW_UNKNOWN_NOT_EXISTS]  The path don't exist",
     id6 = '[FW_FILE_NOT_DELETED]    The file has not been deleted',
     id7 = '[FW_FILE_NOT_DELETED]    File not deleted in the maxwait interval',
@@ -43,11 +42,11 @@ test:plan(4)
 local pini = os.time()
 test:test('single_file_deletion:file_not_exist', function(test)
     test:plan(4)
-    local ans, mssg = fwt.deletion({''})
+    local ans = pcall(fwt.deletion, {''})
     test:is(ans, false, TEST.id1)
     local file_not_exist_yet = '_THIS.NOT$_?EXIST%'
     local ans = fwt.deletion({file_not_exist_yet})
-    test:is(ans, true, TEST.id3)
+    test:is(ans, TEST.id3)
     local MAXWAIT = 5
     local tini = os.time()
     local _ = fwt.deletion({'/tmp/' .. file_not_exist_yet}, MAXWAIT)
