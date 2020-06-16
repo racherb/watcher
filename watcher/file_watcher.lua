@@ -650,6 +650,12 @@ local function file_creation(
 
     local cwlist = remove_duplicates(wlist)
     local nfiles = #cwlist
+
+    assert(
+        nfiles ~= 0,
+        OUTPUT.NOTHING_FOR_WATCH
+    )
+
     local ematch = nmatch or nfiles -- match for all cases
 
     local _, wid = db.awatcher.new(ut.tostring(cwlist), 'FWC')
