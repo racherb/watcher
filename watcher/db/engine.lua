@@ -223,7 +223,7 @@ local function stat(wid)
 end
 
 -- Close and end watcher wid
-local function endw(wid, dmatch)
+local function endw(wid, dmatch, wtype)
     local t_watcher = get(wid)
     if t_watcher then
         local v_end = clock.realtime64()
@@ -232,7 +232,7 @@ local function endw(wid, dmatch)
         )
     end
 
-    if match(wid) >= dmatch then
+    if match(wid, wtype) >= dmatch then
         return true
     else
         return false
