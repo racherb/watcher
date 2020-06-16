@@ -64,43 +64,6 @@ local SORT_BY = {
 
 local BULK_CAPACITY = 1000000
 
---- Get Type for File Watcher
--- Get the type of file, directory or link
--- through either this function or load_local_manifest.
--- @param path string   : Path or pathname for the object.
--- @return string       : Posible return values are
--- FW_DIR Directory
--- FW_FILE File
--- FW_LINK Link
--- FW_UNKNOW Unknow
--- FW_PATTERN
-local function fw_get_type(path)
-    local fio_path = fio.path
-    local fio_stat = fio.stat
-    local FW_PREFIX = FW_DEFAULT.PREFIX
-    if fio_path.is_dir(path) then
-        return (FW_PREFIX .. '_DIR')
-    elseif fio_path.is_file(path) then
-        return (FW_PREFIX .. '_FILE')
-    elseif fio_path.is_link(path) then
-        return (FW_PREFIX .. '_LINK')
-    elseif fio_stat(path) and fio_stat(path):is_sock() then
-        return (FW_PREFIX .. '_SOCK')
-    elseif fio_stat(path) and fio_stat(path):is_reg() then
-        return (FW_PREFIX .. '_REG')
-    elseif fio_stat(path) and fio_stat(path):is_fifo() then
-        return (FW_PREFIX .. '_FIFO')
-    elseif fio_stat(path) and fio_stat(path):is_blk() then
-        return (FW_PREFIX .. '_BLOCK')
-    elseif fio_stat(path) and fio_stat(path):is_chr() then
-        return (FW_PREFIX .. '_CHR')
-    elseif string.find(path, '*') then
-        return (FW_PREFIX .. '_PATTERN')
-    else --Desconocido o no determindado (porque no existe)
-        return (FW_PREFIX .. '_UNKNOWN')
-    end
-end
-
 -- Add the last date of file modification
 local function add_lst_modif( tbl )
     local t = {}
