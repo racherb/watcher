@@ -297,23 +297,29 @@ end
 -- Expand patterns types if exists and Remove duplicates for FW Deletion
 local function cons_watch_listd(wlist)
 
-    local p_wlist = remove_duplicates(wlist)
+    local _wlist = remove_duplicates(wlist)
 
     local t = {}
 
-    for _,v in pairs(p_wlist) do
-        if string_find(v, '*') then
-            local pattern_result = fio_glob(v)
-            --Merge pattern items result with t
-            for _,nv in ipairs(pattern_result) do
-                t[#t+1] = nv
+    for _,v in pairs(_wlist) do
+        if v ~= '' then
+            if string_find(v, '*') then
+                local pattern_result = fio_glob(v)
+                --Merge pattern items result with t
+                for _,nv in ipairs(pattern_result) do
+                    t[#t+1] = nv
+                end
+            else
+                t[#t+1] = v
             end
-        else
-            t[#t+1] = v
         end
     end
 
-    return remove_duplicates(t)
+    if #t~=0 then
+        return remove_duplicates(t)
+    else
+        return {}
+    end
 
 end
 
@@ -501,15 +507,15 @@ local function file_deletion(
         OUTPUT.WATCH_LIST_NOT_VALID
     )
 
-    local p_maxwait = maxwait or FW_DEFAULT.MAXWAIT
+    local _maxwait = maxwait or WATCHER.MAXWAIT
     assert(
-        type(p_maxwait)=='number' and p_maxwait > 0,
+        type(_maxwait)=='number' and _maxwait > 0,
         OUTPUT.MAXWAIT_NOT_VALID
     )
 
-    local p_interval = interval or FW_DEFAULT.INTERVAL
+    local _interval = interval or WATCHER.INTERVAL
     assert(
-        type(p_interval)=='number' and p_interval > 0,
+        type(_interval)=='number' and _interval > 0,
         OUTPUT.INTERVAL_NOT_VALID
     )
 
@@ -517,17 +523,22 @@ local function file_deletion(
     local cwlist = cons_watch_listd(wlist)
     local nfiles = #cwlist
 
+    assert(
+        nfiles ~= 0,
+        OUTPUT.NOTHING_FOR_WATCH
+    )
+
     local p_options = options or {sort = SORT_BY.NO_SORT, cases = 0, match = 0}
 
     local p_sort = p_options[1] or SORT_BY.NO_SORT
     local p_cases = p_options[2] or 0
-    local p_match = p_options[3] or 0
+    local _match = p_options[3] or 0
 
     if p_cases==0 then p_cases = nfiles end
-    if p_match==0 then p_match = nfiles end
+    if _match==0 then _match = nfiles end
 
     assert(tonumber(p_cases), OUTPUT.N_CASES_NOT_VALID)
-    assert(tonumber(p_match), OUTPUT.N_MATCH_NOT_VALID)
+    assert(tonumber(_match), OUTPUT.N_MATCH_NOT_VALID)
 
     local cwlist_o = sort_files_by(cwlist, p_sort, p_cases)
 
@@ -553,9 +564,9 @@ local function file_deletion(
             bulk_file_deletion,
             wid,
             bulk,
-            maxwait,
-            interval,
-            p_match
+            _maxwait,
+            _interval,
+            _match
         )
         bfid:name('file-watcher-bulk-d')
         bulk_fibs[i] = bfid
@@ -569,7 +580,7 @@ local function file_deletion(
         pcall(fiber.cancel, fid)
     end
 
-    return db.awatcher.endw(wid, p_match)
+    return db.awatcher.endw(wid, _match, WATCHER.FILE_DELETION)
 
 end
 
@@ -589,13 +600,13 @@ local function file_creation(
         OUTPUT.WATCH_LIST_NOT_VALID
     )
 
-    local w_maxwait = maxwait or FW_DEFAULT.MAXWAIT
+    local w_maxwait = maxwait or WATCHER.MAXWAIT
     assert(
         type(w_maxwait)=='number' and w_maxwait > 0,
         OUTPUT.MAXWAIT_NOT_VALID
     )
 
-    local w_interval = interval or FW_DEFAULT.INTERVAL
+    local w_interval = interval or WATCHER.INTERVAL
     assert(
         type(w_interval)=='number' and w_interval > 0,
         OUTPUT.INTERVAL_NOT_VALID
@@ -705,13 +716,13 @@ local function file_alteration(
         OUTPUT.WATCH_LIST_NOT_VALID
     )
 
-    local _maxwait = maxwait or FW_DEFAULT.MAXWAIT
+    local _maxwait = maxwait or WATCHER.MAXWAIT
     assert(
         type(_maxwait)=='number' and _maxwait > 0,
         OUTPUT.MAXWAIT_NOT_VALID
     )
 
-    local _interval = interval or FW_DEFAULT.INTERVAL
+    local _interval = interval or WATCHER.INTERVAL
     assert(
         type(_interval)=='number' and _interval > 0,
         OUTPUT.INTERVAL_NOT_VALID
