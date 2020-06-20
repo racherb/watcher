@@ -743,6 +743,12 @@ local function file_alteration(
     -- Consolidate the input watch list
     local cwlist = cons_watch_listd(wlist)
     local nfiles = #cwlist
+
+    assert(
+        nfiles ~= 0,
+        OUTPUT.NOTHING_FOR_WATCH
+    )
+
     local _match = nmatch or nfiles
 
     local _, wid = db.awatcher.new(ut.tostring(cwlist), 'FWA')
