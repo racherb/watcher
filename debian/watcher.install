@@ -1,1 +1,1 @@
-watcher/init.lua usr/share/watcher/
+watcher/watcher.lua usr/share/watcher/
