@@ -18,20 +18,45 @@
 
 # Watcher
 
+Watcher is an open source system to automate the detection of changes in the system, facilitating the integration of processes, workflows and the development of monitoring applications.
+
 Detecting changes to the file system or data structures in memory is useful for developers of security applications, resource monitoring or process integration.
 
-## Supported Platforms
+## Prerequisites
 
-### Distributions
+Before you begin, ensure you have met the following requirements:
 
-- ...
+- Requires **tarantool** >= 1.6.8.0
+- Build Requires: **tarantool-devel** >= 1.6.8.0
 
-### Archictectures
+## Instaling Watcher
 
-- i386
-- x86_64
-- armhf (32-bit ARM with hardware floating-point)
-- aarch64 (64-bit ARM)
+### From LuaRocks
+
+```Shell
+luarocks install https://raw.githubusercontent.com/racherb/watcher/master/warcher-scm-1.rockspec --local
+```
+
+### From Linux Repository
+
+#### Ubuntu
+
+> Precise | Trusty | Xenial | Yakkety | Zesty
+
+```Bash
+apt update
+apt install watcher
+```
+
+## From Source
+
+Download watcher from ...
+
+## Running the tests
+
+```Bash
+prove -v ./test/watcher.test.lua
+```
 
 ## Getting Started
 
@@ -41,72 +66,6 @@ Create a watcher to detect file deletion:
 --Defining file watcher for deletions
 fw = require('watcher').file
 fw.deletion({'/path/to/file'})
-```
-
-### Prerequisites
-
-- Requires **tarantool** >= 1.6.8.0
-- Build Requires: **tarantool-devel** >= 1.6.8.0
-
-### Installing
-
-#### From Luarocks
-
-```Shell
-luarocks install https://raw.githubusercontent.com/racherb/watcher/master/warcher-scm-1.rockspec --local
-```
-
-#### From Linux Repository
-
-**Ubuntu** Precise | Trusty | Xenial | Yakkety | Zesty
-
-```Bash
-apt update
-apt install watcher
-```
-
-**Debian** Wheezy | Jessie | Stretch | Sid
-
-```Bash
-apt update
-apt install watcher
-```
-
-**Fedora** 24 | 25 | Rawhide
-
-```Bash
-apt update
-apt install watcher
-```
-
-**Centos** 6 | 7
-
-#### From source
-
-Download watcher from ...
-
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-```Bash
-prove -v ./test/watcher.test.lua
-```
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
 ```
 
 ## Deployment
@@ -157,7 +116,3 @@ See also the list of [contributors](https://github.com/racherb/watcher/contribut
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details
-
-## Acknowledgments
-
-* TODO
