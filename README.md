@@ -14,9 +14,7 @@
 ![GitHub stars](https://img.shields.io/github/stars/racherb/watcher?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/racherb/watcher?style=social)
 
-**Watcher** for watches the changes in the file system, variables and data records.
-
-> :warning: *This project is under development and not yet ready for production.*
+> **Watcher** for watches the changes in the file system, variables and data records.
 
 # Watcher
 
