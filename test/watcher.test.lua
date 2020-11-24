@@ -164,7 +164,7 @@ test:test('multiple_file_deletion:list_experiments', function(t)
     fiber.create(remove_file, '/tmp/f_b.txt', 1)
     fiber.create(remove_file, '/tmp/f_c.txt', 1)
     local n_match = 2
-    options = {'MTIME_ASC', 3, n_match}
+    local options = {'MTIME_ASC', 3, n_match}
     ans = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, options)
     t:is(ans, true, TEST.id17)
     --test:is(#obj, n_match, TEST.id18)
