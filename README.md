@@ -9,10 +9,6 @@
 ![Travis](https://travis-ci.com/racherb/watcher.svg?branch=master)
 ![GitHub repo size](https://img.shields.io/github/repo-size/racherb/watcher)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/racherb/watcher)
-![GitHub issues](https://img.shields.io/github/issues/racherb/watcher)
-![GitHub closed issues](https://img.shields.io/github/issues-closed/racherb/watcher)
-![GitHub stars](https://img.shields.io/github/stars/racherb/watcher?style=social)
-![GitHub forks](https://img.shields.io/github/forks/racherb/watcher?style=social)
 
 > **Watcher** for watches the changes in the file system, variables and data records.
 
