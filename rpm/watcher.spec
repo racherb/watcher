@@ -7,8 +7,8 @@ License: BSD
 URL: https://github.com/racherb/watcher
 Source0: watcher-%{version}.tar.gz
 BuildArch: noarch
-BuildRequires: tarantool-devel >= 1.6.8.0
-Requires: tarantool >= 1.6.8.0
+BuildRequires: tarantool-devel >= 2.5.3
+Requires: tarantool >= 2.5.3
 
 %description
 Watches the changes in the file system, variables and data records
