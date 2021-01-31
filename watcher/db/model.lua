@@ -13,23 +13,23 @@ local schema = {
         name = "awatcher",
         type = "record",
         fields = {
-            {name="wid", type="long"},
-            {name="type", type="string"},
-            {name="what", type="string"},
-            {name="dini", type="long"},
-            {name="dend", type="long"}
+            {name="wid", type="long"},      --Watcher ID
+            {name="type", type="string"},   --Watcher TYPE
+            {name="what", type="string"},   --What is watching
+            {name="dini", type="long"},     --Begin datetimete
+            {name="dend", type="long"}      --End for watcher
         }
     },
     watchables = {
         name = "watchables",
         type = "record",
         fields = {
-            {name="wid", type="long"},
-            {name="obj", type="string"},
-            {name="dre", type="long"},
-            {name="ans", type="boolean"},
-            {name="msg", type="string"},
-            {name="den", type="long"}
+            {name="wid", type="long"},      --Watcher ID
+            {name="obj", type="string"},    --Objet name
+            {name="dre", type="long"},      --Date register
+            {name="ans", type="boolean"},   --Answer
+            {name="msg", type="string"},    --Message
+            {name="den", type="long"}       --Date end
         }
     }
 }
