@@ -34,7 +34,8 @@ local TEST = {
     FW_DIR_DELETED          = '14. FW_DIR_DELETED           - The folder has been deleted',
     FW_ALL_DELETED_MIX      = '15. FW_ALL_DELETED_MIX       - Combine lists and patterns together',
     FW_MATCH_DELETED_FNO    = '16. FW_MATCH_DELETED_FNO     - Match first N items ordered by change date asc',
-    FW_MATCH_DELETED_FMI    = '17. FW_MATCH_DELETED_FMI     - Return of the first match N items'
+    FW_PATTERN_MATCH_DELETED= '17. FW_PATTERN_MATCH_DELETED - All files from pattern has been deleted',
+    FW_MATCH_DELETED_FMI    = '18. FW_MATCH_DELETED_FMI     - Return of the first match N items'
 }
 
 local test = tap.test('test-file-watcher')
@@ -82,7 +83,7 @@ test:test('single_file_deletion:file_exist_deleted', function(t)
 end)
 
 test:test('multiple_file_deletion:list_experiments', function(t)
-    t:plan(10)
+    t:plan(9)
     local MAXWAIT = 3
     local INTERVAL = 0.5
     local f1 = os.tmpname()
@@ -161,7 +162,7 @@ test:test('multiple_file_deletion:list_experiments', function(t)
     ans = fwt.deletion(watcher_mix, MAXWAIT, INTERVAL)
     t:is(ans, true, TEST.FW_ALL_DELETED_MIX)
 
-    MAXWAIT = 7
+    MAXWAIT = 15
     INTERVAL = 0.5
     os.execute('touch /tmp/f_a.txt')
     os.execute('touch /tmp/f_b.txt')
@@ -169,10 +170,21 @@ test:test('multiple_file_deletion:list_experiments', function(t)
     os.execute('touch /tmp/f_d.txt')
     os.execute('touch /tmp/f_e.txt')
     os.execute('touch /tmp/f_f.txt')
-    fiber.create(remove_file, '/tmp/f_b.txt', 2)
-    fiber.create(remove_file, '/tmp/f_c.txt', 2)
+    fiber.create(remove_pattrn, '/tmp/f_*', 2)
+    ans = fwt.deletion({'/tmp/f_*'})
+    t:is(ans, true, TEST.FW_PATTERN_MATCH_DELETED)
+
+    os.execute('touch /tmp/f_G.txt')
+    os.execute('touch /tmp/f_H.txt')
+    os.execute('touch /tmp/f_I.txt')
+    os.execute('touch /tmp/f_J.txt')
+    os.execute('touch /tmp/f_K.txt')
+    os.execute('touch /tmp/f_L.txt')
     local n_match = 2
-    local options = {'MTIME_ASC', 3, n_match}
+    local options = {'MA', 3, n_match} --MA for MTIME_ASC
+    fiber.create(remove_file, '/tmp/f_G.txt', 2)
+    fiber.create(remove_file, '/tmp/f_L.txt', 2)
+    fiber.create(remove_file, '/tmp/f_K.txt', 2)
     ans = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, options)
     t:is(ans, true, TEST.FW_MATCH_DELETED_FNO)
     --test:is(#obj, n_match, TEST.FW_MATCH_DELETED_FMI)
