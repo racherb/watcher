@@ -1,14 +1,16 @@
 Name: watcher
-Version: 2.0.0
+Version: %{version}
 Release: 1%{?dist}
 Summary: Watches the changes
 Group: Applications/Databases
 License: BSD
 URL: https://github.com/racherb/watcher
-Source0: watcher-%{version}.tar.gz
+Source0: https://github.com/racherb/%{name}/archive/%{version}/%{name}-%{version}.tar.gz
 BuildArch: noarch
-BuildRequires: tarantool-devel >= 2.5.3
-Requires: tarantool >= 2.5.3
+BuildRequires: tarantool >= 1.7
+BuildRequires: tarantool-devel >= 1.7
+BuildRequires: /usr/bin/prove
+Requires: tarantool >= 1.7
 
 %description
 Watches the changes in the file system, variables and data records
