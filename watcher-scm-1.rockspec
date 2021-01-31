@@ -1,7 +1,7 @@
 package = 'watcher'
 version = 'scm-1'
 source  = {
-    url    = 'https://github.com/racherb/watcher/archive/master.zip';
+    url    = 'git://github.com/racherb/watcher.git';
     branch = 'master';
 }
 
