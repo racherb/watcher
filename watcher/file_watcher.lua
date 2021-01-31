@@ -69,8 +69,12 @@ local function add_lst_modif( tbl )
     local t = {}
     local fio_lstat = fio.lstat
     for _, v in pairs( tbl ) do
-        local lst_mod = fio_lstat(v).mtime
-        t[#t+1] = {v, lst_mod}
+        local lst_mod = fio_lstat(v)
+        if lst_mod then
+            t[#t+1] = {v, lst_mod.mtime}
+        else
+            t[#t+1] = {v, 0} --Artitrary zero for mtime when file not exist
+        end
     end
     return t
 end
@@ -580,7 +584,7 @@ local function file_deletion(
         pcall(fiber.cancel, fid)
     end
 
-    return db.awatcher.endw(wid, _match, WATCHER.FILE_DELETION)
+    return {wid, db.awatcher.endw(wid, _match, WATCHER.FILE_DELETION)}
 
 end
 
@@ -702,10 +706,10 @@ local function file_creation(
     --Cancel fibers
     for _, fib in pairs(bulk_fibs) do
         local fid = fiber.id(fib)
-        pcall(fiber.cancel, fid)
+        pcall(fiber.cancel, fid) 
     end
 
-    return db.awatcher.endw(wid, ematch)
+    return {wid, db.awatcher.endw(wid, ematch)}
 
 end
 
@@ -824,10 +828,10 @@ local function file_alteration(
         --Cancel fibers
         for _, fib in pairs(bulk_fibs) do
             local fid = fiber.id(fib)
-            pcall(fiber.cancel, fid)
+            pcall(fiber.cancel, fid)return
         end
 
-        return db.awatcher.endw(wid, _match)
+        return {wid, db.awatcher.endw(wid, _match)}
     end
     return
 end
