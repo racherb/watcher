@@ -12,8 +12,7 @@ git:
 
 env:
     global:
-      - PRODUCT=watcher
-      - CODECOV_TOKEN="0547b387-1456-4864-a201-1fd8b74bb716"
+      - PRODUCT=tarantool-luakit
     matrix:
       - OS=el DIST=6
       - OS=el DIST=7
@@ -52,8 +51,8 @@ before_deploy:
 deploy:
   # Deploy packages to PackageCloud
   - provider: packagecloud
-    username: ${PACKAGECLOUD_USER}
-    repository: ${PACKAGECLOUD_REPO}
+    username: tarantool
+    repository: "1_6"
     token: ${PACKAGECLOUD_TOKEN}
     dist: ${OS}/${DIST}
     package_glob: build/*.{deb,rpm,dsc}
@@ -62,8 +61,8 @@ deploy:
       branch: master
       condition: -n "${OS}" && -n "${DIST}" && -n "${PACKAGECLOUD_TOKEN}"
   - provider: packagecloud
-    username: ${PACKAGECLOUD_USER}
-    repository: ${PACKAGECLOUD_REPO}
+    username: tarantool
+    repository: "1_7"
     token: ${PACKAGECLOUD_TOKEN}
     dist: ${OS}/${DIST}
     package_glob: build/*.{deb,rpm,dsc}
@@ -72,8 +71,8 @@ deploy:
       branch: master
       condition: -n "${OS}" && -n "${DIST}" && -n "${PACKAGECLOUD_TOKEN}"
   - provider: packagecloud
-    username: ${PACKAGECLOUD_USER}
-    repository: ${PACKAGECLOUD_REPO}
+    username: tarantool
+    repository: "1_8"
     token: ${PACKAGECLOUD_TOKEN}
     dist: ${OS}/${DIST}
     package_glob: build/*.{deb,rpm,dsc}
@@ -85,9 +84,6 @@ deploy:
 notifications:
   email:
     recipients:
-      - ${YO_EMAIL}
+      - build@tarantool.org
     on_success: change
     on_failure: always
-
-    after_success:
-  - bash <(curl -s https://codecov.io/bash)
