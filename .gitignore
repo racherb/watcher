@@ -28,3 +28,5 @@ CTestTestfile.cmake
 /lua
 /lua_modules
 /.luarocks
+
+*.backup
