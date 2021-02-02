@@ -3,7 +3,6 @@ version = 'scm-1'
 source  = {
     url    = 'git://github.com/racherb/watcher.git';
     branch = 'master';
-    tag = '1.0.1';
 }
 
 description = {
@@ -14,10 +13,10 @@ description = {
     resource monitoring or process integration with Tarantool.
     ]];
     homepage = 'https://github.com/racherb/watcher.git';
-    issues_url = 'https://github.com/racherb/watcher/issues':
+    issues_url = 'https://github.com/racherb/watcher/issues';
     maintainer = "Raciel Hernández <racielhb@protonmail.com>";
     license  = 'MIT';
-    labels = {'monitoring','integration','filesystem','audit','batch','filewatcher,'watcher','tarantool','detection','creation','alteration'}
+    labels = {'monitoring','integration','filesystem','audit','batch','filewatcher,'watcher','tarantool','detection','creation','alteration'};
 }
 
 -- Lua version and other packages on which this one depends;
@@ -30,8 +29,6 @@ build = {
     type = 'builtin';
     modules = {
         ['watcher']         = 'watcher/watcher.lua';
-        --['file_watcher']    = 'watcher/file_watcher.lua';
-
     }
 }
 -- vim: syntax=lua ts=4 sts=4 sw=4 et
