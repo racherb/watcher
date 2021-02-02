@@ -2,12 +2,10 @@
 
 ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/racherb/watcher/master)
 ![GitHub version](https://badge.fury.io/gh/racherb%2Fwatcher.svg)
-![GitHub Release Date](https://img.shields.io/github/release-date/racherb/watcher)
 ![GitHub contributors](https://img.shields.io/github/contributors/racherb/watcher.svg)
 ![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)
 ![GitHub top language](https://img.shields.io/github/languages/top/racherb/watcher)
 ![Travis](https://travis-ci.com/racherb/watcher.svg?branch=master)
-![GitHub repo size](https://img.shields.io/github/repo-size/racherb/watcher)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/racherb/watcher)
 
 > **Watcher** for watches the changes in the file system, variables and data records.
@@ -20,6 +18,13 @@ Detecting changes to the file system or data structures in memory is useful for 
 
 ## Prerequisites
 
+### Supported platforms
+
+- POSIX Compliant: **Unix**, **Macosx**, **Linux**, **Freebsd**
+- POSIX for Windows: **Cygwin**, **Microsoft POSIX subsystem**, **Windows Services for UNIX**, **MKS Toolkit**
+
+### Watcher runs on Tarantool
+
 Before you begin, ensure you have met the following requirements:
 
 - Requires **tarantool** >= 1.6.8.0
@@ -27,10 +32,20 @@ Before you begin, ensure you have met the following requirements:
 
 ## Instaling Watcher
 
-### From LuaRocks
+### From Utility Tarantool: tarantoolctl
 
 ```Shell
-luarocks install https://raw.githubusercontent.com/racherb/watcher/master/warcher-scm-1.rockspec --local
+tarantoolctl rocks install https://raw.githubusercontent.com/racherb/watcher/master/watcher-scm-1.rockspec
+```
+
+### From LuaRocks
+
+Make sure you have Luarocks installed first, if you need to install it follow the instructions in the following link: https://github.com/luarocks/luarocks/wiki/Download
+
+From the terminal run the following command:
+
+```Shell
+luarocks install https://raw.githubusercontent.com/racherb/watcher/master/watcher-scm-1.rockspec --local
 ```
 
 ### From Linux Repository
@@ -44,14 +59,18 @@ apt update
 apt install watcher
 ```
 
-## From Source
-
-Download watcher from ...
-
 ## Running the tests
+
+The execution of the tests will take between 3 and 10 minutes approximately. This time is required in the simulation of file generation, modification and deletion.
 
 ```Bash
 prove -v ./test/watcher.test.lua
+```
+
+or
+
+```Bash
+./test/watcher.test.lua
 ```
 
 ## Getting Started
