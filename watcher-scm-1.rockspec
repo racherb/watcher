@@ -3,6 +3,7 @@ version = 'scm-1'
 source  = {
     url    = 'git://github.com/racherb/watcher.git';
     branch = 'master';
+    tag = '1.0.1';
 }
 
 description = {
@@ -16,7 +17,7 @@ description = {
     issues_url = 'https://github.com/racherb/watcher/issues':
     maintainer = "Raciel Hernández <racielhb@protonmail.com>";
     license  = 'MIT';
-    labels = {'monitoring','integration','filesystem','audit','batch','filewatcher,'watcher','tarantool','detection','creation','alteration'}:
+    labels = {'monitoring','integration','filesystem','audit','batch','filewatcher,'watcher','tarantool','detection','creation','alteration'}
 }
 
 -- Lua version and other packages on which this one depends;
