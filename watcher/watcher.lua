@@ -9,16 +9,10 @@
 -- @copyright Raciel Hernández 2019
 --
 
-local fw = require("file_watcher")
-
-local file = {
-    deletion = fw.deletion,
-    creation = fw.creation,
-    alteration = fw.alteration
-}
+local file_watcher = require("file_watcher")
 
 return {
-    file = file
+    file = file_watcher
 }
 
 --file-watcher
