@@ -21,6 +21,7 @@ description = {
 -- Tarantool currently supports strictly Lua 5.1
 dependencies = {
     'lua == 5.1',
+    'avro-schema == scm-1',
 }
 
 build = {
