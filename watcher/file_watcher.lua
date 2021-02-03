@@ -262,7 +262,7 @@ local function bulk_file_alteration(
                             alter_lst = alter_lst .. FILE.INODE_ALTERATION
                         end
                     end
-                    print(alter_lst)
+                    --print(alter_lst)
                     if awhat == '1' and alter_lst ~= '' then
                         not_alter_yet[i] = nil
                     else
@@ -584,7 +584,7 @@ local function file_deletion(
         pcall(fiber.cancel, fid)
     end
 
-    return {wid, db.awatcher.endw(wid, _match, WATCHER.FILE_DELETION)}
+    return {wid=wid, ans=db.awatcher.endw(wid, _match, WATCHER.FILE_DELETION)}
 
 end
 
@@ -709,7 +709,7 @@ local function file_creation(
         pcall(fiber.cancel, fid) 
     end
 
-    return {wid, db.awatcher.endw(wid, ematch)}
+    return {wid=wid, ans=db.awatcher.endw(wid, ematch)}
 
 end
 
@@ -831,7 +831,7 @@ local function file_alteration(
             pcall(fiber.cancel, fid)return
         end
 
-        return {wid, db.awatcher.endw(wid, _match)}
+        return {wid=wid, ans=db.awatcher.endw(wid, _match)}
     end
     return
 end
