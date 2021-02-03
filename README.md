@@ -66,6 +66,8 @@ or
 
 ## Getting Started
 
+### Using Watcher is very simple
+
 Create a watcher to detect file deletion:
 
 ```Lua
@@ -73,14 +75,84 @@ tarantool> fw = require('watcher').file
 tarantool> fw.deletion({'/path/to/file'})
 ```
 
+Create a watcher to detect file creation:
+
+```Lua
+tarantool> fw = require('watcher').file
+tarantool> fw.creation({'/path/to/file'})
+```
+
+Create a watcher to detect file alteration:
+
+```Lua
+tarantool> fw = require('watcher').file
+tarantool> fw.creation({'/path/to/file'})
+```
+
+### But it is also very powerful
+
+Watcher for *all* files with extension *txt* in the temporary folder */tmp*. But (there is always a but) you only want to detect the deletion of the first 2 of those 5 files that were recently modified.
+
+Note: The */tmp* directory may contain hundreds of files with *.txt* extension.
+
+```Lua
+tarantool> pattern = {'/tmp/*.txt'} 
+tarantool> MAXWAIT = 120  --Maximum waiting time for the file (seconds)
+tarantool> INTERVAL = 1   --File check frequency (seconds)
+tarantool> O_BY = 'MA'    --Sorted in ascending order by date of modification
+tarantool> N_ITEMS = 5    --Observe the n cases in the ordered list
+tarantool> N_MATCH = 2    --Detects the first ''2' files to be deleted
+
+tarantool> fwt.deletion(pattern, MAXWAIT, INTERVAL, {O_BY, N_ITEMS, N_MATCH})
+```
+
+## Under the hood
+
+--TODO
+
 ## Use cases
 
-#### FileWatcher
+### File Watcher
 
-- [x] File deletion
-- [x] File creation
-- [x] File alteration
+- [x] Advanced File deletion
+- [x] Advanced File creation
+- [x] Advanced File alteration
 
+### Examples
+
+#### When the file arrives: process
+
+This is a simple example of automatic processing of a file once the file is created in a given path. This particular case works in blocking mode.
+
+```Lua
+#!/usr/bin/env tarantool
+
+local fw = require('watcher').file
+
+--Function that processes a file after it arrives
+local function process_file(the_file)
+    print('Waiting for the file ...')
+    if fw.creation(the_file).ans then
+        print('Orale! The file is ready')
+        --Write your code here!
+        --...
+    else
+        print('Ugh! The file has not arrived')
+    end
+end
+
+--Processes the '/tmp/fileX.txt' file: Blocking mode
+process_file({'/tmp/fileX.txt'})
+
+```
+
+A non-blocking mode of execution would be to use Tarantool fibers. For example, replacing the last two lines of the above code with the following:
+
+```Lua
+--Processes the '/tmp/fileX.txt' file: Non-Blocking mode
+local fiber = require('fiber')
+fiber.create(process_file, {'/tmp/fileX.txt'})
+```
 
 ## Built With
 
