@@ -837,8 +837,10 @@ local function file_alteration(
 end
 
 -- Export API functions
-return {
-    deletion = file_deletion,
-    creation = file_creation,
-    alteration = file_alteration
-}
+
+local file = {}
+file.deletion = file_deletion
+file.creation = file_creation
+file.alteration = file_alteration
+
+return file
