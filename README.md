@@ -23,16 +23,18 @@ Detecting changes to the file system or data structures in memory is useful for 
 - POSIX Compliant: **Unix**, **Macosx**, **Linux**, **Freebsd**
 - POSIX for Windows: **Cygwin**, **Microsoft POSIX subsystem**, **Windows Services for UNIX**, **MKS Toolkit**
 
-### Watcher runs on Tarantool
+### Tarantool
 
-Before you begin, ensure you have met the following requirements:
+Watcher runs on Tarantool. Before you begin, ensure you have met the following requirements:
 
 - Requires **tarantool** >= 1.6.8.0
 - Build Requires: **tarantool-devel** >= 1.6.8.0
 
 ## Instaling Watcher
 
-### From Utility Tarantool: tarantoolctl
+### From Utility Tarantool
+
+Install watcher through Tarantool's tarantoolctl command:
 
 ```Shell
 tarantoolctl rocks install https://raw.githubusercontent.com/racherb/watcher/master/watcher-scm-1.rockspec
@@ -40,23 +42,12 @@ tarantoolctl rocks install https://raw.githubusercontent.com/racherb/watcher/mas
 
 ### From LuaRocks
 
-Make sure you have Luarocks installed first, if you need to install it follow the instructions in the following link: https://github.com/luarocks/luarocks/wiki/Download
+Make sure you have Luarocks installed first, if you need to install it follow the instructions in the following link: [luarocks/wiki](https://github.com/luarocks/luarocks/wiki/Download)
 
 From the terminal run the following command:
 
 ```Shell
 luarocks install https://raw.githubusercontent.com/racherb/watcher/master/watcher-scm-1.rockspec --local
-```
-
-### From Linux Repository
-
-#### Ubuntu
-
-> Precise | Trusty | Xenial | Yakkety | Zesty
-
-```Bash
-apt update
-apt install watcher
 ```
 
 ## Running the tests
@@ -78,14 +69,9 @@ or
 Create a watcher to detect file deletion:
 
 ```Lua
---Defining file watcher for deletions
-fw = require('watcher').file
-fw.deletion({'/path/to/file'})
+tarantool> fw = require('watcher').file
+tarantool> fw.deletion({'/path/to/file'})
 ```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
 
 ## Use cases
 
@@ -94,20 +80,7 @@ Add additional notes about how to deploy this on a live system
 - [x] File deletion
 - [x] File creation
 - [x] File alteration
-- [ ] File access
-- [ ] File mode
-- [ ] File users
-- [ ] Corruption of files
 
-#### DataWatcher
-
-- [ ] Data deletion
-- [ ] Data creation
-- [ ] Data alteration
-
-#### FlagWatcher
-
-...
 
 ## Built With
 
@@ -124,9 +97,9 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## Authors
 
-* **Raciel Hernández** - *Personal Blog* - [Fixing the Web](https://racherb.github.io/)
+* **Raciel Hernández**
 
-See also the list of [contributors](https://github.com/racherb/watcher/contributors) who participated in this project.
+* See also the list of [contributors](https://github.com/racherb/watcher/contributors) who participated in this project.
 
 ## License
 
