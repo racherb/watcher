@@ -26,7 +26,18 @@ dependencies = {
 build = {
     type = 'builtin',
     modules = {
-        ['watcher'] = 'watcher/watcher.lua',
-    }
+      ["test.watcher.test"] = "test/watcher.test.lua",
+      ["watcher.db.engine"] = "watcher/db/engine.lua",
+      ["watcher.db.entity"] = "watcher/db/entity.lua",
+      ["watcher.db.model"] = "watcher/db/model.lua",
+      ["watcher.file_watcher"] = "watcher/file_watcher.lua",
+      ["watcher.plugins.default"] = "watcher/plugins/default.lua",
+      ["watcher.types.file"] = "watcher/types/file.lua",
+      ["watcher.util"] = "watcher/util.lua",
+      ["watcher.watcher"] = "watcher/watcher.lua"
+   }
 }
+
+
+
 -- vim: syntax=lua ts=4 sts=4 sw=4 et
