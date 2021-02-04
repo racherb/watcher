@@ -96,27 +96,23 @@ Watcher for *all* files with extension *txt* in the temporary folder */tmp*. But
 Note: The */tmp* directory may contain hundreds of files with *.txt* extension.
 
 ```Lua
+tarantool> fw = require('watcher').file
 tarantool> pattern = {'/tmp/*.txt'} 
-tarantool> MAXWAIT = 120  --Maximum waiting time for the file (seconds)
-tarantool> INTERVAL = 1   --File check frequency (seconds)
-tarantool> O_BY = 'MA'    --Sorted in ascending order by date of modification
-tarantool> N_ITEMS = 5    --Observe the n cases in the ordered list
-tarantool> N_MATCH = 2    --Detects the first ''2' files to be deleted
-
-tarantool> fwt.deletion(pattern, MAXWAIT, INTERVAL, {O_BY, N_ITEMS, N_MATCH})
+tarantool> MAXWAIT = 120  --Maximum waiting time for the file [seconds}
+tarantool> INTERVAL = 1   --File check frequency [seconds]
+tarantool> ORDBY = 'MA'   --Sorted in ascending order by date of modification
+tarantool> ITEMS = 5      --Observe the first 5 cases in the ordered list
+tarantool> MATCH = 2      --Detects the first 2 files to be deleted
+tarantool> fw.deletion(pattern, MAXWAIT, INTERVAL, {ORDBY, ITEMS, MATCH})
 ```
-
-## Under the hood
-
---TODO
 
 ## Use cases
 
 ### File Watcher
 
-- [x] Advanced File deletion
-- [x] Advanced File creation
-- [x] Advanced File alteration
+- [x] Watcher for Advanced File Deletion
+- [x] Watcher for Advanced File Creation
+- [x] Watcher for Advanced File Alteration
 
 ### Examples
 
@@ -125,7 +121,7 @@ tarantool> fwt.deletion(pattern, MAXWAIT, INTERVAL, {O_BY, N_ITEMS, N_MATCH})
 This is a simple example of automatic processing of a file once the file is created in a given path. This particular case works in blocking mode.
 
 ```Lua
-#!/usr/bin/env tarantool
+--#!/usr/bin/env tarantool
 
 local fw = require('watcher').file
 
@@ -153,6 +149,10 @@ A non-blocking mode of execution would be to use Tarantool fibers. For example, 
 local fiber = require('fiber')
 fiber.create(process_file, {'/tmp/fileX.txt'})
 ```
+
+## Under the hood
+
+--TODO
 
 ## Built With
 
