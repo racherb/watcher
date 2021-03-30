@@ -169,7 +169,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## Discussions & Ideas
 
-We’re using [Discussions] (https://github.com/racherb/watcher/discussions) as a place to connect with other members of our community. We hope that you:
+We’re using [Discussions](https://github.com/racherb/watcher/discussions) as a place to connect with other members of our community. We hope that you:
 
 * Ask questions you’re wondering about.
 * Share ideas.
