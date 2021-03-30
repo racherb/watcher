@@ -169,7 +169,8 @@ There are many ways to contribute to Watcher:
 * **Spread the word** – Share your accomplishments in social media using the #watcher hashtags.
 * **Test** - Write a test
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us. 
+For style guide in Lua coding follow the suggestions at [ Olivine-Labs/lua-style-guide ](https://github.com/Olivine-Labs/lua-style-guide).
 
 ### How to contribute to language connectors
 
