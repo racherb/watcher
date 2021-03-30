@@ -169,6 +169,8 @@ There are many ways to contribute to Watcher:
 * **Spread the word** – Share your accomplishments in social media using the #watcher hashtags.
 * **Test** - Write a test
 
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+
 ### How to contribute to language connectors
 
 Support is required for the construction of connectors that allow the use of watcher from different programming languages, for example:
@@ -181,9 +183,7 @@ Support is required for the construction of connectors that allow the use of wat
 
 Plugins allow you to extend watcher applications. If you want to write your own plugins based on watcher, follow the steps below:
 
---TODO
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+...
 
 ## Versioning
 
