@@ -271,9 +271,9 @@ local function bulk_file_alteration(
                         end
                     end
                 end
-                --if db.awatcher.match(wid, awhat)>=nmatch then
-                --    break
-                --end
+                if db.awatcher.match(wid, awhat)>=nmatch then
+                    break
+                end
                 fib_sleep(interval)
             end
         end
@@ -798,6 +798,7 @@ local function file_alteration(
                         gid = flf.gid,
                         inode = flf.inode
                     }
+                    print(as)
                     bulk[j] = {val, as}
                     db.awatcher.add(wid, val, false, FILE.NO_ALTERATION)
                 else
@@ -824,11 +825,11 @@ local function file_alteration(
 
     if bulk_fibs[1] then
         bfa_end:wait()
-
+        
         --Cancel fibers
         for _, fib in pairs(bulk_fibs) do
             local fid = fiber.id(fib)
-            pcall(fiber.cancel, fid)return
+            pcall(fiber.cancel, fid)
         end
 
         return {wid=wid, ans=db.awatcher.endw(wid, _match)}
