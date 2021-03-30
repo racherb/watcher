@@ -176,3 +176,13 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details
+
+## Discussions & Ideas
+
+We’re using [Discussions] (...) as a place to connect with other members of our community. We hope that you:
+
+* Ask questions you’re wondering about.
+* Share ideas.
+* Engage with other community members.
+* Welcome others and are open-minded. Remember that this is a community we build together 💪.
+
