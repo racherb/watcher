@@ -167,6 +167,15 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/racherb/watcher/tags).
 
+## Discussions & Ideas
+
+We’re using [Discussions] (https://github.com/racherb/watcher/discussions) as a place to connect with other members of our community. We hope that you:
+
+* Ask questions you’re wondering about.
+* Share ideas.
+* Engage with other community members.
+* Welcome others and are open-minded. Remember that this is a community we build together 💪.
+
 ## Authors
 
 * **Raciel Hernández**
@@ -176,13 +185,4 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details
-
-## Discussions & Ideas
-
-We’re using [Discussions] (...) as a place to connect with other members of our community. We hope that you:
-
-* Ask questions you’re wondering about.
-* Share ideas.
-* Engage with other community members.
-* Welcome others and are open-minded. Remember that this is a community we build together 💪.
 
