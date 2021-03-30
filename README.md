@@ -1,5 +1,6 @@
 ![Watcher](watcher.png)
 
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3983/badge)](https://bestpractices.coreinfrastructure.org/projects/3983)
 ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/racherb/watcher/master)
 ![GitHub version](https://badge.fury.io/gh/racherb%2Fwatcher.svg)
 ![GitHub contributors](https://img.shields.io/github/contributors/racherb/watcher.svg)
