@@ -16,6 +16,8 @@ Watcher is an open source system to automate the detection of changes in the sys
 
 Detecting changes to the file system or data structures in memory is useful for developers of security applications, resource monitoring or process integration.
 
+[Documentation](https://racherb.github.io/watcher/)
+
 ## Prerequisites
 
 ### Supported platforms
