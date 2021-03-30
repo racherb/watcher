@@ -159,7 +159,29 @@ fiber.create(process_file, {'/tmp/fileX.txt'})
 * [Lua](https://www.lua.org/) - Is a powerful, efficient, lightweight, embeddable scripting language.
 * [Tarantool](https://maven.apache.org/) - Is a powerful fast data platform that comes with an in-memory database and an integrated application server.
 
-## Contributing
+## How to contribute?
+
+There are many ways to contribute to Watcher:
+
+* **Code** – Contribute to the code. We have components written in Lua and other languages.
+* **Write** – Improve documentation, write blog posts, create tutorials or solution pages.
+* **Q&A** – Share your acknowledgments at Stack Overflow with tag #watcher.
+* **Spread the word** – Share your accomplishments in social media using the #watcher hashtags.
+* **Test** - Write a test
+
+### How to contribute to language connectors
+
+Support is required for the construction of connectors that allow the use of watcher from different programming languages, for example:
+
+* Nodejs
+* Python
+* Go
+
+### How to contribute to watcher plugins
+
+Plugins allow you to extend watcher applications. If you want to write your own plugins based on watcher, follow the steps below:
+
+--TODO
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
