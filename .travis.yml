@@ -87,3 +87,6 @@ notifications:
       - build@tarantool.org
     on_success: change
     on_failure: always
+    
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
