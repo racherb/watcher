@@ -45,28 +45,12 @@ _packpack: &packpack
     - ls -l build/
   deploy:
     - <<: *deploy_to_packagecloud
-      repository: "1_10"
-    - <<: *deploy_to_packagecloud
-      repository: "2x"
-    - <<: *deploy_to_packagecloud
-      repository: "2_2"
-    - <<: *deploy_to_packagecloud
-      repository: "2_3"
-    - <<: *deploy_to_packagecloud
-      repository: "2_4"
+      repository: "0_1"
 
 jobs:
   include:
     - env: VERSION=1_10
-      script: ./test.sh
-    - env: VERSION=2x
-      script: ./test.sh
-    - env: VERSION=2_2
-      script: ./test.sh
-    - env: VERSION=2_3
-      script: ./test.sh
-    - env: VERSION=2_4
-      script: ./test.sh
+      script: ./test/watcher.test.lua
 
     - stage: deploy
       name: Publish rockspecs
