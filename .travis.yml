@@ -30,6 +30,7 @@ _test: &test
   before_install:
     - sudo apt-get -y install gnupg2
     - sudo apt-get -y install curl
+    - sudo apt-get -y install ca-certificates
     - curl http://download.tarantool.org/tarantool/2.5/gpgkey | sudo apt-key add -
     - echo "deb http://download.tarantool.org/tarantool/2.5/ubuntu/ xenial main" |
       sudo tee /etc/apt/sources.list.d/tarantool.list
