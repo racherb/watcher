@@ -120,6 +120,6 @@ jobs:
 notifications:
   email:
     recipients:
-      - build@tarantool.org
+      - racielhb@gmail.com
     on_success: change
     on_failure: always
