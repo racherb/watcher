@@ -12,7 +12,7 @@ git:
 
 env:
     global:
-      - PRODUCT=tarantool-luakit
+      - PRODUCT=watcher
     matrix:
       - OS=el DIST=6
       - OS=el DIST=7
@@ -51,7 +51,7 @@ before_deploy:
 deploy:
   # Deploy packages to PackageCloud
   - provider: packagecloud
-    username: tarantool
+    username: racherb
     repository: "1_6"
     token: ${PACKAGECLOUD_TOKEN}
     dist: ${OS}/${DIST}
