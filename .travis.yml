@@ -28,7 +28,6 @@ env:
 
 _test: &test
   before_install:
-    - apt-get -y install sudo
     - sudo apt-get -y install gnupg2
     - sudo apt-get -y install curl
     - curl http://download.tarantool.org/tarantool/2.5/gpgkey | sudo apt-key add -
