@@ -7,7 +7,7 @@
 -- @license MIT
 -- @copyright 2021
 
-local fw = require('watcher').file
+--local fw = require('watcher').file
 
 -- Genera un backup de los archivos del watcher
 local function backup()

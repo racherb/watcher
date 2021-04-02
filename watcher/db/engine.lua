@@ -9,7 +9,6 @@
 
 local strict = require('strict')
 local clock = require('clock')
-local fiber = require('fiber')
 local log = require('log')
 
 strict.on()

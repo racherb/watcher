@@ -45,6 +45,7 @@ db.start()
 
 strict.on()
 
+--[[
 local FW_DEFAULT = {
     PREFIX = 'FW',
     ACTION = 'CREATION',
@@ -53,6 +54,7 @@ local FW_DEFAULT = {
     CHECK_INTERVAL = 0.5,
     ITERATIONS = 10
 }
+]]
 
 local SORT_BY = {
     NO_SORT = 'NS',
@@ -343,7 +345,7 @@ local function is_stable_size(
 
     local mssg
 
-    local stable_iter = 0 --Iteraciones estables
+    local stable_iter = 0 --Stable iteration couter
     while true do
         local o_lstat = fio_lstat(path)
         local f_size
@@ -706,7 +708,7 @@ local function file_creation(
     --Cancel fibers
     for _, fib in pairs(bulk_fibs) do
         local fid = fiber.id(fib)
-        pcall(fiber.cancel, fid) 
+        pcall(fiber.cancel, fid)
     end
 
     return {wid=wid, ans=db.awatcher.endw(wid, ematch)}
@@ -825,7 +827,6 @@ local function file_alteration(
 
     if bulk_fibs[1] then
         bfa_end:wait()
-        
         --Cancel fibers
         for _, fib in pairs(bulk_fibs) do
             local fid = fiber.id(fib)
