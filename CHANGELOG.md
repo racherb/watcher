@@ -10,6 +10,6 @@ Release Pending
 
 ### Added
 
-[x] Advanced File Deletion
-[x] Advanced File Creation
-[x] Advanced File Alteration
+* Advanced File Deletion
+* Advanced File Creation
+* Advanced File Alteration
