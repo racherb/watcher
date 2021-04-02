@@ -6,7 +6,7 @@
 ![GitHub contributors](https://img.shields.io/github/contributors/racherb/watcher.svg)
 ![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)
 ![GitHub top language](https://img.shields.io/github/languages/top/racherb/watcher)
-![Travis](https://travis-ci.com/racherb/watcher.svg?branch=master)
+![Travis](https://travis-ci.org/racherb/watcher.svg?branch=master)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/racherb/watcher)
 
 > **Watcher** for watches the changes in the file system, variables and data records.
