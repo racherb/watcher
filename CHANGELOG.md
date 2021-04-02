@@ -6,8 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Release Pending
+
 ### Added
 
-- Advanced File Deletion
-- Advanced File Creation
-- Advanced File Alteration
+[x] Advanced File Deletion
+[x] Advanced File Creation
+[x] Advanced File Alteration
