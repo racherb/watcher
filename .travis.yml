@@ -41,11 +41,11 @@ _test: &test
   script:
     - .rocks/bin/luacheck watcher --ignore 311
     - .rocks/bin/luatest -v --shuffle all
-    - ./test/watcher.test.lua
+    # - ./test/watcher.test.lua
 
 _deploy: &deploy
   provider: packagecloud
-  username: tarantool
+  username: racherb
   token: ${PACKAGECLOUD_TOKEN}
   dist: ${OS}/${DIST}
   package_glob: build/*.{deb,rpm}
