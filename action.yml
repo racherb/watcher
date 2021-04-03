@@ -9,3 +9,32 @@ jobs:
         uses: Roang-zero1/factorio-mod-luacheck@master
         with:
           luacheckrc_url: https://raw.githubusercontent.com/Nexela/Factorio-luacheckrc/0.17/.luacheckrc
+          
+name: Generate documentation
+on: push
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v2
+
+      - name: Clone wiki
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ github.repository }}.wiki
+          path: .wiki
+
+      - name: Parse and generate documentation
+        uses: p3lim/lua-doc-parser@v2
+        with:
+          output: .wiki
+
+      - name: Push wiki changes
+        working-directory: .wiki
+        run: |
+          git config user.name CI
+          git config user.email "<>"
+          git add .
+          git diff --quiet HEAD || git commit -m "$GITHUB_SHA"
+          git push
