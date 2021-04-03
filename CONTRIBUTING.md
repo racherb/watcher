@@ -11,6 +11,10 @@ Please note we have a code of conduct, please follow it in all your interactions
 3. Increase the version numbers in any examples files and the README.md to the new version that this  Pull Request would represent. The versioning scheme we use is [SemVer](http://semver.org/).
 4. You may merge the Pull Request in once you have the sign-off of two other developers, or if you do not have permission to do that, you may request the second reviewer to merge it for you.
 
+## Automated tests
+
+"When adding or changing functionality, please include new tests for them as part of your contribution"
+
 ## Code of Conduct
 
 ### Our Pledge
