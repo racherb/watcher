@@ -1,0 +1,8 @@
+<?xml version="1.0">
+<cpe-list xmlns="http://cpe.mitre.org/XMLSchema/cpe/1.0"
+ xmlns:cpe="http://cpe.mitre.org/XMLSchema/cpe/1.0">
+ <cpe-item name="cpe:/a:racherb:watcher:0.1">
+ 	<title xml:lang="en-US">Watcher Project 0.1</title>
+ 	<cpe-23:cpe23-item name="cpe:2.3:a:racherb:watcher:0.1:*:*:*:*:*:*:*"/>
+ </cpe-item>
+</cpe-list>
