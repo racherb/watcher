@@ -146,7 +146,8 @@ local function add(
     end
 end
 
-local function put(wid, object)
+local function put(wid, object, ans, msg)
+    --local _msg = msg or FILE.HAS_BEEN_CREATED
     local the_watcher = get(wid)
     -- Subscribe if wid exist and not finish yet
     if the_watcher and the_watcher[5]==0 then
@@ -155,8 +156,8 @@ local function put(wid, object)
             wid = wid,
             obj = object,
             dre = dreg,
-            ans = true,
-            msg = FILE.HAS_BEEN_CREATED,
+            ans = ans,
+            msg = msg,
             den = dreg
         }
 
@@ -209,6 +210,10 @@ local function match(wid, wtype)
         return box.space.watchables.index.wat_ak_mssg:count(
             {wid, FILE.DELETED}
         )
+    else
+        return box.space.watchables.index.wat_ak_mssg:count(
+            {wid, wtype}
+        )
     end
 end
 
@@ -230,7 +235,6 @@ local function endw(wid, dmatch, wtype)
             wid, {{'=', 5, v_end}}
         )
     end
-
     if match(wid, wtype) >= dmatch then
         return true
     else
