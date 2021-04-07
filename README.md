@@ -116,7 +116,7 @@ tarantool> fw.deletion(pattern, MAXWAIT, INTERVAL, {ORDBY, ITEMS, MATCH})
 
 - [x] Watcher for single files and directories.
 - [x] Watcher for different file groups.
-- [x] Watcher for naming patterns.
+- [x] Watcher for file naming patterns.
 - [x] Watcher for Advanced File Deletion.
 - [x] Watcher for Advanced File Creation.
 - [x] Watcher for Advanced File Alteration.
