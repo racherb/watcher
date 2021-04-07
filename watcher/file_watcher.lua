@@ -28,6 +28,8 @@ local strict = require('strict')
 local fiber = require('fiber')
 local fio = require('fio')
 local dig = require('digest')
+local errno = require('errno')
+local log = require('log')
 
 local os_time = os.time
 local string_find = string.find
@@ -239,7 +241,12 @@ local function bulk_file_alteration(
                             sha256 = ''
                         end
                     else
-                        sha256 = dig_sha256(ut.tostring(fio_listdir(file)))
+                        local lstdir = fio_listdir(file)
+                        if not lstdir then
+                            sha256 = ''
+                        else
+                            sha256 = dig_sha256(ut.tostring(lstdir))
+                        end
                     end
                     if sha256 ~= attr.sha256 then
                         alter_lst = alter_lst .. FILE.CONTENT_ALTERATION
@@ -264,12 +271,17 @@ local function bulk_file_alteration(
                             alter_lst = alter_lst .. FILE.INODE_ALTERATION
                         end
                     end
-                    --print(alter_lst)
                     if awhat == '1' and alter_lst ~= '' then
-                        not_alter_yet[i] = nil
+                        db.awatcher.upd(
+                            wid, file, true, FILE.ANY_ALTERATION
+                        )
+                        not_alter_yet[i] = nil --Exclude item
                     else
                         if string_find(alter_lst, awhat) then
-                            not_alter_yet[i] = nil
+                            db.awatcher.upd(
+                                wid, file, true, awhat
+                            )
+                            not_alter_yet[i] = nil --exclude item
                         end
                     end
                 end
@@ -484,7 +496,7 @@ local function bulk_file_creation(
                                 db.awatcher.add(wid, u)
                                 ch_cff:put(u, 0)
                             else
-                                db.awatcher.put(wid, u)
+                                db.awatcher.put(wid, u, true, FILE.HAS_BEEN_CREATED)
                             end
                         end
                     end
@@ -740,7 +752,7 @@ local function file_alteration(
         OUTPUT.INTERVAL_NOT_VALID
     )
 
-    local _awhat = awhat or '1'
+    local _awhat = awhat or FILE.ANY_ALTERATION
     assert(
         tonumber(_awhat) and _awhat <= '8',
         OUTPUT.ALTER_WATCH_NOT_VALID
@@ -756,7 +768,6 @@ local function file_alteration(
     )
 
     local _match = nmatch or nfiles
-
     local _, wid = db.awatcher.new(ut.tostring(cwlist), 'FWA')
 
     local fio_lstat = fio.lstat
@@ -772,6 +783,7 @@ local function file_alteration(
     for i = 1, nbulks do
         local bulk = {}
         local val
+        local k = 0
         for j = 1, BULK_CAPACITY do
             pos = pos + 1
             val = cwlist[pos]
@@ -789,7 +801,14 @@ local function file_alteration(
                             _sha256 = ''
                         end
                     else
-                        _sha256 = dig_sha256(ut.tostring(fio_listdir(val)))
+                        local lstdir = fio_listdir(val)
+                        if not lstdir then
+                            local message = {'Ignoring sha256 for', val, '-', errno.strerror()}
+                            log.warn(table.concat(message, ' '))
+                            _sha256 = ''
+                        else
+                            _sha256 = dig_sha256(ut.tostring(lstdir))
+                        end
                     end
                     local as = {
                         sha256 = _sha256,
@@ -800,11 +819,11 @@ local function file_alteration(
                         gid = flf.gid,
                         inode = flf.inode
                     }
-                    print(as)
-                    bulk[j] = {val, as}
+                    k = k + 1
+                    bulk[k] = {val, as}
                     db.awatcher.add(wid, val, false, FILE.NO_ALTERATION)
                 else
-                    db.awatcher.add(wid, val, false, FILE.NOT_EXISTS)
+                    db.awatcher.put(wid, val, false, FILE.NOT_EXISTS)
                 end
             else
                 break
@@ -824,18 +843,18 @@ local function file_alteration(
             bulk_fibs[i] = bfid
         end
     end
-
     if bulk_fibs[1] then
+        --Waiting for ended
         bfa_end:wait()
         --Cancel fibers
         for _, fib in pairs(bulk_fibs) do
             local fid = fiber.id(fib)
             pcall(fiber.cancel, fid)
         end
-
-        return {wid=wid, ans=db.awatcher.endw(wid, _match)}
+        return {wid=wid, ans=db.awatcher.endw(wid, _match, _awhat)}
     end
-    return
+    --Nothing for watch
+    return {wid=wid, ans=false}
 end
 
 -- Export API functions
