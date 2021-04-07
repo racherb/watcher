@@ -8,21 +8,6 @@
 -- @license MIT
 -- @copyright Raciel Hernández 2019
 ------------
--- FW: File Watcher
--- File Watchers for files, folders, links and registers
--- file_deletion    : File delection watcher
--- file_creation    : File creation watcher
--- file_alteration  : File alteration watcher fio.lstat(path).mtime
--- file_access      : File Access watcher para chequear si fue accedido en una fecha
---                    fio.lstat(path).atime
--- file_mode        : Detects change of file permissions
---                    fio.lstat(path).mode
--- file_users       : Detects uid and gid changes (user owner and group)
---
--- RW: Record Watcher
--- record_deletion  : Record deletion (Registers)
--- record_creation  : Record creation
--- record_alteration: Record alter
 
 local strict = require('strict')
 local fiber = require('fiber')
