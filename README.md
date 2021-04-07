@@ -90,7 +90,7 @@ Create a watcher to detect file alteration:
 
 ```Lua
 tarantool> fw = require('watcher').file
-tarantool> fw.creation({'/path/to/file'})
+tarantool> fw.alteration({'/path/to/file'})
 ```
 
 ### But it is also very powerful
@@ -110,7 +110,7 @@ tarantool> MATCH = 2      --Detects the first 2 files to be deleted
 tarantool> fw.deletion(pattern, MAXWAIT, INTERVAL, {ORDBY, ITEMS, MATCH})
 ```
 
-## Use cases
+## Features
 
 ### File Watcher
 
@@ -120,7 +120,7 @@ tarantool> fw.deletion(pattern, MAXWAIT, INTERVAL, {ORDBY, ITEMS, MATCH})
 
 ### Examples
 
-#### When the file arrives: process
+#### When the file arrives then process
 
 This is a simple example of automatic processing of a file once the file is created in a given path. This particular case works in blocking mode.
 
