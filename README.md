@@ -110,13 +110,27 @@ tarantool> MATCH = 2      --Detects the first 2 files to be deleted
 tarantool> fw.deletion(pattern, MAXWAIT, INTERVAL, {ORDBY, ITEMS, MATCH})
 ```
 
-## Features
+## Key features
 
 ### File Watcher
 
-- [x] Watcher for Advanced File Deletion
-- [x] Watcher for Advanced File Creation
-- [x] Watcher for Advanced File Alteration
+- [x] Watcher for single files and directories.
+- [x] Watcher for different file groups.
+- [x] Watcher for naming patterns.
+- [x] Watcher for Advanced File Deletion.
+- [x] Watcher for Advanced File Creation.
+- [x] Watcher for Advanced File Alteration.
+- [x] Blocking and non-blocking execution with tarantool fibers.
+- [x] Discrimination of files by sorting and quantity.
+- [x] Novelty detection for file creation.
+- [x] Watcher for any changes in the file system.
+- [x] Watcher for specific changes in the file system.
+- [x] Qualitative response for each observed file.
+- [x] Processing of large quantities of files.
+- [x] Validation of the stability of the file when it is created.
+- [x] Configuration of the file watcher conditions.
+- [x] Validation of the minimum expected size of a file.
+- [x] Detection of anomalies in the observation of the file.
 
 ### Examples
 
@@ -153,6 +167,14 @@ A non-blocking mode of execution would be to use Tarantool fibers. For example, 
 local fiber = require('fiber')
 fiber.create(process_file, {'/tmp/fileX.txt'})
 ```
+
+## Possible applications
+
+* Workload automation
+* Process integration
+* System monitoring
+* Backup and restore
+* Data security
 
 ## Under the hood
 
