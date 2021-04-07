@@ -216,6 +216,7 @@ local function bulk_file_alteration(
 
     local ini = os_time()
     local not_alter_yet = bulk
+    local is_over = false
     while (os_time() - ini) < maxwait do
         for i=1,#not_alter_yet do
             if not_alter_yet[i] then
@@ -281,15 +282,19 @@ local function bulk_file_alteration(
                             db.awatcher.upd(
                                 wid, file, true, awhat
                             )
-                            not_alter_yet[i] = nil --exclude item
+                            not_alter_yet[i] = nil --Exclude item
                         end
                     end
                 end
                 if db.awatcher.match(wid, awhat)>=nmatch then
+                    is_over = true
                     break
                 end
                 fib_sleep(interval)
             end
+        end
+        if is_over then 
+            break
         end
     end
     bfa_end:signal()
