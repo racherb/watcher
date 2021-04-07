@@ -43,7 +43,7 @@ local TEST = {
 local test = tap.test('test-file-watcher')
 test:plan(4)
 local pini = os.time()
-test:test('single_file_deletion:file_not_exist', function(t)
+test:test('Single File Deletion -> File does not exist', function(t)
     t:plan(4)
     local res = pcall(fwt.deletion, {''})
     t:is(res, false, TEST.FW_PATH_ISEMPTY)
@@ -62,7 +62,7 @@ test:test('single_file_deletion:file_not_exist', function(t)
     t:is(res.ans, true, TEST.FW_FOLDER_NOT_EXISTS)
 end)
 
-test:test('single_file_deletion:file_exist_not_deleted', function(t)
+test:test('Single File Deletion -> File exists but is not deleted', function(t)
     t:plan(2)
     local MAXWAIT = 10
     local this_file_exist = os.tmpname()
@@ -75,7 +75,7 @@ test:test('single_file_deletion:file_exist_not_deleted', function(t)
     t:is(res.ans, false, TEST.FW_FILE_NOT_DELETED_MW)
 end)
 
-test:test('single_file_deletion:file_exist_deleted', function(t)
+test:test('Single File Deletion -> File exists and is deleted', function(t)
     t:plan(1)
     local MAXWAIT = 8
     local this_file_exist = os.tmpname()
@@ -84,7 +84,7 @@ test:test('single_file_deletion:file_exist_deleted', function(t)
     t:is(res.ans, true, TEST.FW_FILE_DELETED)
 end)
 
-test:test('multiple_file_deletion:list_experiments', function(t)
+test:test('Multiple File Deletion -> Some varied experiments', function(t)
     t:plan(9)
     local MAXWAIT = 3
     local INTERVAL = 0.5
