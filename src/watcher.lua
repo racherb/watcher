@@ -9,6 +9,8 @@
 -- @copyright Raciel Hernández 2019
 --
 
+package.path = package.path .. ';src/?.lua'
+
 local file_watcher = require("file_watcher")
 
 return {

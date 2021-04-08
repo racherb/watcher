@@ -1,6 +1,6 @@
 #!/usr/bin/env tarantool
 
-package.path = package.path .. '../watcher/watcher/?.lua;../watcher/?.lua'
+package.path = package.path .. '../watcher/src/?.lua;../watcher/?.lua'
 
 local strict = require("strict")
 local fwt = require('watcher').file
