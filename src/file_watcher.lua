@@ -158,7 +158,6 @@ local function bulk_file_deletion(
     local fio_exists = fio.path.lexists
     local ini = os_time()
     local notdelyet = bulk
-
     while (os_time() - ini) < maxwait do
         for i=1,#notdelyet do
             local file = notdelyet[i]
