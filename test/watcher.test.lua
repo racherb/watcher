@@ -25,6 +25,11 @@ local function remove_tmp_folder(waitfor)
     os.execute('rm -rf /tmp/thefolder')
 end
 
+local function create_file(file, waitfor)
+    fiber.sleep(waitfor)
+    os.execute('touch ' .. file)
+end
+
 local TEST = {
     FWD01 = '01. FW_PATH_ISEMPTY          -- Expected: Nothing for watch',
     FWD02 = "02. FW_FILE_NOT_EXISTS       -- Expected: The file don't exist",
@@ -46,14 +51,15 @@ local TEST = {
     FWD18 = '18. FW_PATTERN_MATCH_FN2     -- Expected: Match first 2 from 3 fst items ordered by change mtime asc',
     FWD19 = '19. FW_PATTERN_MATCH_FN3     -- Expected: Match first 2 from 3 fst items ordered by change mtime dsc',
     FWD20 = '20. FW_PATTERN_MATCH_FN4     -- Expected: Match first 2 from 3 fst items ordered by change mtime dsc',
-    FWD20 = '21. FW_PATTERN_MATCH_DELETED -- Expected: All files from pattern has been deleted',
-    FWD21 = '22. FW_MATCH_DELETED_FMI     -- Expected: Return of the first match N items'
+    FWD21 = '21. FW_FILE_ALREADY_EXISTED  -- Expected: The file already existed',
+    FWD22 = '22. FW_FILE_HAS_ARRIVED      -- Expected: The file has arrived!',
+    FWD23 = '23. FW_FILE_NOT_ARRIVED      -- Expected: The file has not been created'
 }
 
 log.info('Initiating Watcher testing using TAP')
 
 local test = tap.test('test-file-watcher')
-test:plan(4)
+test:plan(5)
 local pini = os.time()
 test:test('Single File Deletion -> File does not exist', function(t)
     t:plan(4)
@@ -265,6 +271,29 @@ test:test('Multiple File Deletion -> Some varied experiments', function(t)
     t:is(res.ans, true, TEST.FWD20)
 
     --test:is(#obj, n_match, TEST.FWD18)
+
+end)
+
+test:test('Single File Creation', function(t)
+    t:plan(3)
+
+    local MAXWAIT = 4
+    local INTERVAL = 0.5 
+
+    --FWD21
+    local c1 = os.tmpname()
+    fiber.sleep(2)
+    local res = fwt.creation({c1}, MAXWAIT, INTERVAL)
+    t:is(res.ans, true, TEST.FWD21)
+
+    --FWD22
+    create_file('/tmp/c_fdw022', 3)
+    local res = fwt.creation({c1}, MAXWAIT, INTERVAL)
+    t:is(res.ans, true, TEST.FWD22)
+
+    --FWD23
+    local res = fwt.creation({'/tmp/c_fdw023'}, MAXWAIT, INTERVAL)
+    t:is(res.ans, false, TEST.FWD23)
 
 end)
 
