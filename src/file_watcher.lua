@@ -71,17 +71,23 @@ end
 -- Take n items from a table
 local function take_n_items(
     --[[required]] tbl,
-    --[[required]] n )
+    --[[required]] nitems )
 
-    if n == 0 then
+    if nitems == 0 then
         return tbl --Take all items
-    elseif n == 1 then
+    elseif nitems == 1 then
         return { tbl[1] } --Take the first
     else
         --Take the n first items
         local t = {}
-        for i = 1, n, 1 do
-            t[#t+1] = tbl[i]
+        local item
+        for i = 1, nitems, 1 do
+            if type(tbl[i])=='table' then
+                item = tbl[i][1]
+            else
+                item = tbl[i]
+            end
+            t[#t+1] = item
         end
         return t
     end
@@ -100,7 +106,7 @@ local function sort_files_by(
     --[[optional]] take_n)
 
     if take_n == 0 then return {} end
-    if take_n > #flst then take_n = #flst end
+    if take_n > #flst or not take_n then take_n = #flst end
 
     if sort_by == SORT_BY.NO_SORT then
         return take_n_items(flst, take_n)
@@ -130,6 +136,7 @@ local function sort_files_by(
                 return a[2] < b[2]
             end
         )
+
         return take_n_items(flst_ex, take_n)
 
     elseif sort_by == SORT_BY.MTIME_DSC then
