@@ -21,3 +21,5 @@ end
 local fiber = require('fiber')
 fiber.create(process_file, {'/tmp/fileY.txt'})
 
+os.exit()
+
