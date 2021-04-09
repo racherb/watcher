@@ -26,24 +26,28 @@ local function remove_tmp_folder(waitfor)
 end
 
 local TEST = {
-    FWD01 = '01. FW_PATH_ISEMPTY          -- Nothing for watch',
-    FWD02 = "02. FW_FILE_NOT_EXISTS       -- The file don't exist",
-    FWD03 = '03. FW_NOWAIT_MAXWAIT        -- No wait if file not exist',
-    FWD04 = "04. FW_FOLDER_NOT_EXISTS     -- The path don't exist",
-    FWD05 = '05. FW_FILE_NOT_DELETED      -- The file has not been deleted',
-    FWD06 = '06. FW_FILE_NOT_DELETED      -- File not deleted in the maxwait interval',
-    FWD07 = '07. FW_FILE_DELETED          -- The file has been deleted',
-    FWD08 = '08. FW_NOTHING_DELETED       -- No file on the list has been removed',
-    FWD09 = '09. FW_ALL_LIST_DELETED      -- All files have been deleted',
-    FWD10 = '10. FW_MATCH_NOT_DELETED     -- Some items on the list have not been removed',
-    FWD11 = '11. FW_MATCH_DELETED         -- The number of cases has been eliminated',
-    FWD12 = '12. FW_NOTHING_DELETED_PF    -- No pattern elements have been removed',
-    FWD13 = '13. FW_ALL_DELETED           -- All the pattern files have been deleted',
-    FWD14 = '14. FW_DIR_DELETED           -- The folder has been deleted',
-    FWD15 = '15. FW_ALL_DELETED_MIX       -- Combine lists and patterns together',
-    FWD16 = '16. FW_MATCH_DELETED_FNO     -- Match first N items ordered by change date asc',
-    FWD17 = '17. FW_PATTERN_MATCH_DELETED -- All files from pattern has been deleted',
-    FWD18 = '18. FW_MATCH_DELETED_FMI     -- Return of the first match N items'
+    FWD01 = '01. FW_PATH_ISEMPTY          -- Expected: Nothing for watch',
+    FWD02 = "02. FW_FILE_NOT_EXISTS       -- Expected: The file don't exist",
+    FWD03 = '03. FW_NOWAIT_MAXWAIT        -- Expected: No wait if file not exist',
+    FWD04 = "04. FW_FOLDER_NOT_EXISTS     -- Expected: The path don't exist",
+    FWD05 = '05. FW_FILE_NOT_DELETED      -- Expected: The file has not been deleted',
+    FWD06 = '06. FW_FILE_NOT_DELETED      -- Expected: File not deleted in the maxwait interval',
+    FWD07 = '07. FW_FILE_DELETED          -- Expected: The file has been deleted',
+    FWD08 = '08. FW_NOTHING_DELETED       -- Expected: No file on the list has been removed',
+    FWD09 = '09. FW_ALL_LIST_DELETED      -- Expected: All files have been deleted',
+    FWD10 = '10. FW_MATCH_NOT_DELETED     -- Expected: Some items on the list have not been removed',
+    FWD11 = '11. FW_MATCH_DELETED         -- Expected: The number of cases has been eliminated',
+    FWD12 = '12. FW_NOTHING_DELETED_PF    -- Expected: No pattern elements have been removed',
+    FWD13 = '13. FW_ALL_DELETED           -- Expected: All the pattern files have been deleted',
+    FWD14 = '14. FW_DIR_DELETED           -- Expected: The folder has been deleted',
+    FWD15 = '15. FW_ALL_DELETED_MIX       -- Expected: Combine lists and patterns together',
+    FWD16 = '16. FW_MATCH_DELETED_FNO     -- Expected: Match first 2 from 3 fst items ordered by change alpha asc',
+    FWD17 = '17. FW_MATCH_DELETED_FN1     -- Expected: Match first 2 from 3 fst items ordered by change alpha dsc',
+    FWD18 = '18. FW_PATTERN_MATCH_FN2     -- Expected: Match first 2 from 3 fst items ordered by change mtime asc',
+    FWD19 = '19. FW_PATTERN_MATCH_FN3     -- Expected: Match first 2 from 3 fst items ordered by change mtime dsc',
+    FWD20 = '20. FW_PATTERN_MATCH_FN4     -- Expected: Match first 2 from 3 fst items ordered by change mtime dsc',
+    FWD20 = '21. FW_PATTERN_MATCH_DELETED -- Expected: All files from pattern has been deleted',
+    FWD21 = '22. FW_MATCH_DELETED_FMI     -- Expected: Return of the first match N items'
 }
 
 log.info('Initiating Watcher testing using TAP')
@@ -104,7 +108,7 @@ test:test('Single File Deletion -> File exists and is deleted', function(t)
 end)
 
 test:test('Multiple File Deletion -> Some varied experiments', function(t)
-    t:plan(8)
+    t:plan(13)
 
     --FWD08
     local MAXWAIT = 3
@@ -192,7 +196,7 @@ test:test('Multiple File Deletion -> Some varied experiments', function(t)
     local res = fwt.deletion(watcher_mix, MAXWAIT, INTERVAL)
     t:is(res.ans, true, TEST.FWD15)
 
-    --[[FWD16
+    --FWD16
     os.execute('touch /tmp/f_G.txt')
     os.execute('touch /tmp/f_H.txt')
     os.execute('touch /tmp/f_I.txt')
@@ -200,26 +204,67 @@ test:test('Multiple File Deletion -> Some varied experiments', function(t)
     os.execute('touch /tmp/f_K.txt')
     os.execute('touch /tmp/f_L.txt')
     local n_match = 2
-    local options = {'MA', 3, n_match} --MA for MTIME_ASC
     fiber.create(remove_file, '/tmp/f_G.txt', 2)
     fiber.create(remove_file, '/tmp/f_L.txt', 2)
     fiber.create(remove_file, '/tmp/f_K.txt', 2)
-    local res = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, options)
-    t:is(res.ans, true, TEST.FWD16)
+    local res = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {'AA', 3, n_match})
+    t:is(res.ans, false, TEST.FWD16)
 
     --FWD17
-    os.execute('touch /tmp/f_a.txt')
-    os.execute('touch /tmp/f_b.txt')
-    os.execute('touch /tmp/f_c.txt')
-    os.execute('touch /tmp/f_d.txt')
-    os.execute('touch /tmp/f_e.txt')
-    os.execute('touch /tmp/f_f.txt')
-    fiber.create(remove_pattrn, '/tmp/f_*', 2)
-    local res = fwt.deletion({'/tmp/f_*'})
+    remove_pattrn('/tmp/f_*', 0)
+    os.execute('touch /tmp/f_G.txt')
+    os.execute('touch /tmp/f_H.txt')
+    os.execute('touch /tmp/f_I.txt')
+    os.execute('touch /tmp/f_J.txt')
+    os.execute('touch /tmp/f_K.txt')
+    os.execute('touch /tmp/f_L.txt')
+    local n_match = 2
+    fiber.create(remove_file, '/tmp/f_G.txt', 2)
+    fiber.create(remove_file, '/tmp/f_L.txt', 2)
+    fiber.create(remove_file, '/tmp/f_K.txt', 2)
+    local res = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {'AD', 3, n_match})
     t:is(res.ans, true, TEST.FWD17)
 
+    --FWD18
+    remove_pattrn('/tmp/f_*', 0)
+    os.execute('touch /tmp/f_1.txt')
+    fiber.sleep(1)
+    os.execute('touch /tmp/f_2.txt')
+    fiber.sleep(1)
+    os.execute('touch /tmp/f_3.txt')
+    fiber.sleep(1)
+    os.execute('touch /tmp/f_4.txt')
+    local n_match = 2
+    fiber.create(remove_file, '/tmp/f_1.txt', 2)
+    fiber.create(remove_file, '/tmp/f_3.txt', 2)
+    local res = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {'MA', 3, n_match})
+    t:is(res.ans, true, TEST.FWD18)
+
+    --FWD19
+    remove_pattrn('/tmp/f_*', 0)
+    os.execute('touch /tmp/f_1.txt')
+    os.execute('touch /tmp/f_2.txt')
+    os.execute('touch /tmp/f_3.txt')
+    os.execute('touch /tmp/f_4.txt')
+    local n_match = 2
+    fiber.create(remove_file, '/tmp/f_1.txt', 2)
+    fiber.create(remove_file, '/tmp/f_3.txt', 2)
+    local res = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {'MD', 3, n_match})
+    t:is(res.ans, false, TEST.FWD19)
+
+    --FWD20
+    remove_pattrn('/tmp/f_*', 0)
+    os.execute('touch /tmp/f_1.txt')
+    os.execute('touch /tmp/f_2.txt')
+    os.execute('touch /tmp/f_3.txt')
+    os.execute('touch /tmp/f_4.txt')
+    local n_match = 2
+    fiber.create(remove_file, '/tmp/f_2.txt', 2)
+    fiber.create(remove_file, '/tmp/f_3.txt', 2)
+    local res = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {'MD', 3, n_match})
+    t:is(res.ans, true, TEST.FWD20)
+
     --test:is(#obj, n_match, TEST.FWD18)
-    --]]
 
 end)
 
