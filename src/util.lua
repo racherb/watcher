@@ -55,10 +55,27 @@ local function is_keyof(tbl, key)
     return false
 end
 
-  local util = {
-    tostring = tostring,
-    is_valof = is_valof,
-    is_keyof = is_keyof
-  }
+-- Remove duplicate values from a table
+local function remove_duplicates(tbl)
+  local hash = {}
+  local answ = {}
 
-  return util
+  if #tbl==1 then return tbl end
+
+  for _,v in ipairs(tbl) do
+      if not hash[v] then
+          answ[#answ+1] = v
+          hash[v] = true
+      end
+  end
+  return answ
+end
+
+local util = {
+  tostring = tostring,
+  is_valof = is_valof,
+  is_keyof = is_keyof,
+  deduplicate = remove_duplicates
+}
+
+return util
