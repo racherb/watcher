@@ -33,9 +33,3 @@ cp -p watcher/*.lua %{buildroot}%{_datadir}/tarantool/watcher
 %license LICENSE AUTHORS
 
 %changelog
-* Tue Abr 08 2021 Raciel Hernandez <racherb@protonmail.com> 0.1.1-1
-- Advanced File Deletion
-- Advanced File Creation
-- Advanced File Alteration
-- Plugin schema
-- Examples

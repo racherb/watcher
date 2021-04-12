@@ -26,7 +26,7 @@ local ut = require('util')
 
 local FILE = require('types.file').FILE
 local WATCHER = require('types.file').WATCHER
-local OUTPUT = require('types.file').OUTPUT
+local SORT = require('types.file').SORT
 
 db.start()
 
@@ -42,14 +42,6 @@ local FW_DEFAULT = {
     ITERATIONS = 10
 }
 ]]
-
-local SORT_BY = {
-    NO_SORT = 'NS',
-    ALPHA_ASC = 'AA',
-    ALPHA_DSC = 'AD',
-    MTIME_ASC = 'MA',
-    MTIME_DSC = 'MD'
-}
 
 local BULK_CAPACITY = 1000000
 
@@ -105,12 +97,13 @@ local function sort_files_by(
     --[[optional]] sort_by,
     --[[optional]] take_n)
 
+    local size = #flst
     if take_n == 0 then return {} end
-    if take_n > #flst or not take_n then take_n = #flst end
+    if take_n > size or not take_n then take_n = size end
 
-    if sort_by == SORT_BY.NO_SORT then
+    if sort_by == SORT.NO_SORT then
         return take_n_items(flst, take_n)
-    elseif sort_by == SORT_BY.ALPHA_ASC then
+    elseif sort_by == SORT.ALPHA_ASC then
         table.sort(
             flst,
             function(a, b)
@@ -119,7 +112,7 @@ local function sort_files_by(
         )
         return take_n_items(flst, take_n)
 
-    elseif sort_by == SORT_BY.ALPHA_DSC then
+    elseif sort_by == SORT.ALPHA_DSC then
         table.sort(
             flst,
             function(a, b)
@@ -128,7 +121,7 @@ local function sort_files_by(
         )
         return take_n_items(flst, take_n)
 
-    elseif sort_by == SORT_BY.MTIME_ASC then
+    elseif sort_by == SORT.MTIME_ASC then
         local flst_ex = add_lst_modif(flst)
         table.sort(
             flst_ex,
@@ -139,7 +132,7 @@ local function sort_files_by(
 
         return take_n_items(flst_ex, take_n)
 
-    elseif sort_by == SORT_BY.MTIME_DSC then
+    elseif sort_by == SORT.MTIME_DSC then
         local flst_ex = add_lst_modif(flst)
         table.sort(
             flst_ex,
@@ -284,34 +277,18 @@ local function bulk_file_alteration(
                 fib_sleep(interval)
             end
         end
-        if is_over then 
+        if is_over then
             break
         end
     end
     bfa_end:signal()
 end
 
--- Remove duplicate values from a table
-local function remove_duplicates(tbl)
-    local hash = {}
-    local answ = {}
-
-    if #tbl==1 then return tbl end
-
-    for _,v in ipairs(tbl) do
-        if not hash[v] then
-            answ[#answ+1] = v
-            hash[v] = true
-        end
-    end
-    return answ
-end
-
 --- Consolidate the watch list items
 -- Expand patterns types if exists and Remove duplicates for FW Deletion
-local function cons_watch_listd(wlist)
+local function consolidate(wlist)
 
-    local _wlist = remove_duplicates(wlist)
+    local _wlist = ut.deduplicate(wlist)
 
     local t = {}
 
@@ -330,11 +307,10 @@ local function cons_watch_listd(wlist)
     end
 
     if #t~=0 then
-        return remove_duplicates(t)
+        return ut.deduplicate(t)
     else
         return {}
     end
-
 end
 
 -- Determines if a file is stable in relation to its size and layout
@@ -347,7 +323,7 @@ local function is_stable_size(
     local p_interval = interval or 1
     local p_iterations = iterations or 15
 
-    local is_stable = false
+    local is_stable
     local fio_lstat = fio.lstat
     local r_size = fio_lstat(path).size --reference size
 
@@ -378,6 +354,7 @@ local function is_stable_size(
         end
         r_size = f_size --Update the reference size
     end
+    if not is_stable then is_stable = false end
     return is_stable, mssg
 end
 
@@ -511,56 +488,19 @@ end
 
 --API Definition
 local function file_deletion(
-    --[[required]] wlist,
-    --[[optional]] maxwait,
-    --[[optional]] interval,
-    --[[optional]] options)
+    wid,
+    cwlist,
+    maxwait,
+    interval,
+    sort,
+    cases,
+    match)
 
-    assert(
-        wlist and (type(wlist)=='table') and (#wlist~=0),
-        OUTPUT.WATCH_LIST_NOT_VALID
-    )
-
-    local _maxwait = maxwait or WATCHER.MAXWAIT
-    assert(
-        type(_maxwait)=='number' and _maxwait > 0,
-        OUTPUT.MAXWAIT_NOT_VALID
-    )
-
-    local _interval = interval or WATCHER.INTERVAL
-    assert(
-        type(_interval)=='number' and _interval > 0,
-        OUTPUT.INTERVAL_NOT_VALID
-    )
-
-    -- Consolidate the input watch list
-    local cwlist = cons_watch_listd(wlist)
-    local nfiles = #cwlist
-
-    assert(
-        nfiles ~= 0,
-        OUTPUT.NOTHING_FOR_WATCH
-    )
-
-    local p_options = options or {sort = SORT_BY.NO_SORT, cases = 0, match = 0}
-
-    local p_sort = p_options[1] or SORT_BY.NO_SORT
-    local p_cases = p_options[2] or 0
-    local _match = p_options[3] or 0
-
-    if p_cases==0 then p_cases = nfiles end
-    if _match==0 then _match = nfiles end
-
-    assert(tonumber(p_cases), OUTPUT.N_CASES_NOT_VALID)
-    assert(tonumber(_match), OUTPUT.N_MATCH_NOT_VALID)
-
-    local cwlist_o = sort_files_by(cwlist, p_sort, p_cases)
-
-    local _, wid = db.awatcher.new(ut.tostring(cwlist), 'FWD')
-
-    local nbulks = math.floor(1 + nfiles/BULK_CAPACITY)
+    local cwlist_o = sort_files_by(cwlist, sort, cases)
+    local nbulks = math.floor(1 + (#cwlist)/BULK_CAPACITY)
     local bulk_fibs = {} --Fiber list
     local pos = 0
+
     for i = 1, nbulks do
         local bulk = {}
         local val
@@ -578,9 +518,9 @@ local function file_deletion(
             bulk_file_deletion,
             wid,
             bulk,
-            _maxwait,
-            _interval,
-            _match
+            maxwait,
+            interval,
+            match
         )
         bfid:name('file-watcher-bulk-d')
         bulk_fibs[i] = bfid
@@ -594,87 +534,27 @@ local function file_deletion(
         pcall(fiber.cancel, fid)
     end
 
-    return {wid=wid, ans=db.awatcher.endw(wid, _match, WATCHER.FILE_DELETION)}
+    return {
+        wid=wid,
+        ans=db.awatcher.endw(wid, match, WATCHER.FILE_DELETION)
+    }
 
 end
 
 --- File Watch for File Creations
 --
 local function file_creation(
+    --[[required]] wid,
     --[[required]] wlist,
     --[[optional]] maxwait,
     --[[optional]] interval,
     --[[optional]] minsize,
     --[[optional]] stability,
     --[[optional]] novelty,
-    --[[optional]] nmatch)
+    --[[optional]] nmatch
+)
 
-    assert(
-        wlist and (type(wlist)=='table') and (#wlist~=0),
-        OUTPUT.WATCH_LIST_NOT_VALID
-    )
-
-    local w_maxwait = maxwait or WATCHER.MAXWAIT
-    assert(
-        type(w_maxwait)=='number' and w_maxwait > 0,
-        OUTPUT.MAXWAIT_NOT_VALID
-    )
-
-    local w_interval = interval or WATCHER.INTERVAL
-    assert(
-        type(w_interval)=='number' and w_interval > 0,
-        OUTPUT.INTERVAL_NOT_VALID
-    )
-
-    local fminsize = minsize or 0
-    assert(
-        fminsize and type(fminsize)=='number' and fminsize >= 0,
-        OUTPUT.MINSIZE_NOT_VALID
-    )
-
-    if stability then
-        assert(
-            stability and type(stability)=='table' and #stability~=0,
-            OUTPUT.STABILITY_NOT_VALID
-        )
-        assert(
-            stability[1] and type(stability[1])=='number' and stability[1]>0,
-            OUTPUT.CHECK_SIZE_INTERVAL_NOT_VALID
-        )
-        assert(
-            stability[2] and type(stability[2])=='number' and stability[2]>0,
-            OUTPUT.ITERATIONS_NOT_VALID
-        )
-    end
-
-    if novelty then
-        assert(
-            type(novelty)=='table' and #novelty~=0,
-            OUTPUT.NOVELTY_NOT_VALID
-        )
-        assert(
-            novelty[1] and type(novelty[1])=='number',
-            OUTPUT.DATE_FROM_NOT_VALID
-        )
-        assert(
-            novelty[2] and type(novelty[2])=='number',
-            OUTPUT.DATE_UNTIL_NOT_VALID
-        )
-    end
-
-    local cwlist = remove_duplicates(wlist)
-    local nfiles = #cwlist
-
-    assert(
-        nfiles ~= 0,
-        OUTPUT.NOTHING_FOR_WATCH
-    )
-
-    local ematch = nmatch or nfiles -- match for all cases
-
-    local _, wid = db.awatcher.new(ut.tostring(cwlist), 'FWC')
-
-    local nbulks = math.floor(1 + nfiles/BULK_CAPACITY)
+    local nbulks = math.floor(1 + (#wlist)/BULK_CAPACITY)
     local bulk_fibs = {} --Fiber list
     local pos = 0
     for i = 1, nbulks do
@@ -682,7 +562,7 @@ local function file_creation(
         local val
         for j = 1, BULK_CAPACITY do
             pos = pos + 1
-            val = cwlist[pos]
+            val = wlist[pos]
             if val then
                 bulk[j] = val
                 if not string_find(val, '*') then
@@ -700,12 +580,12 @@ local function file_creation(
             bulk_file_creation,
             wid,
             bulk,
-            w_maxwait,
-            w_interval,
-            fminsize,
+            maxwait,
+            interval,
+            minsize,
             stability,
             novelty,
-            ematch
+            nmatch
         )
         bfid:name('file-watcher-bulk-c')
         bulk_fibs[i] = bfid
@@ -719,52 +599,21 @@ local function file_creation(
         pcall(fiber.cancel, fid)
     end
 
-    return {wid=wid, ans=db.awatcher.endw(wid, ematch)}
+    return {
+        wid=wid,
+        ans=db.awatcher.endw(wid, nmatch)
+    }
 
 end
 
 local function file_alteration(
+    --[[required]] wid,
     --[[required]] wlist,
     --[[optional]] maxwait,
     --[[optional]] interval,
     --[[optional]] awhat,
-    --[[optional]] nmatch
+    --[[optional]] match
 )
-
-    assert(
-        wlist and (type(wlist)=='table') and (#wlist~=0),
-        OUTPUT.WATCH_LIST_NOT_VALID
-    )
-
-    local _maxwait = maxwait or WATCHER.MAXWAIT
-    assert(
-        type(_maxwait)=='number' and _maxwait > 0,
-        OUTPUT.MAXWAIT_NOT_VALID
-    )
-
-    local _interval = interval or WATCHER.INTERVAL
-    assert(
-        type(_interval)=='number' and _interval > 0,
-        OUTPUT.INTERVAL_NOT_VALID
-    )
-
-    local _awhat = awhat or FILE.ANY_ALTERATION
-    assert(
-        tonumber(_awhat) and _awhat <= '8',
-        OUTPUT.ALTER_WATCH_NOT_VALID
-    )
-
-    -- Consolidate the input watch list
-    local cwlist = cons_watch_listd(wlist)
-    local nfiles = #cwlist
-
-    assert(
-        nfiles ~= 0,
-        OUTPUT.NOTHING_FOR_WATCH
-    )
-
-    local _match = nmatch or nfiles
-    local _, wid = db.awatcher.new(ut.tostring(cwlist), 'FWA')
 
     local fio_lstat = fio.lstat
     local dig_sha256 = dig.sha256
@@ -773,16 +622,16 @@ local function file_alteration(
     local fio_listdir = fio.listdir
     local fio_exists = fio.path.lexists
 
-    local nbulks = math.floor(1 + nfiles/BULK_CAPACITY)
+    local nbulks = math.floor(1 + (#wlist)/BULK_CAPACITY)
     local bulk_fibs = {} --Fiber list
     local pos = 0
     for i = 1, nbulks do
         local bulk = {}
         local val
         local k = 0
-        for j = 1, BULK_CAPACITY do
+        for _ = 1, BULK_CAPACITY do
             pos = pos + 1
-            val = cwlist[pos]
+            val = wlist[pos]
             local _sha256
             if val then
                 if fio_exists(val) then
@@ -830,34 +679,35 @@ local function file_alteration(
                 bulk_file_alteration,
                 wid,
                 bulk,
-                _awhat,
-                _maxwait,
-                _interval,
-                _match
+                awhat,
+                maxwait,
+                interval,
+                match
             )
             bfid:name('file-watcher-bulk-a')
             bulk_fibs[i] = bfid
         end
     end
     if bulk_fibs[1] then
-        --Waiting for ended
-        bfa_end:wait()
+        bfa_end:wait() --Waiting for ended
         --Cancel fibers
         for _, fib in pairs(bulk_fibs) do
             local fid = fiber.id(fib)
             pcall(fiber.cancel, fid)
         end
-        return {wid=wid, ans=db.awatcher.endw(wid, _match, _awhat)}
+        return {
+            wid=wid,
+            ans=db.awatcher.endw(wid, match, awhat)
+        }
     end
     --Nothing for watch
     return {wid=wid, ans=false}
 end
 
 -- Export API functions
-
-local file = {}
-file.deletion = file_deletion
-file.creation = file_creation
-file.alteration = file_alteration
-
-return file
+return {
+    deletion = file_deletion,
+    creation = file_creation,
+    alteration = file_alteration,
+    consolidate = consolidate
+}
