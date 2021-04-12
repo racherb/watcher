@@ -55,8 +55,26 @@ FILE.INODE_ALTERATION = '6'                 --The number of inodes has been alte
 FILE.OWNER_ALTERATION = '7'                 --The owner of the file has changed
 FILE.GROUP_ALTERATION = '8'                 --The group of the file has changed
 
+local SORT = {
+    NO_SORT = 'NS',
+    ALPHA_ASC = 'AA',
+    ALPHA_DSC = 'AD',
+    MTIME_ASC = 'MA',
+    MTIME_DSC = 'MD'
+}
+
+local STATE = {}
+STATE.RUNNING = 'R'
+
+STATE.UNKNOW = 'U'
+STATE.IN_PROGRESS = 'P'
+STATE.COMPLETED = 'C'
+STATE.DISCONTINUED = 'D'
+
 return {
     FILE = FILE,
     OUTPUT = OUTPUT,
-    WATCHER = WATCHER
+    WATCHER = WATCHER,
+    SORT = SORT,
+    STATE = STATE
 }
