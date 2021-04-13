@@ -18,31 +18,31 @@ Watcher is an open source system to automate the detection of changes in the sys
 
 Detecting changes to the file system or data structures in memory is useful for developers of security applications, resource monitoring or process integration.
 
-[Documentation](https://racherb.github.io/watcher/) (*Under construction*)
+[Documentation](https://racherb.github.io/watcher/) (:construction: *Under construction*)
 
-**WARNING:** Watcher is currently in an unstable phase.
+:warning: **WARNING:** Watcher is currently in an unstable phase.
 
 ## Key features
 
 ### File Watcher
 
-- [x] Watcher for single files and directories.
-- [x] Watcher for different file groups.
-- [x] Watcher for file naming patterns.
-- [x] Watcher for Advanced File Deletion.
-- [x] Watcher for Advanced File Creation.
-- [x] Watcher for Advanced File Alteration.
-- [x] Blocking and non-blocking execution with tarantool fibers.
-- [x] Discrimination of files by sorting and quantity.
-- [x] Novelty detection for file creation.
-- [x] Watcher for any changes in the file system.
-- [x] Watcher for specific changes in the file system.
-- [x] Qualitative response for each observed file.
-- [x] Processing of large quantities of files.
-- [x] Validation of the stability of the file when it is created.
-- [x] Configuration of the file watcher conditions.
-- [x] Validation of the minimum expected size of a file.
-- [x] Detection of anomalies in the observation of the file.
+- [x] Watcher for single files and directories
+- [x] Watcher for different file groups
+- [x] Watcher for file naming patterns
+- [x] Watcher for Advanced File Deletion
+- [x] Watcher for Advanced File Creation
+- [x] Watcher for Advanced File Alteration
+- [x] Blocking and non-blocking execution with tarantool fibers
+- [x] Discrimination of files by sorting and quantity
+- [x] Novelty detection for file creation
+- [x] Watcher for any changes in the file system
+- [x] Watcher for specific changes in the file system
+- [x] Qualitative response for each observed file
+- [x] Processing of large quantities of files
+- [x] Validation of the stability of the file when it is created
+- [x] Configuration of the file watcher conditions
+- [x] Validation of the minimum expected size of a file
+- [x] Detection of anomalies in the observation of the file
 
 ## Prerequisites
 
