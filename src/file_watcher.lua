@@ -551,12 +551,13 @@ local function file_creation(
     --[[optional]] minsize,
     --[[optional]] stability,
     --[[optional]] novelty,
-    --[[optional]] nmatch
+    --[[optional]] match
 )
 
     local nbulks = math.floor(1 + (#wlist)/BULK_CAPACITY)
     local bulk_fibs = {} --Fiber list
     local pos = 0
+
     for i = 1, nbulks do
         local bulk = {}
         local val
@@ -569,7 +570,10 @@ local function file_creation(
                     db.awatcher.add(wid, val)
                 else
                     db.awatcher.add(
-                        wid, val, false, FILE.IS_PATTERN
+                        wid,
+                        val,
+                        false,
+                        FILE.IS_PATTERN
                     )
                 end
             else
@@ -585,7 +589,7 @@ local function file_creation(
             minsize,
             stability,
             novelty,
-            nmatch
+            match
         )
         bfid:name('file-watcher-bulk-c')
         bulk_fibs[i] = bfid
@@ -600,8 +604,12 @@ local function file_creation(
     end
 
     return {
-        wid=wid,
-        ans=db.awatcher.endw(wid, nmatch)
+        wid = wid,
+        ans = db.awatcher.endw(
+            wid,
+            match,
+            WATCHER.FILE_CREATION
+        )
     }
 
 end
@@ -625,6 +633,7 @@ local function file_alteration(
     local nbulks = math.floor(1 + (#wlist)/BULK_CAPACITY)
     local bulk_fibs = {} --Fiber list
     local pos = 0
+
     for i = 1, nbulks do
         local bulk = {}
         local val
@@ -700,8 +709,12 @@ local function file_alteration(
             ans=db.awatcher.endw(wid, match, awhat)
         }
     end
+
     --Nothing for watch
-    return {wid=wid, ans=false}
+    return {
+        wid=wid,
+        ans=false
+    }
 end
 
 -- Export API functions
