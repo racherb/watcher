@@ -32,10 +32,12 @@ Detecting changes to the file system or data structures in memory is useful for 
 - [x] Watcher for Advanced File Deletion
 - [x] Watcher for Advanced File Creation
 - [x] Watcher for Advanced File Alteration
-- [x] Blocking and non-blocking execution with tarantool fibers
+- [x] Non-blocking execution with tarantool fibers
+- [x] :new: Blocking execution with "waitfor"
+- [x] :new: Decoupled execution between the creation of the watcher and its execution
 - [x] Discrimination of files by sorting and quantity
 - [x] Novelty detection for file creation
-- [x] Watcher for any changes in the file system
+- [x] Watcher for any changes or alteration in the file system
 - [x] Watcher for specific changes in the file system
 - [x] Qualitative response for each observed file
 - [x] Processing of large quantities of files
@@ -43,6 +45,7 @@ Detecting changes to the file system or data structures in memory is useful for 
 - [x] Configuration of the file watcher conditions
 - [x] Validation of the minimum expected size of a file
 - [x] Detection of anomalies in the observation of the file
+- [x] :new: Injection of atomic functions on the watcher list
 
 ## Prerequisites
 
