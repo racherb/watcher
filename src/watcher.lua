@@ -386,6 +386,30 @@ local function file_alteration(
     )
 end
 
+--Wait for a watcher to finish
+local function wait_for_watcher(wid)
+    local waiting = true
+    local s = box.space.awatcher
+    local watcher
+
+    while (waiting) do
+        fiber.sleep(5)
+        watcher = s:select(wid)
+        
+        if watcher[1][5] ~=0 then
+            waiting = false
+            break
+        end
+    end
+
+    return {
+        wid = watcher[1][1],
+        ans = watcher[1][6],
+        time = (watcher[1][5] - watcher[1][4])/1000000000 --seconds
+    }
+
+end
+
 local file = {}
 file.deletion = file_deletion
 file.creation = file_creation
@@ -394,6 +418,7 @@ file.alteration = file_alteration
 return {
     create = create_watcher,
     run = run_watcher,
+    waitfor = wait_for_watcher,
     file = file
 }
 
