@@ -398,7 +398,7 @@ local function wait_for_watcher(wid)
         
         if watcher[1][5] ~=0 then
             waiting = false
-            break
+            --break
         end
     end
 
