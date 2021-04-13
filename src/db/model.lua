@@ -17,7 +17,8 @@ local schema = {
             {name="type", type="string"},   --Watcher TYPE
             {name="what", type="string"},   --What is watching
             {name="dini", type="long"},     --Begin datetimete
-            {name="dend", type="long"}      --End for watcher
+            {name="dend", type="long"},     --End for watcher
+            {name="answ", type="string"}    --Answer or end status
         }
     },
     watchables = {
