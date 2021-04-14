@@ -1,25 +1,25 @@
 #!/usr/bin/env tarantool
 
-local fw = require('watcher').file
+local filewatcher = require('watcher').file
+local waitfor = require('watcher').waitfor
 
 --Function that processes a file after it arrives
 local function process_file(the_file)
     print('Waiting for the file ...')
-    if fw.creation(the_file).ans then
+    local res = waitfor(
+        filewatcher.creation(the_file).wid
+    )
+    if res.ans then
         print('Orale! The file ' .. the_file[1] .. ' is ready')
         --Write your code here!
         --...
         --...
     else
-        print('Ugh! The file has not arrived')
+        print("'D'OH.! The file has not arrived")
     end
 end
 
---Processes the '/tmp/filex.txt' file
---process_file({'/tmp/filex.txt'})
-
-local fiber = require('fiber')
-fiber.create(process_file, {'/tmp/fileY.txt'})
+process_file({'/tmp/abc.x'})
 
 os.exit()
 
