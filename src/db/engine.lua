@@ -62,7 +62,14 @@ end
 
 local function start()
 
-    box.cfg{}
+    --box.cfg{}
+
+    box.cfg {
+        listen = 3301,
+        background = true,
+        log = 'watcher.log',
+        pid_file = 'watcher.pid'
+     }
 
     box.once('init', function()
         local ok = create_spaces()
