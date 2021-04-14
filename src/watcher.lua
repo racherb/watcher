@@ -395,7 +395,7 @@ local function wait_for_watcher(wid)
     while (waiting) do
         fiber.sleep(5)
         watcher = s:select(wid)
-        
+
         if watcher[1][5] ~=0 then
             waiting = false
             --break
