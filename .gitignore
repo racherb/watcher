@@ -31,3 +31,7 @@ CTestTestfile.cmake
 
 *.backup
 .rocks/*
+
+src/watcher.pid
+
+src/watcher.log
