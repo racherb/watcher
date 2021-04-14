@@ -9,7 +9,7 @@
 
 local strict = require('strict')
 local clock = require('clock')
-local errno = require('errno')
+--local errno = require('errno')
 local log = require('log')
 
 strict.on()
@@ -275,7 +275,7 @@ local function stat(
 )
 
     local sel = box.space.watchables.index.wat_ak_mssg
-    
+
     return {
         total = box.space.watchables:len(),
         match = sel:count(
