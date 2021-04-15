@@ -13,7 +13,7 @@ package.path = package.path .. ';src/?.lua'
 
 local strict = require('strict')
 local fiber = require('fiber')
---local errno = require('errno')
+local errno = require('errno')
 local log = require('log')
 
 local db = require('db.engine')
@@ -27,6 +27,8 @@ local SORT = require('types.file').SORT
 local FILE = require('types.file').FILE
 
 strict.on()
+
+local message
 
 local function apply_func(atomic_func, wlist)
     for i=1,#wlist do
@@ -48,10 +50,17 @@ local function create_watcher(
         cwlist = fwa.consolidate(wlist)
     end
 
-    local _, wid = db.awatcher.new(
-        ut.tostring(cwlist),
+    local wid
+    local nwid = db.awatcher.new(
+        ut.tostring(wlist),
         wkind
     )
+    if nwid.ans then
+        wid = nwid.wid
+    else
+        message = {'Watcher could not be created', '-', errno.strerror()}
+        log.error(table.concat(message, ' '))
+    end
 
     if wid then
         if afunc then
@@ -94,8 +103,7 @@ local function run_watcher(watcher, parm)
                 fib:name(string.format('FWD-%s', tostring(watcher.wid)))
                 return {
                     fid = fib:id(),
-                    wid = watcher.wid,
-                    stt = 'running'
+                    wid = watcher.wid
                 }
             end
         elseif watcher.kind == WATCHER.FILE_CREATION then
@@ -114,8 +122,7 @@ local function run_watcher(watcher, parm)
                 fib:name(string.format('FWC-%s', tostring(watcher.wid)))
                 return {
                     fid = fib:id(),
-                    wid = watcher.wid,
-                    stt = 'running'
+                    wid = watcher.wid
                 }
             end
         elseif watcher.kind == WATCHER.FILE_ALTERATION then
@@ -133,8 +140,7 @@ local function run_watcher(watcher, parm)
                 return
                 {
                     fid = fib:id(),
-                    wid = watcher.wid,
-                    stt = 'running'
+                    wid = watcher.wid
                 }
             end
         end

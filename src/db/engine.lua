@@ -123,9 +123,15 @@ local function new(
 
     if ok then
         box.space.awatcher:insert(tuple)
-        return true, id
+        return {
+            ans = true,
+            wid = id
+        }
     else
-        return false, tuple
+        return {
+            ans = false,
+            wid = nil
+        }
     end
 end
 
