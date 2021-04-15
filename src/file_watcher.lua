@@ -236,27 +236,39 @@ local function bulk_file_alteration(
                         end
                     end
                     if sha256 ~= attr.sha256 then
-                        alter_lst = alter_lst .. FILE.CONTENT_ALTERATION
+                        alter_lst = string.format(
+                            '%s%s', alter_lst, FILE.CONTENT_ALTERATION
+                        )
                     end
                     if flf.size ~= attr.size then
-                        alter_lst = alter_lst .. FILE.SIZE_ALTERATION
+                        alter_lst = string.format(
+                            '%s%s', alter_lst, FILE.SIZE_ALTERATION
+                        )
                     end
                     if flf.ctime ~= attr.ctime then
-                        alter_lst = alter_lst .. FILE.CHANGE_TIME_ALTERATION
+                        alter_lst = string.format(
+                            '%s%s', alter_lst, FILE.CHANGE_TIME_ALTERATION
+                        )
                     end
                     if flf.mtime ~= attr.mtime then
-                        alter_lst = alter_lst .. FILE.MODIFICATION_TIME_ALTERATION
+                        alter_lst = string.format(
+                            '%s%s', alter_lst, FILE.MODIFICATION_TIME_ALTERATION
+                        )
                     end
                     if flf.uid ~= attr.uid then
-                        alter_lst = alter_lst .. FILE.OWNER_ALTERATION
+                        alter_lst = string.format(
+                            '%s%s', alter_lst, FILE.OWNER_ALTERATION
+                        )
                     end
                     if flf.gid ~= attr.gid then
-                        alter_lst = alter_lst .. FILE.GROUP_ALTERATION
+                        alter_lst = string.format(
+                            '%s%s', alter_lst, FILE.GROUP_ALTERATION
+                        )
                     end
                     if flf.inode ~= attr.inode then
-                        if flf.gid ~= attr.gid then
-                            alter_lst = alter_lst .. FILE.INODE_ALTERATION
-                        end
+                        alter_lst = string.format(
+                            '%s%s', alter_lst, FILE.INODE_ALTERATION
+                        )
                     end
                     if awhat == '1' and alter_lst ~= '' then
                         db_awatcher.upd(

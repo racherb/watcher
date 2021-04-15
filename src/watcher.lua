@@ -91,7 +91,7 @@ local function run_watcher(watcher, parm)
                 parm[5]       --match
             )
             if fib then
-                fib:name('FWD-'..tostring(watcher.wid))
+                fib:name(string.format('FWD-%s', tostring(watcher.wid)))
                 return {
                     fid = fib:id(),
                     wid = watcher.wid,
@@ -111,7 +111,7 @@ local function run_watcher(watcher, parm)
                 parm[6]       --match
             )
             if fib then
-                fib:name('FWD-'..tostring(watcher.wid))
+                fib:name(string.format('FWC-%s', tostring(watcher.wid)))
                 return {
                     fid = fib:id(),
                     wid = watcher.wid,
@@ -129,7 +129,7 @@ local function run_watcher(watcher, parm)
                 parm[4]       --nmatch
             )
             if fib then
-                fib:name('FWD-'..tostring(watcher.wid))
+                fib:name(string.format('FWA-%s', tostring(watcher.wid)))
                 return
                 {
                     fid = fib:id(),
