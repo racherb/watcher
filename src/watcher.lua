@@ -17,6 +17,7 @@ local fiber = require('fiber')
 local log = require('log')
 
 local db = require('db.engine')
+local awatcher = require('db.engine').spaces.awatcher
 local ut = require('util')
 local fwa = require('file_watcher')
 
@@ -389,12 +390,12 @@ end
 --Wait for a watcher to finish
 local function wait_for_watcher(wid)
     local waiting = true
-    local s = box.space.awatcher
+    --local s = box.space.awatcher
     local watcher
 
     while (waiting) do
         fiber.sleep(5)
-        watcher = s:select(wid)
+        watcher = awatcher:select(wid)
 
         if watcher[1][5] ~=0 then
             waiting = false
