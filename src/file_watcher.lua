@@ -28,6 +28,8 @@ local FILE = require('types.file').FILE
 local WATCHER = require('types.file').WATCHER
 local SORT = require('types.file').SORT
 
+local db_awatcher = db.awatcher
+
 db.start()
 
 strict.on()
@@ -163,13 +165,13 @@ local function bulk_file_deletion(
             local file = notdelyet[i]
             if not file then break end
             if not fio_exists(file) then
-                db.awatcher.upd(
+                db_awatcher.upd(
                     wid, file, true, FILE.DELETED
                 )
                 notdelyet[i] = nil
             end
         end
-        if db.awatcher.match(wid, WATCHER.FILE_DELETION)>=nmatch then
+        if db_awatcher.match(wid, WATCHER.FILE_DELETION)>=nmatch then
             break
         end
         fib_sleep(interval)
@@ -208,7 +210,7 @@ local function bulk_file_alteration(
                 local attr = not_alter_yet[i][2]
                 if not file then break end
                 if not fio_exists(file) then
-                    db.awatcher.upd(
+                    db_awatcher.upd(
                         wid, file, true, FILE.DISAPPEARED_UNEXPECTEDLY
                     )
                     not_alter_yet[i] = nil
@@ -257,20 +259,20 @@ local function bulk_file_alteration(
                         end
                     end
                     if awhat == '1' and alter_lst ~= '' then
-                        db.awatcher.upd(
+                        db_awatcher.upd(
                             wid, file, true, FILE.ANY_ALTERATION
                         )
                         not_alter_yet[i] = nil --Exclude item
                     else
                         if string_find(alter_lst, awhat) then
-                            db.awatcher.upd(
+                            db_awatcher.upd(
                                 wid, file, true, awhat
                             )
                             not_alter_yet[i] = nil --Exclude item
                         end
                     end
                 end
-                if db.awatcher.match(wid, awhat)>=nmatch then
+                if db_awatcher.match(wid, awhat)>=nmatch then
                     is_over = true
                     break
                 end
@@ -399,7 +401,7 @@ local function bulk_file_creation(
                     if _novelty then
                         local lmod = fio_lstat(data).mtime
                         if not (lmod >= novelty[1] and lmod <= novelty[2]) then
-                            db.awatcher.upd(
+                            db_awatcher.upd(
                                 wid, data, false, FILE.IS_NOT_NOVELTY
                             )
                             return
@@ -412,22 +414,22 @@ local function bulk_file_creation(
                             stability[2]
                         )
                         if not stble then
-                            db.awatcher.upd(
+                            db_awatcher.upd(
                                 wid, data, false, FILE.UNSTABLE_SIZE
                             )
                             if merr then
-                                db.awatcher.upd(wid, data, false, merr)
+                                db_awatcher.upd(wid, data, false, merr)
                             end
                             return
                         end
                     end
                     if _minsize then
                         if not (fio_lstat(data).size >= minsize) then
-                            db.awatcher.upd(wid, data, false, FILE.UNEXPECTED_SIZE)
+                            db_awatcher.upd(wid, data, false, FILE.UNEXPECTED_SIZE)
                             return
                         end
                     end
-                    db.awatcher.upd(wid, data, true, FILE.HAS_BEEN_CREATED)
+                    db_awatcher.upd(wid, data, true, FILE.HAS_BEEN_CREATED)
                 end
             )
         end
@@ -452,7 +454,7 @@ local function bulk_file_creation(
                     if stability or minsize or novelty then
                         ch_cff:put(v, 0)
                     else
-                        db.awatcher.upd(
+                        db_awatcher.upd(
                             wid, v, true, FILE.HAS_BEEN_CREATED
                         )
                     end
@@ -466,10 +468,10 @@ local function bulk_file_creation(
                             fnd[#fnd+1]=u
                             nfp = nfp + 1
                             if stability or minsize or novelty then
-                                db.awatcher.add(wid, u)
+                                db_awatcher.add(wid, u)
                                 ch_cff:put(u, 0)
                             else
-                                db.awatcher.put(wid, u, true, FILE.HAS_BEEN_CREATED)
+                                db_awatcher.put(wid, u, true, FILE.HAS_BEEN_CREATED)
                             end
                         end
                     end
@@ -477,7 +479,7 @@ local function bulk_file_creation(
             end
         end
         --Exit as soon as posible
-        if (not has_pttn and nff>=nmatch) or db.awatcher.match(wid)>=nmatch then
+        if (not has_pttn and nff>=nmatch) or db_awatcher.match(wid)>=nmatch then
             break
         end
         fib_sleep(interval)
@@ -509,7 +511,7 @@ local function file_deletion(
             val = cwlist_o[pos]
             if val then
                 bulk[j] = val
-                db.awatcher.add(wid, val, false, FILE.NOT_YET_DELETED)
+                db_awatcher.add(wid, val, false, FILE.NOT_YET_DELETED)
             else
                 break
             end
@@ -536,7 +538,7 @@ local function file_deletion(
 
     return {
         wid=wid,
-        ans=db.awatcher.endw(wid, match, WATCHER.FILE_DELETION)
+        ans=db_awatcher.endw(wid, match, WATCHER.FILE_DELETION)
     }
 
 end
@@ -567,9 +569,9 @@ local function file_creation(
             if val then
                 bulk[j] = val
                 if not string_find(val, '*') then
-                    db.awatcher.add(wid, val)
+                    db_awatcher.add(wid, val)
                 else
-                    db.awatcher.add(
+                    db_awatcher.add(
                         wid,
                         val,
                         false,
@@ -605,7 +607,7 @@ local function file_creation(
 
     return {
         wid = wid,
-        ans = db.awatcher.endw(
+        ans = db_awatcher.endw(
             wid,
             match,
             WATCHER.FILE_CREATION
@@ -675,9 +677,9 @@ local function file_alteration(
                     }
                     k = k + 1
                     bulk[k] = {val, as}
-                    db.awatcher.add(wid, val, false, FILE.NO_ALTERATION)
+                    db_awatcher.add(wid, val, false, FILE.NO_ALTERATION)
                 else
-                    db.awatcher.put(wid, val, false, FILE.NOT_EXISTS)
+                    db_awatcher.put(wid, val, false, FILE.NOT_EXISTS)
                 end
             else
                 break
@@ -706,7 +708,7 @@ local function file_alteration(
         end
         return {
             wid=wid,
-            ans=db.awatcher.endw(wid, match, awhat)
+            ans=db_awatcher.endw(wid, match, awhat)
         }
     end
 
