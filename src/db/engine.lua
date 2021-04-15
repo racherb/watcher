@@ -9,7 +9,7 @@
 
 local strict = require('strict')
 local clock = require('clock')
---local errno = require('errno')
+local box = require('box')
 local log = require('log')
 
 strict.on()
@@ -20,6 +20,8 @@ local wat = enty.watchables()
 
 local FILE = require('types.file').FILE
 local WATCHER = require('types.file').WATCHER
+
+box.cfg{}
 
 local function create_spaces()
 
@@ -62,15 +64,15 @@ end
 
 local function start()
 
-    --box.cfg{}
-
+    box.cfg{}
+    --[[
     box.cfg {
         listen = 3301,
         background = true,
         log = 'watcher.log',
         pid_file = 'watcher.pid'
      }
-
+    --]]
     box.once('init', function()
         local ok = create_spaces()
         if not ok then
@@ -332,7 +334,12 @@ local awatcher = {
     match = match
 }
 
+local spaces = {
+    awatcher = box.space.awatcher
+}
+
 return {
     start = start,
-    awatcher = awatcher
+    awatcher = awatcher,
+    spaces = spaces
 }
