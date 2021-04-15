@@ -175,11 +175,11 @@ By default watcher runs in non-blocking mode through tarantool fibers.
 
 ## Possible applications
 
-* Workload automation
-* Process integration
-* System monitoring
-* Backup and restore
-* Data security
+- Workload automation
+- Process integration
+- System monitoring
+- Backup and restore
+- Data security
 
 ## Under the hood
 
@@ -187,29 +187,29 @@ By default watcher runs in non-blocking mode through tarantool fibers.
 
 ## Built With
 
-* [Lua](https://www.lua.org/) - Is a powerful, efficient, lightweight, embeddable scripting language.
-* [Tarantool](https://maven.apache.org/) - Is a powerful fast data platform that comes with an in-memory database and an integrated application server.
+- [Lua](https://www.lua.org/) - Is a powerful, efficient, lightweight, embeddable scripting language.
+- [Tarantool](https://maven.apache.org/) - Is a powerful fast data platform that comes with an in-memory database and an integrated application server.
 
 ## How to contribute?
 
 There are many ways to contribute to Watcher:
 
-* **Code** – Contribute to the code. We have components written in Lua and other languages.
-* **Write** – Improve documentation, write blog posts, create tutorials or solution pages.
-* **Q&A** – Share your acknowledgments at Stack Overflow with tag #watcher.
-* **Spread the word** – Share your accomplishments in social media using the #watcher hashtags.
-* **Test** - Write a test
+- **Code** – Contribute to the code. We have components written in Lua and other languages.
+- **Write** – Improve documentation, write blog posts, create tutorials or solution pages.
+- **Q&A** – Share your acknowledgments at Stack Overflow with tag #watcher.* **Spread the word** – Share your accomplishments in social media using the #watcher hashtags.
+- **Test** - Write a test
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us. 
-For style guide in Lua coding follow the suggestions at [ Olivine-Labs/lua-style-guide ](https://github.com/Olivine-Labs/lua-style-guide).
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+
+For style guide in Lua coding follow the suggestions at [Lua Style Guide](https://www.tarantool.io/en/doc/latest/dev_guide/lua_style_guide/).
 
 ### How to contribute to language connectors
 
 Support is required for the construction of connectors that allow the use of watcher from different programming languages, for example:
 
-* Nodejs
-* Python
-* Go
+- Node
+- Python
+- Go
 
 ### How to contribute to watcher plugins
 
@@ -225,18 +225,17 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 We’re using [Discussions](https://github.com/racherb/watcher/discussions) as a place to connect with other members of our community. We hope that you:
 
-* Ask questions you’re wondering about.
-* Share ideas.
-* Engage with other community members.
-* Welcome others and are open-minded. Remember that this is a community we build together 💪.
+- Ask questions you’re wondering about.
+- Share ideas.
+- Engage with other community members.
+- Welcome others and are open-minded. Remember that this is a community we build together 💪
 
 ## Authors
 
-* **Raciel Hernández**
+- **Raciel Hernández**
 
-* See also the list of [contributors](https://github.com/racherb/watcher/contributors) who participated in this project.
+- See also the list of [contributors](https://github.com/racherb/watcher/contributors) who participated in this project.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details
-
