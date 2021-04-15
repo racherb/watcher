@@ -27,18 +27,19 @@ dependencies = {
 build = {
    type = "builtin",
    modules = {
-      ["examples.ifexist_do"] = "examples/ifexist_do.lua",
-      ["test.watcher.test"] = "test/watcher.test.lua",
-      ["watcher.db.engine"] = "src/db/engine.lua",
-      ["watcher.db.entity"] = "src/db/entity.lua",
-      ["watcher.db.model"] = "src/db/model.lua",
-      ["watcher.file_watcher"] = "src/file_watcher.lua",
-      ["watcher.monitor"] = "src/monit.lua",
-      ["watcher.plugins.backup"] = "src/plugins/backup.lua",
+      ["examples.ifexist_do"]     = "examples/ifexist_do.lua",
+      ["test.watcher.test"]       = "test/watcher.test.lua",
+      ["test.helper"]             = "test/helper.lua",
+      ["watcher.db.engine"]       = "src/db/engine.lua",
+      ["watcher.db.entity"]       = "src/db/entity.lua",
+      ["watcher.db.model"]        = "src/db/model.lua",
+      ["watcher.file_watcher"]    = "src/file_watcher.lua",
+      ["watcher.monitor"]         = "src/monit.lua",
+      ["watcher.plugins.backup"]  = "src/plugins/backup.lua",
       ["watcher.plugins.default"] = "src/plugins/default.lua",
-      ["watcher.types.file"] = "src/types/file.lua",
-      ["watcher.util"] = "src/util.lua",
-      ["watcher.watcher"] = "src/watcher.lua"
+      ["watcher.types.file"]      = "src/types/file.lua",
+      ["watcher.util"]            = "src/util.lua",
+      ["watcher.watcher"]         = "src/watcher.lua"
    }
 }
 
