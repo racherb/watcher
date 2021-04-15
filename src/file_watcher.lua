@@ -719,15 +719,15 @@ local function file_alteration(
             pcall(fiber.cancel, fid)
         end
         return {
-            wid=wid,
-            ans=db_awatcher.endw(wid, match, awhat)
+            wid = wid,
+            ans = db_awatcher.endw(wid, match, awhat)
         }
     end
 
     --Nothing for watch
     return {
-        wid=wid,
-        ans=false
+        wid = wid,
+        ans = false
     }
 end
 
