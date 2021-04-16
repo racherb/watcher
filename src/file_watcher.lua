@@ -455,7 +455,6 @@ local function bulk_file_creation(
         novelty
     )
 
-    local has_pttn = false
     while ((os_time() - ini) < maxwait) do
         for k,v in pairs(nfy) do
             if not string_find(v, '*') then
@@ -472,7 +471,6 @@ local function bulk_file_creation(
                     end
                 end
             else
-                has_pttn = true
                 local pit = fio_glob(v) --pattern_items
                 if #pit~=0 then
                     for _,u in pairs(pit) do
@@ -491,7 +489,7 @@ local function bulk_file_creation(
             end
         end
         --Exit as soon as posible
-        if (not has_pttn and nff>=nmatch) or db_awatcher.match(wid)>=nmatch then
+        if db_awatcher.match(wid)>=nmatch then
             break
         end
         fib_sleep(interval)
@@ -536,7 +534,7 @@ local function file_deletion(
             interval,
             match
         )
-        bfid:name('file-watcher-bulk-d')
+        bfid:name('fwd-bulk-d')
         bulk_fibs[i] = bfid
     end
 
@@ -605,7 +603,7 @@ local function file_creation(
             novelty,
             match
         )
-        bfid:name('file-watcher-bulk-c')
+        bfid:name('fwc-bulk-c')
         bulk_fibs[i] = bfid
     end
 
@@ -707,7 +705,7 @@ local function file_alteration(
                 interval,
                 match
             )
-            bfid:name('file-watcher-bulk-a')
+            bfid:name('fwa-bulk-a')
             bulk_fibs[i] = bfid
         end
     end
