@@ -33,6 +33,7 @@ build = {
       ["watcher.db.engine"]       = "src/db/engine.lua",
       ["watcher.db.entity"]       = "src/db/entity.lua",
       ["watcher.db.model"]        = "src/db/model.lua",
+      ["watcher.sanity_check"]    = "src/sanity_check.lua",
       ["watcher.file_watcher"]    = "src/file_watcher.lua",
       ["watcher.monitor"]         = "src/monit.lua",
       ["watcher.plugins.backup"]  = "src/plugins/backup.lua",

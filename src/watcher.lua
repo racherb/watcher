@@ -23,8 +23,11 @@ local fwa = require('file_watcher')
 
 local WATCHER = require('types.file').WATCHER
 local OUTPUT = require('types.file').OUTPUT
+local EXIT = require('types.file').EXIT
 local SORT = require('types.file').SORT
 local FILE = require('types.file').FILE
+
+local sck = require('sanity_check') --for sanity check
 
 strict.on()
 
@@ -165,22 +168,16 @@ local function file_deletion(
     --[[optional]] options
 )
 
-    assert(
-        wlist and (type(wlist)=='table') and (#wlist~=0),
-        OUTPUT.WATCH_LIST_NOT_VALID
-    )
+    local sck_wlist = sck.wlist(wlist)
+    assert(sck_wlist.ans, sck_wlist.msg)
 
     local _maxwait = maxwait or WATCHER.MAXWAIT
-    assert(
-        type(_maxwait)=='number' and _maxwait > 0,
-        OUTPUT.MAXWAIT_NOT_VALID
-    )
+    local sck_maxwait = sck.maxwait(_maxwait)
+    assert(sck_maxwait.ans, sck_maxwait.msg)
 
     local _interval = interval or WATCHER.INTERVAL
-    assert(
-        type(_interval)=='number' and _interval > 0,
-        OUTPUT.INTERVAL_NOT_VALID
-    )
+    local sck_interval = sck.maxwait(_interval)
+    assert(sck_interval.ans, sck_interval.msg)
 
     --Create watcher
     local watcher = create_watcher(
@@ -194,8 +191,8 @@ local function file_deletion(
     if watcher then
         nfiles = #(watcher.list)
     else
-        --TODO: Normalize this
-        log.error('Cannot create the watcher')
+        log.error(string.format('%s - Unable to create the watcher', OUTPUT.WATCHER_WAS_NOT_CREATED))
+        os.exit(EXIT.WATCHER_WAS_NOT_CREATED)
     end
 
     assert(
@@ -238,58 +235,30 @@ local function file_creation(
     novelty,
     nmatch
 )
-
-    assert(
-        wlist and (type(wlist)=='table') and (#wlist~=0),
-        OUTPUT.WATCH_LIST_NOT_VALID
-    )
+    --Validate th user inputs
+    local sck_wlist = sck.wlist(wlist)
+    assert(sck_wlist.ans, sck_wlist.msg)
 
     local _maxwait = maxwait or WATCHER.MAXWAIT
-    assert(
-        type(_maxwait)=='number' and _maxwait > 0,
-        OUTPUT.MAXWAIT_NOT_VALID
-    )
+    local sck_maxwait = sck.maxwait(_maxwait)
+    assert(sck_maxwait.ans, sck_maxwait.msg)
 
     local _interval = interval or WATCHER.INTERVAL
-    assert(
-        type(_interval)=='number' and _interval > 0,
-        OUTPUT.INTERVAL_NOT_VALID
-    )
+    local sck_interval = sck.interval(_interval, _maxwait)
+    assert(sck_interval.ans, sck_interval.msg)
 
     local _minsize = minsize or 0
-    assert(
-        _minsize and type(_minsize)=='number' and _minsize >= 0,
-        OUTPUT.MINSIZE_NOT_VALID
-    )
+    local sck_size = sck.size(_minsize)
+    assert(sck_size.ans, sck_size.msg)
 
     if stability then
-        assert(
-            stability and type(stability)=='table' and #stability~=0,
-            OUTPUT.STABILITY_NOT_VALID
-        )
-        assert(
-            stability[1] and type(stability[1])=='number' and stability[1]>0,
-            OUTPUT.CHECK_SIZE_INTERVAL_NOT_VALID
-        )
-        assert(
-            stability[2] and type(stability[2])=='number' and stability[2]>0,
-            OUTPUT.ITERATIONS_NOT_VALID
-        )
+        local sck_stability = sck.stability(stability)
+        assert(sck_stability.ans, sck_stability.msg)
     end
 
     if novelty then
-        assert(
-            type(novelty)=='table' and #novelty~=0,
-            OUTPUT.NOVELTY_NOT_VALID
-        )
-        assert(
-            novelty[1] and type(novelty[1])=='number',
-            OUTPUT.DATE_FROM_NOT_VALID
-        )
-        assert(
-            novelty[2] and type(novelty[2])=='number',
-            OUTPUT.DATE_UNTIL_NOT_VALID
-        )
+        local sck_novelty = sck.novelty(novelty)
+        assert(sck_novelty.ans, sck_novelty.msg)
     end
 
     --Create watcher
@@ -303,8 +272,8 @@ local function file_creation(
     if watcher then
         nfiles = #(watcher.list)
     else
-        --TODO: Normalize this
-        log.error('Cannot create the watcher')
+        log.error(string.format('%s - Unable to create the watcher', OUTPUT.WATCHER_WAS_NOT_CREATED))
+        os.exit(EXIT.WATCHER_WAS_NOT_CREATED)
     end
 
     assert(
@@ -337,22 +306,17 @@ local function file_alteration(
     --[[optional]] nmatch
 )
 
-    assert(
-        wlist and (type(wlist)=='table') and (#wlist~=0),
-        OUTPUT.WATCH_LIST_NOT_VALID
-    )
+    --Validate th user inputs
+    local sck_wlist = sck.wlist(wlist)
+    assert(sck_wlist.ans, sck_wlist.msg)
 
     local _maxwait = maxwait or WATCHER.MAXWAIT
-    assert(
-        type(_maxwait)=='number' and _maxwait > 0,
-        OUTPUT.MAXWAIT_NOT_VALID
-    )
+    local sck_maxwait = sck.maxwait(_maxwait)
+    assert(sck_maxwait.ans, sck_maxwait.msg)
 
     local _interval = interval or WATCHER.INTERVAL
-    assert(
-        type(_interval)=='number' and _interval > 0,
-        OUTPUT.INTERVAL_NOT_VALID
-    )
+    local sck_interval = sck.maxwait(_interval)
+    assert(sck_interval.ans, sck_interval.msg)
 
     local _awhat = awhat or FILE.ANY_ALTERATION
     assert(
@@ -370,8 +334,8 @@ local function file_alteration(
     if watcher then
         nfiles = #(watcher.list)
     else
-        --TODO: Normalize this
-        log.error('Cannot create the watcher')
+        log.error(string.format('%s - Unable to create the watcher', OUTPUT.WATCHER_WAS_NOT_CREATED))
+        os.exit(EXIT.WATCHER_WAS_NOT_CREATED)
     end
 
     assert(
