@@ -251,7 +251,7 @@ local function match(
     wid,
     wtype
 )
-    local _wtype = wtype or WATCHER.FILE_CREATION --File Watcher Creation is Default
+    local _wtype = wtype or 'FWC' --WATCHER.FILE_CREATION is Default
     local s = box.space.watchables.index.wat_ak_mssg
 
     if _wtype == WATCHER.FILE_CREATION then
