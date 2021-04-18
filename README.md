@@ -34,7 +34,8 @@ Detecting changes to the file system or data structures in memory is useful for 
 - [x] Watcher for Advanced File Creation
 - [x] Watcher for Advanced File Alteration
 - [x] Non-blocking execution with tarantool fibers
-- [x] :new: Blocking execution with "waitfor"
+- [x] Bulk file processing
+- [x] :new: Blocking execution with "*waitfor*" function
 - [x] :new: Decoupled execution between the creation of the watcher and its execution
 - [x] Discrimination of files by sorting and quantity
 - [x] Novelty detection for file creation
