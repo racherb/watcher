@@ -304,8 +304,10 @@ local function recursive_tree(
     --[[optional]] levels,
     --[[optional]] shidden
 )
-    local _levels = levels or {0}      --zero for all levels
+    local _levels = levels or {0}      --zero for all directory levels
     local _shidden = shidden or false  --false for ignore the hidden files and folders
+
+    table.sort(_levels) --Sort _levels
 
     local function get_level (path)
         local folders={}
@@ -318,6 +320,10 @@ local function recursive_tree(
     local t = {} --table resultant
 
     local function explore_dir(dir)
+        local level = get_level(dir)
+        if (level > _levels[#_levels]) and (_levels[1]~=0) then
+            return t
+        end
         if fio_is_dir(dir) then
             local flst = fio_listdir(dir)
             if flst then
@@ -326,7 +332,6 @@ local function recursive_tree(
                     local ofile
                     if (string.byte(file, 1) ~= 46) or (_shidden == true) then
                         ofile = string.format('%s/%s', dir, file)
-                        local level = get_level(dir)
                         if (_levels[1]==0) or (ut.is_valof(_levels, level)) then
                             t[#t+1] = ofile
                         end
