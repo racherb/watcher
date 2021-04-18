@@ -20,6 +20,8 @@ local os_time = os.time
 local string_find = string.find
 local fib_sleep = fiber.sleep
 local fio_glob = fio.glob
+local fio_is_dir = fio.path.is_dir
+local fio_listdir = fio.listdir
 
 local db = require('db.engine')
 local ut = require('util')
@@ -197,8 +199,6 @@ local function bulk_file_alteration(
     local dig_sha256 = dig.sha256
 
     local io_open = io.open
-    local fio_is_dir = fio.path.is_dir
-    local fio_listdir = fio.listdir
 
     local ini = os_time()
     local not_alter_yet = bulk
@@ -298,10 +298,56 @@ local function bulk_file_alteration(
     bfa_end:signal()
 end
 
+--levels: '1,2,3,4,5'}
+local function recursive_tree(
+    --[[required]] root,
+    --[[optional]] levels,
+    --[[optional]] shidden
+)
+    local _levels = levels or {0}      --zero for all levels
+    local _shidden = shidden or false  --false for ignore the hidden files and folders
+
+    local function get_level (path)
+        local folders={}
+        for str in string.gmatch(path, "([^/]+)") do
+                table.insert(folders, str)
+        end
+        return #folders
+    end
+
+    local t = {} --table resultant
+
+    local function explore_dir(dir)
+        if fio_is_dir(dir) then
+            local flst = fio_listdir(dir)
+            if flst then
+                for k=1,#flst do
+                    local file = flst[k]
+                    local ofile
+                    if (string.byte(file, 1) ~= 46) or (_shidden == true) then
+                        ofile = string.format('%s/%s', dir, file)
+                        local level = get_level(dir)
+                        if (_levels[1]==0) or (ut.is_valof(_levels, level)) then
+                            t[#t+1] = ofile
+                        end
+                        if fio_is_dir(ofile) then
+                            explore_dir(ofile)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    explore_dir(root)
+
+    return t
+end
+
 --- Consolidate the watch list items
 -- Expand patterns types if exists and Remove duplicates for FW Deletion
 local function consolidate(wlist)
-
+    --TODO: Add recursive option for level folders {all, specific level-tree: 12345...} ?
     local _wlist = ut.deduplicate(wlist)
 
     local t = {}
@@ -581,6 +627,7 @@ local function file_creation(
                 if not string_find(val, '*') then
                     db_awatcher.add(wid, val)
                 else
+                    --TODO: Review this, it is necessary?
                     db_awatcher.add(
                         wid,
                         val,
@@ -638,8 +685,6 @@ local function file_alteration(
     local fio_lstat = fio.lstat
     local dig_sha256 = dig.sha256
     local io_open = io.open
-    local fio_is_dir = fio.path.is_dir
-    local fio_listdir = fio.listdir
     local fio_exists = fio.path.lexists
 
     local nbulks = math.floor(1 + (#wlist)/BULK_CAPACITY)
@@ -734,5 +779,6 @@ return {
     deletion = file_deletion,
     creation = file_creation,
     alteration = file_alteration,
-    consolidate = consolidate
+    consolidate = consolidate,
+    recursive = recursive_tree
 }
