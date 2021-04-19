@@ -20,6 +20,7 @@ local db = require('db.engine')
 local awatcher = require('db.engine').spaces.awatcher
 local ut = require('util')
 local fwa = require('file_watcher')
+local mon = require('monit')
 
 local WATCHER = require('types.file').WATCHER
 local OUTPUT = require('types.file').OUTPUT
@@ -345,7 +346,7 @@ local function file_alteration(
 
     local _match = nmatch or nfiles
 
-        --Run the watcher for specific params
+    --Run the watcher for specific params
    return run_watcher(
     watcher,
     {
@@ -386,11 +387,15 @@ file.deletion = file_deletion
 file.creation = file_creation
 file.alteration = file_alteration
 
+local core = {}
+core.create = create_watcher
+core.run = run_watcher
+core.waitfor = wait_for_watcher
+
 return {
-    create = create_watcher,
-    run = run_watcher,
-    waitfor = wait_for_watcher,
-    file = file
+    core = core,
+    file = file,
+    monit = mon
 }
 
 --data-watcher
