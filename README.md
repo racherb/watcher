@@ -173,9 +173,9 @@ Once the watcher has finished we can know the final status. For example, for the
 ```Lua
 tarantool> mon.info(1618857178550065)
 ---
-- ans: false  --'ans=false' means that the watcher has finished but the conditions were not met, i.e. all files were not created as expected.
+- ans: false  --The watcher has finished but the conditions were not met
   match: 1
-  what: '{"/tmp/fileA","fileB"}'
+  what: '{"/tmp/fileA","/tmp/fileB"}'
   wid: 1618857178550065
   type: FWC
   nomatch: 1
@@ -192,7 +192,7 @@ tarantool> mon.match(1618857178550065)
 ...
 tarantool> mon.nomatch(1618857178550065)
 ---
-- - [1618857178550065, 'fileB', 1618857178551146982, false, '_', 0]
+- - [1618857178550065, '/tmp/fileB', 1618857178551146982, false, '_', 0]
 ...
 
 ```
