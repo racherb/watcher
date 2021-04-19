@@ -48,6 +48,8 @@ Detecting changes to the file system or data structures in memory is useful for 
 - [x] Validation of the minimum expected size of a file
 - [x] Detection of anomalies in the observation of the file
 - [x] :new: Injection of atomic functions on the watcher list
+- [x] :new: Folder recursion and selective path level
+- [x] :new: Watcher monitoring (info, match, nomatch)
 
 ## Prerequisites
 
@@ -137,6 +139,62 @@ tarantool> ORDBY = 'MA'   --Sorted in ascending order by date of modification
 tarantool> ITEMS = 5      --Observe the first 5 cases in the ordered list
 tarantool> MATCH = 2      --Detects the first 2 files to be deleted
 tarantool> fw.deletion(pattern, MAXWAIT, INTERVAL, {ORDBY, ITEMS, MATCH})
+```
+
+### Use monit to know the result of the watcher execution
+
+The following case is a file watcher for the detection of the creation of two files ('/tmp/fileA' and '/tmp/fileB'). One of them exists and the other has not been created yet.
+
+The use of monit allows you to know the status of the watcher.
+
+```Lua
+tarantool> fw = require('watcher').file
+tarantool> mon = require('watcher').monit
+tarantool> os.execute('touch /tmp/fileA')              --Create fileA for demo
+tarantool> fw.creation({'/tmp/fileA', '/tmp/fileB'})   --Create file watcher for fileA and fileB
+---
+- wid: 1618857178550065
+  fid: 123
+...
+tarantool> mon.info(1618857178550065) --wid as param for monitoring result
+---
+- ans: waiting                        --'waiting' means that it has not yet been completed
+  match: 1                            --A file has been found
+  what: '{"/tmp/fileA","fileB"}'      --List of observable objects
+  wid: 1618857178550065               --The watcher id
+  type: FWC                           --Type of watcher, 'FWC' for file watcher creation
+  nomatch: 1                          --A file was not found
+  status: started                     --File watcher started
+...
+```
+
+Once the watcher has finished we can know the final status. For example, for the same watcher id (wid) we get:
+
+```Lua
+tarantool> mon.info(1618857178550065)
+---
+- ans: false  --'ans=false' means that the watcher has finished but the conditions were not met, i.e. all files were not created as expected.
+  match: 1
+  what: '{"/tmp/fileA","fileB"}'
+  wid: 1618857178550065
+  type: FWC
+  nomatch: 1
+  status: completed
+...
+```
+
+To know the cases that satisfy the watcher criteria use the function 'match' and for those that do not, use the function 'nomatch'.
+
+```Lua
+tarantool> mon.match(1618857178550065)
+---
+- - [1618857178550065, '/tmp/fileA', 1618857178550662653, true, 'C', 1618857178651989852]
+...
+tarantool> mon.nomatch(1618857178550065)
+---
+- - [1618857178550065, 'fileB', 1618857178551146982, false, '_', 0]
+...
+
 ```
 
 ### Examples
