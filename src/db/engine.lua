@@ -56,6 +56,13 @@ local function create_spaces()
                 unique = false
             }
         )
+        box.space.watchables:create_index('wat_ak_answ',
+            {
+                type = 'tree',
+                parts = {{1, 'unsigned'}, {4, 'boolean'}},
+                unique = false
+            }
+        )
     end
 
     return true
