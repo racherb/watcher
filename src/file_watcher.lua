@@ -298,16 +298,16 @@ local function bulk_file_alteration(
     bfa_end:signal()
 end
 
---levels: '1,2,3,4,5'}
+--deep: {0, 1,2,3,4,5..}
 local function recursive_tree(
     --[[required]] root,
-    --[[optional]] levels,
+    --[[optional]] deep,
     --[[optional]] shidden
 )
-    local _levels = levels or {0}      --zero for all directory levels
+    local _deep = deep or {0}      --zero for all directory deep
     local _shidden = shidden or false  --false for ignore the hidden files and folders
 
-    table.sort(_levels) --Sort _levels
+    table.sort(_deep) --Sort _deep
 
     local function get_level (path)
         local folders={}
@@ -321,7 +321,7 @@ local function recursive_tree(
 
     local function explore_dir(dir)
         local level = get_level(dir)
-        if (level > _levels[#_levels]) and (_levels[1]~=0) then
+        if (level > _deep[#_deep]) and (_deep[1]~=0) then
             return t
         end
         if fio_is_dir(dir) then
@@ -332,7 +332,7 @@ local function recursive_tree(
                     local ofile
                     if (string.byte(file, 1) ~= 46) or (_shidden == true) then
                         ofile = string.format('%s/%s', dir, file)
-                        if (_levels[1]==0) or (ut.is_valof(_levels, level)) then
+                        if (_deep[1]==0) or (ut.is_valof(_deep, level)) then
                             t[#t+1] = ofile
                         end
                         if fio_is_dir(ofile) then
@@ -351,8 +351,11 @@ end
 
 --- Consolidate the watch list items
 -- Expand patterns types if exists and Remove duplicates for FW Deletion
-local function consolidate(wlist)
-    --TODO: Add recursive option for level folders {all, specific level-tree: 12345...} ?
+local function consolidate(wlist, recur, deep, hidden)
+    local _recur = recur or false
+    local _deep = deep or {0}
+    local _hidden = hidden or false
+
     local _wlist = ut.deduplicate(wlist)
 
     local t = {}
@@ -366,7 +369,14 @@ local function consolidate(wlist)
                     t[#t+1] = nv
                 end
             else
-                t[#t+1] = v
+                if (_recur==true) and fio_is_dir(v) then
+                    local tr = recursive_tree(v, _deep, _hidden)
+                    for rv = 1, #tr do
+                        t[#t+1] = rv
+                    end
+                else
+                    t[#t+1] = v
+                end
             end
         end
     end
