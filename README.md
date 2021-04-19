@@ -160,7 +160,7 @@ tarantool> mon.info(1618857178550065) --wid as param for monitoring result
 ---
 - ans: waiting                        --'waiting' means that it has not yet been completed
   match: 1                            --A file has been found
-  what: '{"/tmp/fileA","fileB"}'      --List of observable objects
+  what: '{"/tmp/fileA","/tmp/fileB"}' --List of observable objects on request
   wid: 1618857178550065               --The watcher id
   type: FWC                           --Type of watcher, 'FWC' for file watcher creation
   nomatch: 1                          --A file was not found
