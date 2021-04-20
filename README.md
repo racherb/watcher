@@ -11,9 +11,9 @@
 ![Travis](https://travis-ci.org/racherb/watcher.svg?branch=master)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/racherb/watcher)
 
-> **Watcher** for watches the changes in the file system, variables and data records.
+> **Watcher** for watches the changes in the file system.
 
-# Watcher
+# 👁️‍🗨️ Watcher
 
 :warning: **WARNING:** *Watcher is currently in an unstable phase*.
 
@@ -141,7 +141,9 @@ tarantool> MATCH = 2      --Detects the first 2 files to be deleted
 tarantool> fw.deletion(pattern, MAXWAIT, INTERVAL, {ORDBY, ITEMS, MATCH})
 ```
 
-### Use monit to know the result of the watcher execution
+### :tv: Monit
+
+> Use monit to know the result of the watcher execution.
 
 The following case is a file watcher for the detection of the creation of two files ('/tmp/fileA' and '/tmp/fileB'). One of them exists and the other has not been created yet.
 
@@ -243,7 +245,7 @@ By default watcher runs in non-blocking mode through tarantool fibers.
 
 ## Under the hood
 
---TODO
+:soon: *Comming soon*
 
 ## Built With
 
