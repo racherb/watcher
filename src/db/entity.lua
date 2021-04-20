@@ -13,12 +13,17 @@ local strict = require("strict")
 
 local schema = require("db.model").schema
 
+local avro_compile = avro.compile
+local avro_create = avro.create
+
 strict.on()
 
 local function mk_awatcher()
-    local s_ok, s_awatcher = avro.create(schema.awatcher)
+    local s_ok, s_awatcher = avro_create(
+        schema.awatcher
+    )
     if s_ok then
-        local c_ok, c_awatcher = avro.compile(s_awatcher)
+        local c_ok, c_awatcher = avro_compile(s_awatcher)
         if c_ok then
             log.info('Schema compilation is ok for awatcher')
             return c_awatcher
@@ -31,9 +36,13 @@ local function mk_awatcher()
 end
 
 local function mk_watchables()
-    local s_ok, s_watchables = avro.create(schema.watchables)
+    local s_ok, s_watchables = avro_create(
+        schema.watchables
+    )
     if s_ok then
-        local c_ok, c_watchables = avro.compile(s_watchables)
+        local c_ok, c_watchables = avro_compile(
+            s_watchables
+        )
         if c_ok then
             log.info('Schema compilation is ok for watchables')
             return c_watchables
