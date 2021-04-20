@@ -103,6 +103,7 @@ local function sort_files_by(
 
     local size = #flst
     if take_n == 0 then return {} end
+    if size == 0 then return flst end
     if take_n > size or not take_n then take_n = size end
 
     if sort_by == SORT.NO_SORT then
@@ -559,7 +560,7 @@ local function bulk_file_creation(
     bfc_end:signal()
 end
 
---API Definition
+--File watcher deletion
 local function file_deletion(
     wid,
     cwlist,
@@ -608,8 +609,8 @@ local function file_deletion(
     end
 
     return {
-        wid=wid,
-        ans=db_awatcher.endw(wid, match, WATCHER.FILE_DELETION)
+        wid = wid,
+        ans = db_awatcher.close(wid, match, WATCHER.FILE_DELETION)
     }
 
 end
@@ -679,7 +680,7 @@ local function file_creation(
 
     return {
         wid = wid,
-        ans = db_awatcher.endw(
+        ans = db_awatcher.close(
             wid,
             match,
             WATCHER.FILE_CREATION
@@ -778,7 +779,7 @@ local function file_alteration(
         end
         return {
             wid = wid,
-            ans = db_awatcher.endw(wid, match, awhat)
+            ans = db_awatcher.close(wid, match, awhat)
         }
     end
 
