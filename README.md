@@ -2,7 +2,6 @@
 
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3983/badge)](https://bestpractices.coreinfrastructure.org/projects/3983)
 ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/racherb/watcher/master)
-[![codecov](https://codecov.io/gh/racherb/watcher/branch/master/graph/badge.svg?token=grkOrioWzr)](https://codecov.io/gh/racherb/watcher)
 [![Luacheck](https://github.com/racherb/watcher/actions/workflows/luacheck.yml/badge.svg)](https://github.com/racherb/watcher/actions/workflows/luacheck.yml)
 ![GitHub version](https://badge.fury.io/gh/racherb%2Fwatcher.svg)
 ![GitHub contributors](https://img.shields.io/github/contributors/racherb/watcher.svg)
@@ -141,9 +140,9 @@ tarantool> MATCH = 2      --Detects the first 2 files to be deleted
 tarantool> fw.deletion(pattern, MAXWAIT, INTERVAL, {ORDBY, ITEMS, MATCH})
 ```
 
-### :tv: Monit
+### :tv: Monit for explore watcher
 
-> Use monit to know the result of the watcher execution.
+Use monit to know the result of the watcher execution.
 
 The following case is a file watcher for the detection of the creation of two files ('/tmp/fileA' and '/tmp/fileB'). One of them exists and the other has not been created yet.
 
