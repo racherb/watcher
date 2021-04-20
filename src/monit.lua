@@ -1,8 +1,7 @@
 #!/usr/bin/env tarantool
 
 local box = require('box')
-local spc = require('db.engine').spaces
-local awa = spc.awatcher
+local awa = box.space.awatcher
 local wat = box.space.watchables.index.wat_ak_answ
 
 local status
@@ -30,7 +29,7 @@ local function info(wid)
     else
         return {
             wid = wid,
-            err = 'error'
+            err = 'Watcher not found'
         }
     end
 end
