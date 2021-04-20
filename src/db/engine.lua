@@ -303,7 +303,7 @@ local function stat(
 end
 
 -- Close and end watcher wid
-local function endw(
+local function close(
     wid,
     dmatch,
     wtype
@@ -339,7 +339,7 @@ local awatcher = {
     add = add,        --Add watchables to Watcher
     put = put,
     get = get,        --Get the active watcher from wid
-    endw = endw,      --Close Watcher and watchables
+    close = close,    --Close Watcher and watchables
     upd = upd,        --Update watchables data
     del = del,        --Delete active watchers and watchables by wid
     trun = trun,
