@@ -7,36 +7,43 @@ local fiber = require('fiber')
 --Define Helpers
 local helper = {}
 
-function helper.remove_file(file, waitfor)
+local function remove_file(file, waitfor)
     fiber.sleep(waitfor)
     os.remove(file)
 end
 
-function helper.remove_tmp_files(waitfor)
+local function remove_tmp_files(waitfor)
     fiber.sleep(waitfor)
     os.execute('rm -rf /tmp/lua_*')
 end
 
-function helper.remove_tmp_folder(waitfor)
+local function remove_tmp_folder(waitfor)
     fiber.sleep(waitfor)
     os.execute('rm -rf /tmp/thefolder')
 end
 
-function helper.create_file(file, waitfor)
+local function create_file(file, waitfor)
     fiber.sleep(waitfor)
     os.execute('touch ' .. file)
 end
 
-function helper.append_file(file, waitfor)
+local function append_file(file, waitfor)
     fiber.sleep(waitfor)
     local command = 'echo "*UYHBVCDCV" >> ' ..file
     os.execute(command)
 end
 
-function helper.create_nfiles(n)
+local function create_nfiles(n)
     for _=1, n do
         os.tmpname()
     end
 end
+
+helper.remove_file = remove_file
+helper.remove_tmp_files = remove_tmp_files
+helper.remove_tmp_folder = remove_tmp_folder
+helper.create_file = create_file
+helper.append_file = append_file
+helper.create_nfiles = create_nfiles
 
 return helper
