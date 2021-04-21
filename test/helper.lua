@@ -39,11 +39,17 @@ local function create_nfiles(n)
     end
 end
 
+local function remove_pattrn(pattrn, waitfor)
+    fiber.sleep(waitfor)
+    os.execute('rm -rf ' .. pattrn)
+end
+
 helper.remove_file = remove_file
 helper.remove_tmp_files = remove_tmp_files
 helper.remove_tmp_folder = remove_tmp_folder
 helper.create_file = create_file
 helper.append_file = append_file
 helper.create_nfiles = create_nfiles
+helper.remove_pattrn = remove_pattrn
 
 return helper
