@@ -1,5 +1,3 @@
-![Watcher](watcher.png)
-
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3983/badge)](https://bestpractices.coreinfrastructure.org/projects/3983)
 ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/racherb/watcher/master)
 [![Luacheck](https://github.com/racherb/watcher/actions/workflows/luacheck.yml/badge.svg)](https://github.com/racherb/watcher/actions/workflows/luacheck.yml)
@@ -10,9 +8,9 @@
 ![Travis](https://travis-ci.org/racherb/watcher.svg?branch=master)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/racherb/watcher)
 
-> **Watcher** for watches the changes in the file system.
-
 # 👁️‍🗨️ Watcher
+
+> **Watcher** for watches the changes in the file system.
 
 :warning: **WARNING:** *Watcher is currently in an unstable phase*.
 
