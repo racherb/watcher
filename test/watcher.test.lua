@@ -16,7 +16,7 @@ local MAXWAIT
 local INTERVAL
 
 local pini = os.time()
-test = tap.test('test-file-watcher')
+local test = tap.test('test-file-watcher')
 test:plan(6)
 
 --Plan 1
