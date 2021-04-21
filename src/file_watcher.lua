@@ -72,7 +72,11 @@ local function take_n_items(
     if nitems == 0 then
         return tbl --Take all items
     elseif nitems == 1 then
-        return { tbl[1] } --Take the first
+        if type(tbl[1])=='table' then
+            return { tbl[1][1] }
+        else
+            return { tbl[1] }
+        end
     else
         --Take the n first items
         local t = {}
@@ -98,8 +102,8 @@ end
 -- @fixme: Sort for date modification don't work
 local function sort_files_by(
     --[[required]] flst,
-    --[[optional]] sort_by,
-    --[[optional]] take_n)
+    --[[required]] sort_by,
+    --[[required]] take_n)
 
     local size = #flst
     if take_n == 0 then return {} end
@@ -796,5 +800,6 @@ return {
     creation = file_creation,
     alteration = file_alteration,
     consolidate = consolidate,
-    recursive = recursive_tree
+    recursive = recursive_tree,
+    sort = sort_files_by
 }
