@@ -32,8 +32,6 @@ local SORT = require('types.file').SORT
 
 local db_awatcher = db.awatcher
 
-db.start()
-
 strict.on()
 
 --[[
@@ -800,6 +798,5 @@ return {
     creation = file_creation,
     alteration = file_alteration,
     consolidate = consolidate,
-    recursive = recursive_tree,
-    sort = sort_files_by
+    recursive = recursive_tree
 }
