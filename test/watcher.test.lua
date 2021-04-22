@@ -36,11 +36,13 @@ test:test('Single File Deletion >> The File Does Not Exist', function(t)
     t:is(res, true, "The file don't exist")
 
     --FWD03
-    MAXWAIT = 7
+    MAXWAIT = 3
     local tini = os.time()
     local _ = core.waitfor(
-        fwt.deletion({'/tmp/' .. file_not_exist_yet}, MAXWAIT
-    ).wid)
+        fwt.deletion(
+            {'/tmp/' .. file_not_exist_yet},
+            MAXWAIT
+        ).wid)
     etime = os.difftime(os.time() - tini)
     t:ok(etime < MAXWAIT, 'No wait if file not exist')
 
