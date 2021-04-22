@@ -17,10 +17,8 @@ local errno = require('errno')
 local log = require('log')
 
 local db = require('db.engine')
-local awatcher = require('db.engine').spaces.awatcher
 local ut = require('util')
 local fwa = require('file_watcher')
-local mon = require('monit')
 
 local WATCHER = require('types.file').WATCHER
 local OUTPUT = require('types.file').OUTPUT
@@ -29,6 +27,9 @@ local SORT = require('types.file').SORT
 local FILE = require('types.file').FILE
 
 local sck = require('sanity_check') --for sanity check
+
+local awa = db.spaces.awatcher
+local wat = db.spaces.watchables.index.wat_ak_answ --box.space.watchables.index.wat_ak_answ
 
 strict.on()
 
@@ -365,8 +366,8 @@ local function wait_for_watcher(wid)
     local watcher
 
     while (waiting) do
-        fiber.sleep(5)
-        watcher = awatcher:select(wid)
+        fiber.sleep(0.2)
+        watcher = awa:select(wid)
 
         if watcher[1][5] ~=0 then
             waiting = false
@@ -382,6 +383,52 @@ local function wait_for_watcher(wid)
 
 end
 
+local function info(wid)
+    local status
+    local answer
+    local watcher = awa:select(wid)
+    if watcher and watcher[1] then
+        if watcher[1][5]~=0 then
+            status = 'completed'
+            answer = watcher[1][6]
+        else
+            status = 'started'
+            answer = 'waiting'
+        end
+        return {
+            wid = watcher[1][1],
+            type = watcher[1][2],
+            what = watcher[1][3],
+            status = status,
+            ans = answer,
+            match = wat:count({wid, true}),
+            nomatch = wat:count({wid, false})
+        }
+    else
+        return {
+            wid = wid,
+            err = 'Watcher not found'
+        }
+    end
+end
+
+local function match(wid)
+    local mwa = wat:select({wid, true})
+    return mwa
+end
+
+local function nomatch(wid)
+    local nwa = wat:select({wid, false})
+    return nwa
+end
+
+local monitor = {}
+monitor.info = info
+monitor.match = match
+monitor.nomatch = nomatch
+--monitor.why = why
+--monitor.diff = diff
+
 local file = {}
 file.deletion = file_deletion
 file.creation = file_creation
@@ -391,11 +438,13 @@ local core = {}
 core.create = create_watcher
 core.run = run_watcher
 core.waitfor = wait_for_watcher
+core.start = db.start
+--core.forever = forever
 
 return {
     core = core,
     file = file,
-    monit = mon
+    monit = monitor
 }
 
 --data-watcher
