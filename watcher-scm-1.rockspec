@@ -35,11 +35,11 @@ build = {
       ["watcher.db.model"]        = "src/db/model.lua",
       ["watcher.sanity_check"]    = "src/sanity_check.lua",
       ["watcher.file_watcher"]    = "src/file_watcher.lua",
-      ["watcher.monitor"]         = "src/monit.lua",
       ["watcher.plugins.backup"]  = "src/plugins/backup.lua",
       ["watcher.plugins.default"] = "src/plugins/default.lua",
       ["watcher.types.file"]      = "src/types/file.lua",
       ["watcher.util"]            = "src/util.lua",
+      ["watcher.app"]            = "src/app.lua",
       ["watcher.watcher"]         = "src/watcher.lua"
    }
 }
