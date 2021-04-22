@@ -39,8 +39,7 @@ _test: &test
     - tarantoolctl rocks install luatest 0.5.0
     - tarantoolctl rocks install avro-schema scm-1
   script:
-    - .rocks/bin/luacheck watcher --ignore 311
-    - .rocks/bin/luatest -v --shuffle all
+    - .rocks/bin/luacheck watcher-scm-1.rockspec
     - ./test/watcher.test.lua
 
 _deploy: &deploy
