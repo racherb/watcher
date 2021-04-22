@@ -21,8 +21,6 @@ local wat = enty.watchables()
 local FILE = require('types.file').FILE
 local WATCHER = require('types.file').WATCHER
 
-box.cfg{}
-
 local function create_spaces()
 
     if not pcall(box.schema.create_space, 'awatcher') then
@@ -347,9 +345,13 @@ local awatcher = {
     match = match
 }
 
+start()
+
 local spaces = {
-    awatcher = box.space.awatcher
+    awatcher = box.space.awatcher,
+    watchables = box.space.watchables
 }
+
 
 return {
     start = start,
