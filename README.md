@@ -1,6 +1,7 @@
+
 # 👁️‍🗨️ Watcher
 
-> **Watcher** for watches the changes in the file system.
+**Watcher** for watches the changes in the file system.
 
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3983/badge)](https://bestpractices.coreinfrastructure.org/projects/3983)
 ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/racherb/watcher/master)
