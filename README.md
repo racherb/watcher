@@ -4,9 +4,7 @@
 **Watcher** for watches the changes in the file system.
 
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3983/badge)](https://bestpractices.coreinfrastructure.org/projects/3983)
-![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/racherb/watcher/master)
 [![Luacheck](https://github.com/racherb/watcher/actions/workflows/luacheck.yml/badge.svg)](https://github.com/racherb/watcher/actions/workflows/luacheck.yml)
-![GitHub version](https://badge.fury.io/gh/racherb%2Fwatcher.svg)
 ![GitHub contributors](https://img.shields.io/github/contributors/racherb/watcher.svg)
 ![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)
 ![GitHub top language](https://img.shields.io/github/languages/top/racherb/watcher)
