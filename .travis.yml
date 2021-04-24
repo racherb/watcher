@@ -43,7 +43,7 @@ _test: &test
 
 _deploy: &deploy
   provider: packagecloud
-  username: racherb
+  username: iamio
   token: ${PACKAGECLOUD_TOKEN}
   dist: ${OS}/${DIST}
   package_glob: build/*.{deb,rpm}
@@ -55,6 +55,7 @@ _deploy: &deploy
 _packpack: &packpack
   stage: deploy
   script:
+    - sudo apt-get install -y tarantool tarantool-dev
     - git describe --long
     - git clone https://github.com/packpack/packpack.git packpack
     - packpack/packpack
@@ -119,6 +120,6 @@ jobs:
 notifications:
   email:
     recipients:
-      - racielhb@gmail.com
+      - ${YO_EMAIL}
     on_success: change
     on_failure: always
