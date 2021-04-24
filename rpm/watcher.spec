@@ -1,4 +1,4 @@
-Name: tarantool-watcher
+Name: watcher
 Version: 0.1.1
 Release: 1%{?dist}
 Summary: Watcher for watches the changes in the file system, variables and data records.
@@ -7,7 +7,7 @@ License: BSD
 URL: https://github.com/racherb/watcher
 Source0: watcher-%{version}.tar.gz
 BuildArch: noarch
-BuildRequires: tarantool-devel >= 1.6.8.0
+BuildRequires: tarantool-dev >= 1.6.8.0
 Requires: tarantool >= 1.6.8.0
 
 %description

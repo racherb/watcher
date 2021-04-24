@@ -23,7 +23,7 @@ stages:
 
 env:
   global:
-    - PRODUCT=tarantool-watcher
+    - PRODUCT=watcher
     - ROCK_NAME=watcher
 
 _test: &test
