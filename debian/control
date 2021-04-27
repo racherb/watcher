@@ -1,8 +1,9 @@
 Source: watcher
 Priority: optional
-Section: database
+Section: file-system
 Maintainer: Raciel Hernandez <racherb@protonmail.com>
-Build-Depends: debhelper (>= 9), tarantool (>= 1.6.8.0)
+Build-Depends: debhelper (>= 9),
+               tarantool (>= 1.7)
 Standards-Version: 3.9.8
 Homepage: https://github.com/racherb/watcher
 Vcs-Git: git://github.com/racherb/watcher.git
@@ -10,7 +11,7 @@ Vcs-Browser: https://github.com/racherb/watcher
 
 Package: watcher
 Architecture: all
-Depends: tarantool (>= 1.6.8.0), ${shlibs:Depends}, ${misc:Depends}
+Depends: tarantool (>= 1.7),
+         ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: Watches the changes
- Watches the changes in the file system, variables and data records.
+Description: Watches the changes in the file system.

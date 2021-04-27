@@ -1,19 +1,24 @@
-watcher (2.0.0-1) unstable; urgency=medium
-
-  * Split into luakit and ckit
-
- -- Raciel Hernández <racherb@protonmail.com>  Sun, 19 Apr 2020 20:46:01 +0400
-
-watcher (1.0.1-1) unstable; urgency=medium
+watcher (0.2.1-1) unstable; urgency=medium
 
   * Fix tarantool-dev and libmsgpuck-dev dependencies
   * Set correct Architecture
   * Update Standards-Version
+  * Create watcher function
+  * Run watcher function
+  * Wait for watcher function
+  * Atomic functions over watchables
+  * Folder recursion
+  * Selective path level for recursion
+  * Watcher monitoring (info, match, nomatch)
+  * New tests are added
+  * Important code refactoring (file_deletion, file_creation, file_alteration)
+  * :bug: Fix issue #10 "LuajitError: builtin/fio.lua:544: pathname is absent #10"
+  * Refactoring watcher.test.lua
 
  -- Raciel Hernández <racherb@protonmail.com>  Sun, 19 Apr 2020 20:46:01 +0400
 
-watcher (1.0.0-1) unstable; urgency=low
+watcher (0.1.1-172-gb7309a3) unstable; urgency=low
 
   * Initial release
 
- -- Raciel Hernández <racherb@protonmail.com>  Sun, 19 Apr 2020 20:46:01 +0400
+ -- Raciel Hernández <racherb@protonmail.com>  Sun, 07 Apr 2021 20:46:01 +0400

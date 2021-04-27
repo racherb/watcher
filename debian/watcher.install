@@ -1,0 +1,7 @@
+src/*.lua usr/share/watcher/
+src/db/*.lua usr/share/watcher/db/
+src/types/*.lua usr/share/watcher/types/
+src/plugins/*.lua usr/share/watcher/plugins/
+.rocks/share/tarantool/avro_schema/* usr/share/watcher/.rocks/share/tarantool/avro_schema/
+.rocks/lib/tarantool/avro_schema_rt_c.so usr/share/watcher/.rocks/lib/tarantool/
+

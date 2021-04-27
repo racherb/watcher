@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - :bug: Fix issue #10 "LuajitError: builtin/fio.lua:544: pathname is absent #10"
 - Refactoring watcher.test.lua
 
-## [v0.1.1] - 2021-04-07
+## [0.1.1-172-gb7309a3] - 2021-04-07
 
 First release of watcher for advanced file watcher.
 

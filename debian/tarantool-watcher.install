@@ -1,4 +1,0 @@
-src/*.lua usr/share/tarantool/watcher/
-src/db/*.lua usr/share/tarantool/watcher/db/
-src/types/*.lua usr/share/tarantool/watcher/types/
-src/plugins/*.lua usr/share/tarantool/watcher/plugins/

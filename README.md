@@ -5,10 +5,10 @@
 
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3983/badge)](https://bestpractices.coreinfrastructure.org/projects/3983)
 [![Luacheck](https://github.com/racherb/watcher/actions/workflows/luacheck.yml/badge.svg)](https://github.com/racherb/watcher/actions/workflows/luacheck.yml)
-![GitHub contributors](https://img.shields.io/github/contributors/racherb/watcher.svg)
-![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)
-![GitHub top language](https://img.shields.io/github/languages/top/racherb/watcher)
 ![Travis](https://travis-ci.org/racherb/watcher.svg?branch=master)
+![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)
+![GitHub contributors](https://img.shields.io/github/contributors/racherb/watcher.svg)
+![GitHub top language](https://img.shields.io/github/languages/top/racherb/watcher)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/racherb/watcher)
 
 :warning: **WARNING:** *Watcher is currently in an unstable phase*.
