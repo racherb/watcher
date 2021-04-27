@@ -35,3 +35,11 @@ CTestTestfile.cmake
 src/watcher.pid
 
 src/watcher.log
+
+watcher.pid
+
+watcher.log
+
+watcher-scm-1.src.rock
+
+packpack/
