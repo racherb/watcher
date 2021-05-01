@@ -58,10 +58,40 @@ Detecting changes to the file system or data structures in memory is useful for 
 
 Watcher runs on Tarantool. Before you begin, ensure you have met the following requirements:
 
-- Requires **tarantool** >= 1.6.8.0
-- Build Requires: **tarantool-devel** >= 1.6.8.0
+- Requires **tarantool** >= 1.7
+- Build Requires: **tarantool-devel** >= 1.7
 
 ## Instaling Watcher
+
+There are several ways to install watcher on your server. Choose the option that suits you best and ... go ahead! :blush:
+
+### From Docker
+
+#### Get Watcher container from a docker image
+
+```Bash
+docker pull racherb/watcher:latest
+docker run -i -t racherb/watcher
+```
+
+#### Use docker volumes
+
+If you want to look at the host or remote machine's file system then start a container with a volume.
+
+The following example enables a volume on the temporary folder */tmp* of the host at path */opt/watcher/host/* of the container.
+
+```Shell
+docker run -i -t -v /tmp/:/opt/watcher/host/tmp racherb/watcher
+```
+
+> :sparkles: https://hub.docker.com/r/racherb/watcher
+
+### From GNU Linux Repository
+
+```Shell
+curl -s https://packagecloud.io/install/repositories/iamio/watcher/script.deb.sh | sudo bash
+sudo apt-get install watcher=0.2.1-1
+```
 
 ### From Utility Tarantool
 
@@ -83,13 +113,7 @@ luarocks install https://raw.githubusercontent.com/racherb/watcher/master/watche
 
 ## Running the tests
 
-The execution of the tests will take between 3 and 10 minutes approximately. This time is required in the simulation of file generation, modification and deletion.
-
-```Bash
-prove -v ./test/watcher.test.lua
-```
-
-or
+The execution of the tests will take between 2 and 10 minutes approximately. This time is required in the simulation of file generation, modification and deletion.
 
 ```Bash
 ./test/watcher.test.lua
@@ -141,9 +165,9 @@ tarantool> fw.deletion(pattern, MAXWAIT, INTERVAL, {ORDBY, ITEMS, MATCH})
 
 Use monit to know the result of the watcher execution.
 
-The following case is a file watcher for the detection of the creation of two files ('/tmp/fileA' and '/tmp/fileB'). One of them exists and the other has not been created yet.
+The following case is a file watcher for the detection of the creation of two files ('*/tmp/fileA*' and '*/tmp/fileB*'). One of them exists and the other has not been created yet.
 
-The use of monit allows you to know the status of the watcher.
+The use of **monit** allows you to know the status of the watcher.
 
 ```Lua
 tarantool> fw = require('watcher').file
