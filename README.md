@@ -86,14 +86,42 @@ docker run -i -t -v /tmp/:/opt/watcher/host/tmp racherb/watcher
 
 > :sparkles: https://hub.docker.com/r/racherb/watcher
 
-### From GNU Linux Repository
+### Quick installation from DEB Package
+
+Install the repository and package:
 
 ```Shell
 curl -s https://packagecloud.io/install/repositories/iamio/watcher/script.deb.sh | sudo bash
 sudo apt-get install watcher=0.2.1-1
 ```
 
-### From Utility Tarantool
+Available for the following distributions:
+
+- **Debian**: Lenny, Trixie, Bookworm, Bullseye, Buster, Stretch, Jessie
+- **Ubuntu**: Cosmic, Disco, Hirsute, Groovy, Focal
+- **ElementaryOS**: Freya, Loki, Juno, Hera
+
+### Quick installation from RPM Package
+
+Available for the following distributions:
+
+- **RHEL**: 7, 6, 8
+- **Fedora**: 29, 30, 31, 32, 33
+- **OpenSuse**: 15.1, 15.2, 15.3, 42.1, 42.2, 42.3
+- **SLES**: 12.4, 12.5, 15.0, 15.1, 15.2, 15.3
+
+First install the repository:
+
+```Shell
+curl -s https://packagecloud.io/install/repositories/iamio/watcher/script.rpm.sh | sudo bash
+```
+
+Install the package:
+
+- For RHEL and Fedora distros: `sudo yum install watcher-0.2.1-1.noarch`
+- For Opensuse and Suse Linux Enterprise: `sudo zypper install watcher-0.2.1-1.noarch`
+
+### Quick installation from Utility Tarantool
 
 Install watcher through Tarantool's tarantoolctl command:
 
@@ -108,7 +136,7 @@ Make sure you have Luarocks installed first, if you need to install it follow th
 From the terminal run the following command:
 
 ```Shell
-luarocks install https://raw.githubusercontent.com/racherb/watcher/master/watcher-scm-1.rockspec --local
+luarocks install https://raw.githubusercontent.com/racherb/watcher/master/watcher-scm-1.rockspec
 ```
 
 ## Running the tests
