@@ -1,38 +1,59 @@
 Name: watcher
-Version: 0.2.1-1
+Version: 0.2.1
 Release: 1%{?dist}
-Summary: Watcher for watches the changes in the file system, variables and data records.
-Group: Applications/Databases
+Summary: Watcher for watches the changes in the file system, variables and data records
+Group: Development/Libraries
 License: BSD
 URL: https://github.com/racherb/watcher
-Source0: watcher-%{version}.tar.gz
+Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
-BuildRequires: tarantool >= 1.7
-BuildRequires: tarantool-devel >= 1.7
-BuildRequires: /usr/bin/prove
 Requires: tarantool >= 1.7
+BuildRoot: %{_topdir}/BUILDROOT/
 
 %description
 Watcher for watches the changes in the file system, variables and data records.
 
+%define _binaries_in_noarch_packages_terminate_build   0
+
 %prep
-%setup -q -n watcher-%{version}
+%setup -q
+
+%autosetup
 
 %check
-./test/watcher.test.lua
+#./test/watcher.test.lua
+
+%build
 
 %install
-# Create /usr/share/watcher
-mkdir -p %{buildroot}%{_datadir}/watcher
-# Copy init.lua to /usr/share/tarantool/watcher/init.lua
-cp -p src/*.lua %{buildroot}%{_datadir}/watcher
+rm -rf %{buildroot}
+install -m 0755 -d %{buildroot}/opt/%{name}
+mkdir -p %{buildroot}/opt/%{name}/db
+mkdir -p %{buildroot}/opt/%{name}/types
+mkdir -p %{buildroot}/opt/%{name}/plugins
+cp -a *.lua %{buildroot}/opt/%{name}
+cp -p *.lua %{buildroot}/opt/%{name}
+cp -p db/*.lua %{buildroot}/opt/%{name}/db/
+cp -p types/*.lua %{buildroot}/opt/%{name}/types/
+cp -p plugins/*.lua %{buildroot}/opt/%{name}/plugins
+mkdir -p %{buildroot}/opt/%{name}/.rocks/share/tarantool/avro_schema
+mkdir -p %{buildroot}/opt/%{name}/.rocks/lib/tarantool
+cp -p .rocks/share/tarantool/avro_schema/* %{buildroot}/opt/%{name}/.rocks/share/tarantool/avro_schema/
+cp -p .rocks/lib/tarantool/avro_schema_rt_c.so %{buildroot}/opt/%{name}/.rocks/lib/tarantool/
+
+%clean
+rm -rf %{buildroot}
 
 %files
-%dir %{_datadir}/watcher
-%{_datadir}/watcher/
-%doc README.md
+%defattr(-,root,root,-)
+/opt/%{name}/*.lua
+/opt/%{name}/db/*
+/opt/%{name}/types/*
+/opt/%{name}/plugins/*
+/opt/%{name}/.rocks/share/tarantool/avro_schema/*
+/opt/%{name}/.rocks/lib/tarantool/avro_schema_rt_c.so
 %{!?_licensedir:%global license %doc}
-%license LICENSE AUTHORS
+%license LICENSE
 
 %changelog
 * Fri Apr 23 2021 Raciel Hernandez <racherb@protonmail.com> v0.2.1-1
