@@ -7,16 +7,20 @@ Watcher for Watch everything!
 `Watcher`_ simplifies the integration of non-connected systems 
 by detecting changes in data and facilitates the development of monitoring, 
 security and process automation applications.
-Think of it as *Continuous Integration*.
+Think of Watcher as an intercom or a bridge between different servers or between different 
+applications on the same server. Or you can simply take advantage of Watcher's capabilities 
+to develop your project.
 
-Yes, "Watch everything"
+"Watch everything"
     Currently the functionality of detecting changes in the file system is implemented.
     However, the project has a larger scope and we invite you to collaborate with us 
     to achieve the goal of "Watch Everything".
     One step at a time! Come on and join us.
 
 Starting with the file system 🗂️
-    Yes, the FS.
+    Yes, we have started implementing watcher to observe and detect changes in the file system. 
+    You can use watcher to discover changes related to file creation, file deletion and 
+    file alteration. You can find out more about our all the :doc:`/features` in these pages.
 
 Watcher is Free, Open Source and User Focused 💓
     Our code is free and `open source <https://github.com/racherb/watcher>`_.
@@ -25,15 +29,12 @@ Watcher is Free, Open Source and User Focused 💓
 
 .. _Watcher: https://watcher.readthedocs.io/en/latest/
 
-You can find out more about our all the :doc:`/features` in these pages.
-
 First steps
 -----------
 
 Your project needs to process inputs that trigger your business logic 
 but those inputs are out of your control? 
-Do you want to integrate your project based on detection of file system changes 
-or Web changes? 
+Do you want to integrate your project based on detection of file system changes? 
 Learn about the great options Watcher offers for advanced change 
 detection that you can leverage for your project development.
 

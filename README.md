@@ -151,21 +151,21 @@ The execution of the tests will take between 2 and 10 minutes approximately. Thi
 
 ### Using Watcher is very simple
 
-Create a watcher to detect file deletion:
+Create a watcher to detect **file deletion**:
 
 ```Lua
 tarantool> fw = require('watcher').file
 tarantool> fw.deletion({'/path/to/file'})
 ```
 
-Create a watcher to detect file creation:
+Create a watcher to detect **file creation**:
 
 ```Lua
 tarantool> fw = require('watcher').file
 tarantool> fw.creation({'/path/to/file'})
 ```
 
-Create a watcher to detect file alteration:
+Create a watcher to detect **file alteration**:
 
 ```Lua
 tarantool> fw = require('watcher').file
