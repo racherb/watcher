@@ -39,7 +39,8 @@ Learn about the great options Watcher offers for advanced change
 detection that you can leverage for your project development.
 
 * **Getting started**:
-  :doc:`With File Watcher </intro/getting-started-with-file-watcher>` |
+  :doc:`Installation Prerequisites <prerreq>` |
+  :doc:`Quick Installation <setup>` |
   :doc:`With Http Watcher </intro/getting-started-with-http-watcher>` |
   :doc:`Feature Overview </features>` |
   :doc:`/choosing-a-site`
@@ -52,8 +53,9 @@ detection that you can leverage for your project development.
    :maxdepth: 2
    :hidden:
    :caption: First steps
-
-   /intro/getting-started-with-file-watcher
+  
+   /prerreq
+   /setup
    /intro/getting-started-with-http-watcher
 
    /intro/integration-guide
