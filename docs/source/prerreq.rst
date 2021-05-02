@@ -1,9 +1,8 @@
 Prerequisites
-=============
+==============
 
-
-Supported Platforms
--------------------
+1. Supported Platforms.
+----------------------
 
 * **POSIX Compliant**: ``Unix``, ``MacOsx``, ``Linux``, ``Freebsd``.
 * **POSIX for Windows**: ``Cygwin``, ``Microsoft POSIX Subsystem``, ``Windows Services for UNIX``, ``MKS Toolkit``.
@@ -11,9 +10,10 @@ Supported Platforms
 .. warning::
     Watcher has not been tested on POSIX Windows Systems.
 
-Tarantool
----------
+2. Tarantool
+------------
 
-Watcher runs on Tarantool. Before you begin, ensure you have met the following requirements:
+Watcher runs on Tarantool. 
+Before you begin, ensure you have met the following requirements:
 
-* Requires Tarantool >= 1.7.
+* **Tarantool**: ``>= 1.7``.
