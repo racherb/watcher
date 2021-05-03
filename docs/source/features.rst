@@ -66,30 +66,165 @@ The ``waitfor`` function blocks the code and waits for a watcher to finish.
 Bulk File Processing
 --------------------
 
-..
-
+**Watcher** has an internal mechanism to allocate fibers for every certain amount of files 
+in the watcher list. This amount is determined by the ``BULK_CAPACITY`` configuration value 
+in order to optimize performance.
 
 Advanced File Deletion
 ----------------------
 
+Inputs
+******
+
+.. list-table:: File Watcher Deletion Parameters
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Name
+     - Type
+     - Description
+   * - wlist
+     - ``table``, ``required``
+     - Watch List
+   * - maxwait
+     - ``number``, ``otional``, ``default-value: 60``
+     - Maximum wait time in seconds
+   * - interval
+     - ``number``, ``otional``, ``default-value: 0.5``
+     - Verification interval for watcher in seconds
+   * - options
+     - ``table``, ``optional``, ``default-value: {'NS', 0, 0}``
+     - List of search options
+
+Options
+*******
+
 Advanced File Creation
 ----------------------
+
+Inputs
+******
+
+.. list-table:: File Watcher Creation Parameters
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Name
+     - Type
+     - Description
+   * - wlist
+     - ``table``, ``required``
+     - Watch List
+   * - maxwait
+     - ``number``, ``otional``, ``default-value: 60``
+     - Maximum wait time in seconds
+   * - interval
+     - ``number``, ``otional``, ``default-value: 0.5``
+     - Verification interval for watcher in seconds
+   * - minsize
+     - ``number``, ``optional``, ``default-value: 0``
+     - Value of the minimum expected file size
+   * - stability
+     - ``table``, ``optional``, ``default-value: {1, 15}``
+     - Minimum criteria for measuring file stability
+   * - novelty
+     - ``table``, ``optional``, ``default-value: {0, 0}``
+     - Time interval that determines the validity of the file's novelty
+   * - nmatch
+     - ``number``, ``optional``, ``default-value: 0``
+     - Number of expected files as a search sufficiency condition
+
+minsize
+*******
+
+stability
+*********
+
+internal
+iterations
+
+novelty
+*******
+
+nmatch
+******
 
 Advanced File Alteration
 ------------------------
 
+Inputs
+******
 
-Decoupled Execution
--------------------
 
-Novelty Detection
-------------------
+.. list-table:: File Watcher Alteration Parameters
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Name
+     - Type
+     - Description
+   * - wlist
+     - ``table``, ``required``
+     - Watch List
+   * - maxwait
+     - ``numeric``, ``otional``, ``default-value: 60``
+     - Maximum wait time in seconds
+   * - interval
+     - ``numeric``, ``otional``, ``default-value: 0.5``
+     - Verification interval for watcher in seconds
+   * - awhat
+     - ``string``, ``optional``, ``default-value: '1'``
+     - Type of file alteration to be observed
+   * - nmatch
+     - ``number``, ``optional``, ``default-value: 0``
+     - Number of expected files as a search sufficiency condition
+
+awhat
+*****
+
+.. list-table:: File Watcher Alteration Parameters
+   :widths: 25 10 65
+   :header-rows: 1
+
+   * - Code
+     - Value
+     - Description
+   * - ``ANY_ALTERATION``
+     - ``'1'``
+     - Search for any alteration
+   * - ``CONTENT_ALTERATION``
+     - ``'2'``
+     - Search for content file alteration
+   * - ``SIZE_ALTERATION``
+     - ``'3'``
+     - Search for file size alteration
+   * - ``CHANGE_TIME_ALTERATION``
+     - ``'4'``
+     - Search for file ``ctime`` alteration
+   * - ``MODIFICATION_TIME_ALTERATION``
+     - ``'5'``
+     - Search for file ``mtime`` alteration
+   * - ``INODE_ALTERATION``
+     - ``'6'``
+     - Search for file ``inode`` alteration
+   * - ``OWNER_ALTERATION``
+     - ``'7'``
+     - Search for file ``owner`` alteration
+   * - ``GROUP_ALTERATION``
+     - ``'8'``
+     - Search for file ``group`` alteration
 
 Watcher for Any Alteration
 ---------------------------
 
 Watcher for Specific Alteration
 -------------------------------
+
+Decoupled Execution
+-------------------
+
+Novelty Detection
+------------------
 
 
 Qualitative Response
