@@ -75,7 +75,9 @@ Quick installation from **Utility Tarantool**:
 Install watcher through Tarantool's ``tarantoolctl`` command:
 
 .. code-block:: console
-
+   :linenos:
+   
+   tarantoolctl rocks install avro-schema
    tarantoolctl rocks install https://raw.githubusercontent.com/racherb/watcher/master/watcher-scm-1.rockspec
 
 From LuaRocks

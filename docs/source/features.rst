@@ -4,9 +4,31 @@ Watcher features
 The **Watcher** module has been designed with the typical use cases of the Banking 
 and Telecommunications industry in mind for *IT Batch Processing*.
 
+If you know of a use case that is not covered by watcher, 
+please tell us about it in the 
+`GitHub Discussions Section <https://github.com/racherb/watcher/discussions/categories/ideas/>`_ .
+
+Currently **Watcher** comprises the following features: 
+:ref:`Single File & Folders`, 
+:ref:`Multiples File Groups`,
+:ref:`File Patterns`,
+:ref:`Non-Bloking Execution`, 
+:ref:`Bloking Execution`,, 
+Bulk File Processing, 
+Advanced File Deletion, 
+Advanced File Creation, 
+Advanced File Alteration, 
+Watcher for Any Alteration, Watcher for Specific Alteration, Decoupled Execution,
+Novelty Detection, Qualitative Response, Check File Stability, Big Amounts of Files,
+Atomic Function Injection, Folder Recursion, Selective Path Level, Watcher Monitoring
+, ...
+
+
 .. note::
    The lines of code used to exemplify each feature of watcher assume the following: 
    ``fwa = require('watcher').file``.
+
+.. _Single File & Folders:
 
 Single File & Folders
 ----------------------
@@ -19,6 +41,8 @@ Detection of ``creation``, ``deletion`` and ``alteration`` of **single files** o
    fwa.creation({'/path/to/single_file'})
    fwa.creation({'/path/to/single_folder/'})
 
+.. _Multiples File Groups:
+
 Multiples File Groups
 ---------------------
 
@@ -27,6 +51,7 @@ The input list of watchable files is a Lua table type parameter.
 
 .. code-block:: lua
    :linenos:
+   :emphasize-lines: 3,4
 
    fwa.deletion(
        {
@@ -34,6 +59,8 @@ The input list of watchable files is a Lua table type parameter.
            '/path2/to/group_file_b/*'
         }
     )
+
+.. _File Patterns:
 
 File Patterns
 --------------
@@ -46,12 +73,16 @@ File Patterns
    The *watch-list* is constructed with a single flag that controls the behavior of the function: **GLOB_NOESCAPE**. 
    For details type ``man 3 glob``.
 
+.. _Non-Bloking Execution:
+
 Non-Bloking Execution
 ---------------------
 
 By default the **Watcher** run is executed in non-blocking mode through tarantool fibers. 
 Fibers are a unique Tarantool feature *"green threads"* or coroutines that run independently 
 of operating system threads.
+
+.. _Bloking Execution:
 
 Blocking Execution
 ------------------
@@ -60,7 +91,7 @@ The ``waitfor`` function blocks the code and waits for a watcher to finish.
 
 .. code-block:: lua
 
-   waitfor(fwa.creation('/path/to/file').wid)
+   waitfor(fwa.creation({'/path/to/file'}).wid)
 
 
 Bulk File Processing
@@ -80,7 +111,7 @@ Inputs
    :widths: 25 25 50
    :header-rows: 1
 
-   * - Name
+   * - Param
      - Type
      - Description
    * - wlist
@@ -109,7 +140,7 @@ Inputs
    :widths: 25 25 50
    :header-rows: 1
 
-   * - Name
+   * - Param
      - Type
      - Description
    * - wlist
@@ -160,7 +191,7 @@ Inputs
    :widths: 25 25 50
    :header-rows: 1
 
-   * - Name
+   * - Param
      - Type
      - Description
    * - wlist
@@ -186,7 +217,7 @@ awhat
    :widths: 25 10 65
    :header-rows: 1
 
-   * - Code
+   * - Type
      - Value
      - Description
    * - ``ANY_ALTERATION``
@@ -217,11 +248,28 @@ awhat
 Watcher for Any Alteration
 ---------------------------
 
+.. code-block:: lua
+
+   fwa.alteration({'/path/to/file'}, nil, nil, '1')
+
 Watcher for Specific Alteration
 -------------------------------
 
+.. code-block:: lua
+   :linenos:
+
+   fwa.alteration({'/path/to/file'}, nil, nil, '2') --Watcher for content file alteration
+   fwa.alteration({'/path/to/file'}, nil, nil, '3') --Watcher for content file size alteration
+   fwa.alteration({'/path/to/file'}, nil, nil, '4') --Watcher for content file ctime alteration
+
+See table "*File Watcher Alteration Parameters*" for more options.
+   
+
 Decoupled Execution
 -------------------
+
+The ``create``, ``runv functions and the ``monit`` options have been decoupled 
+for better behavior, overhead relief and versatility of use.
 
 Novelty Detection
 ------------------
