@@ -229,13 +229,13 @@ local function file_deletion(
 end
 
 local function file_creation(
-    wlist,
-    maxwait,
-    interval,
-    minsize,
-    stability,
-    novelty,
-    nmatch
+    --[[required]] wlist,
+    --[[optional]] maxwait,
+    --[[optional]] interval,
+    --[[optional]] minsize,
+    --[[optional]] stability,
+    --[[optional]] novelty,
+    --[[optional]] nmatch
 )
     --Validate th user inputs
     local sck_wlist = sck.wlist(wlist)
@@ -349,13 +349,13 @@ local function file_alteration(
 
     --Run the watcher for specific params
    return run_watcher(
-    watcher,
-    {
-        _maxwait,
-        _interval,
-        _awhat,
-        _match
-     }
+        watcher,
+        {
+            _maxwait,
+            _interval,
+            _awhat,
+            _match
+        }
     )
 end
 
