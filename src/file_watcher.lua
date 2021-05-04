@@ -692,12 +692,12 @@ local function file_creation(
 end
 
 local function file_alteration(
-    --[[required]] wid,
-    --[[required]] wlist,
-    --[[optional]] maxwait,
-    --[[optional]] interval,
-    --[[optional]] awhat,
-    --[[optional]] match
+    wid,
+    wlist,
+    maxwait,
+    interval,
+    awhat,
+    match
 )
 
     local fio_lstat = fio.lstat
@@ -779,17 +779,13 @@ local function file_alteration(
             local fid = fiber.id(fib)
             pcall(fiber.cancel, fid)
         end
-        return {
-            wid = wid,
-            ans = db_awatcher.close(wid, match, awhat)
-        }
     end
 
-    --Nothing for watch
     return {
         wid = wid,
-        ans = false
+        ans = db_awatcher.close(wid, match, awhat)
     }
+
 end
 
 -- Export API functions
