@@ -17,7 +17,7 @@ local INTERVAL
 
 local pini = os.time()
 local test = tap.test('test-file-watcher')
-test:plan(6)
+test:plan(7)
 
 --Plan 1
 test:test('Single File Deletion >> The File Does Not Exist', function(t)
@@ -374,6 +374,21 @@ test:test('Advanced File Creation', function(t)
     res = mon.info(wat.wid)
     t:is(res.ans, false, 'The file has unexpectedly disappeared')
     --]]
+end)
+
+--Plan 7
+test:test('File Alteration', function(t)
+
+    t:plan(1)
+
+    MAXWAIT = 4
+    INTERVAL = 0.5
+
+    wat = fwt.creation({'/tmp/nOt.eXisT.tfv'}, MAXWAIT, INTERVAL, 10)
+    fiber.sleep(MAXWAIT + 1)
+    res = mon.info(wat.wid)
+    t:is(res.ans, false, 'The file not exist')
+
 end)
 
 print('Elapsed time: ' .. os.difftime(os.time() - pini) .. 's')
