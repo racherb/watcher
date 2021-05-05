@@ -13,20 +13,31 @@ Currently **Watcher** comprises the following features:
 :ref:`Multiples File Groups`,
 :ref:`File Patterns`,
 :ref:`Non-Bloking Execution`, 
-:ref:`Bloking Execution`,, 
-Bulk File Processing, 
-Advanced File Deletion, 
-Advanced File Creation, 
-Advanced File Alteration, 
-Watcher for Any Alteration, Watcher for Specific Alteration, Decoupled Execution,
-Novelty Detection, Qualitative Response, Check File Stability, Big Amounts of Files,
-Atomic Function Injection, Folder Recursion, Selective Path Level, Watcher Monitoring
-, ...
-
+:ref:`Bloking Execution`,
+:ref:`Bulk File Processing`, 
+:ref:`Advanced File Deletion`, 
+:ref:`Advanced File Creation`, 
+:ref:`Advanced File Alteration`, 
+:ref:`Watcher for Any Alteration`,
+:ref:`Watcher for Specific Alteration`,
+:ref:`Decoupled Execution`,
+:ref:`Novelty Detection`,
+:ref:`Qualitative Response`,
+:ref:`Check File Stability`,
+:ref:`Big Amounts of Files`,
+:ref:`Atomic Function Injection`,
+:ref:`Folder Recursion`,
+:ref:`Selective Path Level`,
+:ref:`Watcher Monitoring`
 
 .. note::
    The lines of code used to exemplify each feature of watcher assume the following: 
-   ``fwa = require('watcher').file``.
+
+   .. code-block:: lua
+      :linenos:
+      
+      fwa = require('watcher').file   --for file-watcher
+      mon = require('watcher').monit  --for watcher monitoring
 
 .. _Single File & Folders:
 
@@ -38,8 +49,8 @@ Detection of ``creation``, ``deletion`` and ``alteration`` of **single files** o
 .. code-block:: lua
    :linenos:
 
-   fwa.creation({'/path/to/single_file'})
-   fwa.creation({'/path/to/single_folder/'})
+   fwa.creation({'/path/to/single_file'})    --watching file creation
+   fwa.creation({'/path/to/single_folder/'}) --watching folder creation
 
 .. _Multiples File Groups:
 
@@ -55,8 +66,8 @@ The input list of watchable files is a Lua table type parameter.
 
    fwa.deletion(
        {
-           '/path1/to/group_file_a/*',
-           '/path2/to/group_file_b/*'
+           '/path_1/to/group_file_a/*',  --folder
+           '/path_2/to/group_file_b/*'   --another
         }
     )
 
@@ -91,8 +102,9 @@ The ``waitfor`` function blocks the code and waits for a watcher to finish.
 
 .. code-block:: lua
 
-   waitfor(fwa.creation({'/path/to/file'}).wid)
+   waitfor(fwa.creation({'/path/to/file'}).wid) --wait for watcher
 
+.. _Bulk File Processing:
 
 Bulk File Processing
 --------------------
@@ -100,6 +112,8 @@ Bulk File Processing
 **Watcher** has an internal mechanism to allocate fibers for every certain amount of files 
 in the watcher list. This amount is determined by the ``BULK_CAPACITY`` configuration value 
 in order to optimize performance.
+
+.. _Advanced File Deletion:
 
 Advanced File Deletion
 ----------------------
@@ -127,8 +141,69 @@ Inputs
      - ``table``, ``optional``, ``default-value: {'NS', 0, 0}``
      - List of search options
 
-Options
+wlist
+*****
+
+It is the list of files, directories or file patterns to be observed. The data type is a Lua table and 
+the size of tables is already limited to ``2.147.483.647`` elements.
+
+An example definition is the following:
+
+.. code-block:: lua
+   
+   wlist = {'path/file', 'path', 'pattern*', ...} --arbitrary code
+
+maxwait
 *******
+
+Maxwait is a numeric value that represents the maximum time to wait for the watcher. 
+Watcher will terminate as soon as possible and as long as the search conditions are met. 
+The default value is ``60 seconds``. 
+
+interval
+********
+
+Interval is a numerical value that determines how often the watcher checks the search conditions. 
+This value must be less than the maxwait value. 
+The default value is ``0.5`` seconds.
+
+options
+*******
+The options parameter is a Lua table containing 3 elements: ``sort``, ``cases`` and ``match``.
+
+* The first one ``sort`` contains the ordering method of the ``wlist``. 
+* The second element ``cases`` contains the number of cases to observe from the wlist.
+* and the third element ``match`` indicates the number of cases expected to satisfy the search. 
+
+By default, the value of the option table is ``{sort = 'NS', cases = 0, match = 0}``.
+
+.. list-table:: The list of possible values for ``sort``
+   :widths: 12 50
+   :header-rows: 1
+
+   * - Value
+     - Description
+   * - ``'NS'``
+     - No sort
+   * - ``'AA'``
+     - Sorted alphabetically ascending
+   * - ``'AD'``
+     - Sorted alphabetically descending
+   * - ``'MA'``
+     - Sorted by date of modification ascending
+   * - ``'MD'``
+     - Sorted for date of modification descending
+
+.. note::
+
+   The value ``'NS'`` treats the list in the same order in which the elements 
+   are passed to the list ``wlist``.
+
+
+Output
+******
+
+.. _Advanced File Creation:
 
 Advanced File Creation
 ----------------------
@@ -165,27 +240,74 @@ Inputs
      - ``number``, ``optional``, ``default-value: 0``
      - Number of expected files as a search sufficiency condition
 
+wlist
+*****
+
+It is the list of files, directories or file patterns to be observed. The data type is a Lua table and 
+the size of tables is already limited to ``2.147.483.647`` elements.
+
+An example definition is the following:
+
+.. code-block:: lua
+   
+   wlist = {'path/file', 'path', 'pattern*', ...} --arbitrary code
+
+maxwait
+*******
+
+Maxwait is a numeric value that represents the maximum time to wait for the watcher. 
+Watcher will terminate as soon as possible and as long as the search conditions are met. 
+The default value is ``60 seconds``. 
+
+interval
+********
+
+Interval is a numerical value that determines how often the watcher checks the search conditions. 
+This value must be less than the maxwait value. 
+The default value is ``0.5`` seconds.
+
 minsize
 *******
+
+Minsize is a numerical value representing the minimum expected file size. 
+The default value is ``0``, which means that it is sufficient to just generate the file when the minimum size is unknown.
+
+.. important::
+
+   Regardless of whether the expected file size is ``0 Bytes``, 
+   watcher will not terminate until the file arrives in its entirety, 
+   avoiding edge cases where a file is consumed before the data transfer is complete.
 
 stability
 *********
 
-internal
-iterations
+The ``stability`` parameter contains the elements that allow to evaluate the stability of a file. 
+It is a Lua table containing two elements:
+
+* The ``interval`` that defines the frequency of checking the file once it has arrived.
+* The number of ``iterations`` used to determine the stability of the file.
+
+The default value is: ``{1, 15}``.
 
 novelty
 *******
 
+The ``novelty`` parameter is a two-element Lua table that contains the 
+time interval that determines the validity of the file’s novelty.
+The default value is ``{0, 0}`` which indicates that the novelty of the file will not be evaluated.
+
 nmatch
 ******
+
+``nmatch`` is a number of expected files as a search sufficiency condition.
+
+.. _Advanced File Alteration:
 
 Advanced File Alteration
 ------------------------
 
 Inputs
 ******
-
 
 .. list-table:: File Watcher Alteration Parameters
    :widths: 25 25 50
@@ -210,8 +332,38 @@ Inputs
      - ``number``, ``optional``, ``default-value: 0``
      - Number of expected files as a search sufficiency condition
 
+wlist
+*****
+
+It is the list of files, directories or file patterns to be observed. The data type is a Lua table and 
+the size of tables is already limited to ``2.147.483.647`` elements.
+
+An example definition is the following:
+
+.. code-block:: lua
+   
+   wlist = {'path/file', 'path', 'pattern*', ...} --arbitrary code
+
+maxwait
+*******
+
+Maxwait is a numeric value that represents the maximum time to wait for the watcher. 
+Watcher will terminate as soon as possible and as long as the search conditions are met. 
+The default value is ``60 seconds``. 
+
+interval
+********
+
+Interval is a numerical value that determines how often the watcher checks the search conditions. 
+This value must be less than the maxwait value. 
+The default value is ``0.5`` seconds.
+
 awhat
 *****
+
+Type of file alteration to be observed. See :ref:`File Watcher Alteration Parameters`.
+
+.. _File Watcher Alteration Parameters:
 
 .. list-table:: File Watcher Alteration Parameters
    :widths: 25 10 65
@@ -245,6 +397,13 @@ awhat
      - ``'8'``
      - Search for file ``group`` alteration
 
+nmatch
+******
+
+``nmatch`` is a number of expected files as a search sufficiency condition.
+
+.. _Watcher for Any Alteration:
+
 Watcher for Any Alteration
 ---------------------------
 
@@ -262,29 +421,37 @@ Watcher for Specific Alteration
    fwa.alteration({'/path/to/file'}, nil, nil, '3') --Watcher for content file size alteration
    fwa.alteration({'/path/to/file'}, nil, nil, '4') --Watcher for content file ctime alteration
 
-See table "*File Watcher Alteration Parameters*" for more options.
+See table :ref:`File Watcher Alteration Parameters` for more options.
    
+.. _Decoupled Execution:
 
 Decoupled Execution
 -------------------
 
-The ``create``, ``runv functions and the ``monit`` options have been decoupled 
+The ``create``, ``run`` function and the ``monit`` options have been decoupled 
 for better behavior, overhead relief and versatility of use.
+
+.. _Novelty Detection:
 
 Novelty Detection
 ------------------
 
+.. _Qualitative Response:
 
 Qualitative Response
 --------------------
 
+.. _Check File Stability:
 
 Check File Stability
 --------------------
 
+.. _Big Amounts of Files:
+
 Big Amounts of Files
 --------------------
 
+.. _Atomic Function Injection:
 
 Atomic Function Injection
 -------------------------
@@ -301,14 +468,17 @@ In the example, the atomic function afu creates a backup copy for each element o
    wat = cor.create({'/tmp/original.txt'}, 'FWD', afu) --afu is passed as parameter
    res = run_watcher(wat)
 
+.. _Folder Recursion:
+
 Folder Recursion
 ----------------
 
-
+.. _Selective Path Level:
 
 Selective Path Level
 --------------------
 
+.. _Watcher Monitoring:
 
 Watcher Monitoring
 ------------------
