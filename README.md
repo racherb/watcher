@@ -6,8 +6,8 @@
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3983/badge)](https://bestpractices.coreinfrastructure.org/projects/3983)
 [![Luacheck](https://github.com/racherb/watcher/actions/workflows/luacheck.yml/badge.svg)](https://github.com/racherb/watcher/actions/workflows/luacheck.yml)
 ![Travis](https://travis-ci.org/racherb/watcher.svg?branch=master)
+[![Documentation Status](https://readthedocs.org/projects/watcher/badge/?version=latest)](https://watcher.readthedocs.io/en/latest/?badge=latest)
 ![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)
-![GitHub contributors](https://img.shields.io/github/contributors/racherb/watcher.svg)
 ![GitHub top language](https://img.shields.io/github/languages/top/racherb/watcher)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/racherb/watcher)
 
