@@ -4,6 +4,7 @@ package.path = package.path .. ';../watcher/src/?.lua;../src/?.lua;?.lua;../test
 
 local tap = require('tap')
 local fiber = require('fiber')
+local fio=require('fio')
 local helper = require('helper')
 
 local fwt = require('watcher').file
@@ -331,7 +332,7 @@ end)
 --Plan 6
 test:test('Advanced File Creation', function(t)
 
-    t:plan(4)
+    t:plan(8)
 
     MAXWAIT = 4
     INTERVAL = 0.5
@@ -366,6 +367,37 @@ test:test('Advanced File Creation', function(t)
     res = mon.info(wat.wid)
     t:is(res.ans, false, '2100 files are expected but only 2000 arrive')
 
+    helper.remove_tmp_files(0)
+    MAXWAIT = 2
+    helper.create_file('/tmp/c_novelty.dat', 0)
+    local dfrom = os.time({year = 2021, month = 1, day = 5})
+    local duntil = os.time()+2500000
+    wat = fwt.creation({'/tmp/c_novelty.dat'}, MAXWAIT, nil, 0, nil, {dfrom, duntil})
+    fiber.sleep(MAXWAIT+1)
+    res = mon.info(wat.wid)
+    t:is(res.ans, true, 'The novelty is in range')
+
+    dfrom = os.time()
+    duntil = dfrom + 2500000
+    wat = fwt.creation({'/tmp/c_novelty.dat'}, MAXWAIT, nil, 0, nil, {dfrom, duntil})
+    fiber.sleep(MAXWAIT+1)
+    res = mon.info(wat.wid)
+    t:is(res.ans, false, 'The novelty is not in range')
+
+    dfrom = os.time()-123435421
+    wat = fwt.creation({'/tmp/c_novelty.dat'}, MAXWAIT, nil, 0, nil, {dfrom, nil})
+    fiber.sleep(MAXWAIT+1)
+    res = mon.info(wat.wid)
+    t:is(res.ans, true, 'The novelty is after the date')
+
+    duntil = os.time()+123435421
+    wat = fwt.creation({'/tmp/c_novelty.dat'}, MAXWAIT, nil, 0, nil, {nil, duntil})
+    fiber.sleep(MAXWAIT+1)
+    res = mon.info(wat.wid)
+    t:is(res.ans, true, 'The novelty is before the date')
+
+    helper.remove_file('/tmp/c_*', 0)
+
     --[[helper.remove_tmp_files(0)
     local c2 = os.tmpname()
     wat = fwt.creation({c2}, 10, INTERVAL, 10)
@@ -379,15 +411,65 @@ end)
 --Plan 7
 test:test('File Alteration', function(t)
 
-    t:plan(1)
+    t:plan(5)
 
     MAXWAIT = 4
     INTERVAL = 0.5
 
-    wat = fwt.creation({'/tmp/nOt.eXisT.tfv'}, MAXWAIT, INTERVAL, 10)
+    wat = fwt.alteration({'/tmp/d_nOt.eXisT.tfv'}, MAXWAIT, INTERVAL)
     fiber.sleep(MAXWAIT + 1)
     res = mon.info(wat.wid)
     t:is(res.ans, false, 'The file not exist')
+
+    helper.create_file('/tmp/d_fa002.dat', 0)
+    fiber.sleep(1)
+    wat = fwt.alteration({'/tmp/d_fa002.dat'}, MAXWAIT, INTERVAL)
+    helper.append_file('/tmp/d_fa002.dat', 1)
+    fiber.sleep(MAXWAIT + 1)
+    res = mon.info(wat.wid)
+    t:is(res.ans, true, 'The file has been altered')
+
+    wat = fwt.alteration({'/tmp/d_fa002.dat'}, MAXWAIT, INTERVAL, '3')
+    fiber.sleep(0.5)
+    helper.append_file('/tmp/d_fa002.dat', 1)
+    fiber.sleep(MAXWAIT + 1)
+    res = mon.info(wat.wid)
+    t:is(res.ans, true, 'The file size has been altered')
+
+    wat = fwt.alteration({'/tmp/d_fa002.dat'}, MAXWAIT, INTERVAL, '4')
+    fiber.sleep(0.5)
+    helper.append_file('/tmp/d_fa002.dat', 1)
+    fiber.sleep(MAXWAIT + 1)
+    res = mon.info(wat.wid)
+    t:is(res.ans, true, 'The file ctime has been altered')
+
+    wat = fwt.alteration({'/tmp/d_fa002.dat'}, MAXWAIT, INTERVAL, '5')
+    fiber.sleep(0.5)
+    helper.append_file('/tmp/d_fa002.dat', 1)
+    fiber.sleep(MAXWAIT + 1)
+    res = mon.info(wat.wid)
+    t:is(res.ans, true, 'The file mtime has been altered')
+
+    --[[
+    MAXWAIT = 5
+    os.execute('echo "adDXWXERFSDDFCSCZXD" >> /tmp/d_fileCnt.dat')
+    wat = fwt.alteration({'/tmp/d_fa002.dat'}, MAXWAIT, INTERVAL, '2')
+    fiber.sleep(2)
+    os.execute('echo "ANOTHERLINEALTEREDFILE" >> /tmp/d_fileCnt.dat')
+    fiber.sleep(MAXWAIT)
+    res = mon.info(wat.wid)
+    t:is(res.ans, true, 'The file content has been altered')
+    ]]
+
+    helper.remove_file('/tmp/d_*', 0)
+
+    --[[FIX:
+    wat = fwt.alteration({'/tmp/d_fa002.dat'}, MAXWAIT, INTERVAL, '2')
+    os.execute('mv /tmp/d_fa002.dat /tmp/d_fa002.cvs')
+    fiber.sleep(MAXWAIT + 1)
+    res = mon.info(wat.wid)
+    t:is(res.ans, false, 'The file extension has been altered but no content')
+    ]]
 
 end)
 
