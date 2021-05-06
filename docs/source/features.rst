@@ -278,6 +278,8 @@ The default value is ``0``, which means that it is sufficient to just generate t
    watcher will not terminate until the file arrives in its entirety, 
    avoiding edge cases where a file is consumed before the data transfer is complete.
 
+.. _stability:
+
 stability
 *********
 
@@ -411,6 +413,8 @@ Watcher for Any Alteration
 
    fwa.alteration({'/path/to/file'}, nil, nil, '1')
 
+.. _Watcher for Specific Alteration:
+
 Watcher for Specific Alteration
 -------------------------------
 
@@ -420,6 +424,7 @@ Watcher for Specific Alteration
    fwa.alteration({'/path/to/file'}, nil, nil, '2') --Watcher for content file alteration
    fwa.alteration({'/path/to/file'}, nil, nil, '3') --Watcher for content file size alteration
    fwa.alteration({'/path/to/file'}, nil, nil, '4') --Watcher for content file ctime alteration
+   --explore other options for 'awhat' values
 
 See table :ref:`File Watcher Alteration Parameters` for more options.
    
@@ -436,15 +441,56 @@ for better behavior, overhead relief and versatility of use.
 Novelty Detection
 ------------------
 
+**Watcher** implements the detection of the newness of a file based on the ``mtime`` modification date. 
+This is useful to know if file system items have been created in an expected time window.
+
+.. warning::
+
+   Note that the creation of the files may have been done preserving the attributes of the original file. 
+   In that case you should consider the novelty rank accordingly.
+
 .. _Qualitative Response:
 
 Qualitative Response
 --------------------
 
+Watcher leaves a record for each watchable file where it provides qualitative 
+nformation about the search result for each of them. 
+To explore this information see the :ref:`Watcher Monitoring` ``match`` and ``nomatch`` functions.
+
+.. code-block:: lua
+   :linenos:
+
+    NOT_YET_CREATED = '_'               --The file has not yet been created
+    FILE_PATTERN = 'P'                  --This is a file pattern
+    HAS_BEEN_CREATED = 'C'              --The file has been created
+    IS_NOT_NOVELTY = 'N'                --The file is not an expected novelty
+    UNSTABLE_SIZE = 'U'                 --The file has an unstable file size
+    UNEXPECTED_SIZE = 'S'               --The file size is unexpected
+    DISAPPEARED_UNEXPECTEDLY = 'D'      --The file has disappeared unexpectedly
+    DELETED = 'X'                       --The file has been deleted
+    NOT_EXISTS = 'T'                    --The file does not exist
+    NOT_YET_DELETED = 'E'               --The file has not been deleted yet
+    NO_ALTERATION = '0'                 --The file has not been modified
+    ANY_ALTERATION = '1'                --The file has been modified
+    CONTENT_ALTERATION = '2'            --The content of the file has been altered
+    SIZE_ALTERATION = '3'               --The file size has been altered
+    CHANGE_TIME_ALTERATION = '4'        --The ctime of the file has been altered
+    MODIFICATION_TIME_ALTERATION = '5'  --The mtime of the file has been altered
+    INODE_ALTERATION = '6'              --The number of inodes has been altered
+    OWNER_ALTERATION = '7'              --The owner of the file has changed
+    GROUP_ALTERATION = '8'              --The group of the file has changed
+
 .. _Check File Stability:
 
 Check File Stability
 --------------------
+
+Enabled only for file creation. 
+This feature ensures that the **watcher** terminates once the file creation is completely finished. 
+This criterion is independent of the file size.
+
+See usage for parameter :ref:`stability`
 
 .. _Big Amounts of Files:
 
