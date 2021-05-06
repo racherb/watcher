@@ -116,7 +116,7 @@ local function validate_novelty(novelty)
                 else
                     return {
                         ans = false,
-                        msg = OUTPUT.STABILITY_BAD_RANGE
+                        msg = OUTPUT.NOVELTY_BAD_RANGE
                     }
                 end
             else
@@ -128,13 +128,13 @@ local function validate_novelty(novelty)
         else
             return {
                 ans = false,
-                msg = OUTPUT.NOVELTY_NOT_VALID
+                msg = OUTPUT.DATE_FROM_NOT_VALID
             }
         end
     else
         return {
             ans = false,
-            msg = OUTPUT.DATE_FROM_NOT_VALID
+            msg = OUTPUT.NOVELTY_NOT_VALID
         }
     end
 end
