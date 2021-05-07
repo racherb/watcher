@@ -307,7 +307,7 @@ local function recursive_tree(
     --[[optional]] deep,
     --[[optional]] shidden
 )
-    local _deep = deep or {0}      --zero for all directory deep
+    local _deep = deep or {0}          --zero for all directory deep
     local _shidden = shidden or false  --false for ignore the hidden files and folders
 
     table.sort(_deep) --Sort _deep
@@ -320,11 +320,13 @@ local function recursive_tree(
         return #folders
     end
 
+    local level_root = get_level(root) --root level ref
+
     local t = {} --table resultant
 
     local function explore_dir(dir)
-        local level = get_level(dir)
-        if (level > _deep[#_deep]) and (_deep[1]~=0) then
+        local level = get_level(dir) - level_root
+        if (level > _deep[#_deep]) then
             return t
         end
         if fio_is_dir(dir) then
@@ -354,7 +356,12 @@ end
 
 --- Consolidate the watch list items
 -- Expand patterns types if exists and Remove duplicates for FW Deletion
-local function consolidate(wlist, recur, deep, hidden)
+local function consolidate(
+    wlist,
+    recur,
+    deep,
+    hidden
+)
     local _recur = recur or false
     local _deep = deep or {0}
     local _hidden = hidden or false
@@ -375,7 +382,7 @@ local function consolidate(wlist, recur, deep, hidden)
                 if (_recur==true) and fio_is_dir(v) then
                     local tr = recursive_tree(v, _deep, _hidden)
                     for rv = 1, #tr do
-                        t[#t+1] = rv
+                        t[#t+1] = tr[rv]
                     end
                 else
                     t[#t+1] = v
@@ -476,7 +483,7 @@ local function bulk_file_creation(
                 function()
                     if _novelty then
                         local lmod = fio_lstat(data).mtime
-                        if not (lmod >= novelty[1] and lmod <= novelty[2]) then
+                        if not (lmod >= _novelty[1] and lmod <= _novelty[2]) then
                             db_awatcher.upd(
                                 wid, data, false, FILE.IS_NOT_NOVELTY
                             )
@@ -486,8 +493,8 @@ local function bulk_file_creation(
                     if _stability then
                         local stble, merr = is_stable_size(
                             data,
-                            stability[1],
-                            stability[2]
+                            _stability[1],
+                            _stability[2]
                         )
                         if not stble then
                             db_awatcher.upd(
@@ -720,6 +727,9 @@ local function file_alteration(
             if val then
                 if fio_exists(val) then
                     local flf = fio_lstat(val)
+                    --FIX: When file dissapear this fail with  error
+                    --     attempt to index local 'flf' (a nil value)
+                    --     This occur when the file is erased or change extension
                     if not fio_is_dir(val) then
                         if flf.size ~= 0 then
                             local fh = io_open(val, 'r')
@@ -752,7 +762,7 @@ local function file_alteration(
                     bulk[k] = {val, as}
                     db_awatcher.add(wid, val, false, FILE.NO_ALTERATION)
                 else
-                    db_awatcher.put(wid, val, false, FILE.NOT_EXISTS)
+                    db_awatcher.put(wid, val, false, FILE.NOT_EXISTS) --0r dissapear?
                 end
             else
                 break
