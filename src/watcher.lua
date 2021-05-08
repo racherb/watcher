@@ -45,14 +45,17 @@ end
 local function create_watcher(
     --[[required]] wlist,       --Watch List
     --[[required]] wkind,       --Watch Kind
-    --[[optional]] afunc        --Function(watch_list)
+    --[[optional]] afunc,       --Function(watch_list)
+    --[[optional]] recursion,   --recursive mode?
+    --[[optional]] deep,        --folder level or deep
+    --[[optional]] hidden       --include hidden files?
 )
 
     local cwlist
     if wkind == WATCHER.FILE_CREATION then
         cwlist = ut.deduplicate(wlist)
     else
-        cwlist = fwa.consolidate(wlist)
+        cwlist = fwa.consolidate(wlist, recursion, deep, hidden)
     end
 
     local wid
@@ -167,7 +170,8 @@ local function file_deletion(
     --[[required]] wlist,
     --[[optional]] maxwait,
     --[[optional]] interval,
-    --[[optional]] options
+    --[[optional]] options,
+    --[[optional]] recursion
 )
 
     local sck_wlist = sck.wlist(wlist)
@@ -181,11 +185,19 @@ local function file_deletion(
     local sck_interval = sck.maxwait(_interval)
     assert(sck_interval.ans, sck_interval.msg)
 
+    local _recursion = recursion or {false, nil, false}
+    local isrecur = _recursion[1]
+    local deep = _recursion[2]
+    local hidden = _recursion[3]
+
     --Create watcher
     local watcher = create_watcher(
         wlist,
         WATCHER.FILE_DELETION,
-        nil
+        nil,
+        isrecur,
+        deep,
+        hidden
     )
     --function(x, y) os.execute('cp ' ..x .. ' /tmp/_copy/') end
 
@@ -258,8 +270,13 @@ local function file_creation(
         assert(sck_stability.ans, sck_stability.msg)
     end
 
+    local dfrom, duntil, _novelty
+
     if novelty then
-        local sck_novelty = sck.novelty(novelty)
+        dfrom = novelty[1] or 0
+        duntil = novelty[2] or WATCHER.INFINITY_DATE --Arbitrary infinite date (5138-11-16T09:46:39Z)
+        _novelty = {dfrom, duntil}
+        local sck_novelty = sck.novelty(_novelty)
         assert(sck_novelty.ans, sck_novelty.msg)
     end
 
@@ -293,7 +310,7 @@ local function file_creation(
             _interval,
             _minsize,
             stability,
-            novelty,
+            _novelty,
             _match
          }
     )
@@ -378,7 +395,7 @@ local function wait_for_watcher(wid)
     return {
         wid = watcher[1][1],
         ans = watcher[1][6],
-        time = (watcher[1][5] - watcher[1][4])/1000000000 --seconds
+        time = (watcher[1][5] - watcher[1][4])/1000000000 --to seconds
     }
 
 end
