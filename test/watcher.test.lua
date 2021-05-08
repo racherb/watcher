@@ -4,7 +4,6 @@ package.path = package.path .. ';../watcher/src/?.lua;../src/?.lua;?.lua;../test
 
 local tap = require('tap')
 local fiber = require('fiber')
-local fio=require('fio')
 local helper = require('helper')
 
 local fwt = require('watcher').file
@@ -18,7 +17,8 @@ local INTERVAL
 
 local pini = os.time()
 local test = tap.test('test-file-watcher')
-test:plan(7)
+
+test:plan(8)
 
 --Plan 1
 test:test('Single File Deletion >> The File Does Not Exist', function(t)
@@ -470,6 +470,45 @@ test:test('File Alteration', function(t)
     res = mon.info(wat.wid)
     t:is(res.ans, false, 'The file extension has been altered but no content')
     ]]
+
+end)
+
+--Plan 8
+test:test('Recursion Test', function(t)
+
+    t:plan(2)
+
+    --FWD08
+    MAXWAIT = 4
+    INTERVAL = 0.5
+
+    os.execute('mkdir -p /tmp/folder_1/folder_2/folder_3/folder_4')
+    os.execute('touch /tmp/folder_1/file_1')
+    os.execute('touch /tmp/folder_1/folder_2/file_1')
+    os.execute('touch /tmp/folder_1/folder_2/file_2')
+    os.execute('touch /tmp/folder_1/folder_2/folder_3/file_1')
+    os.execute('touch /tmp/folder_1/folder_2/folder_3/file_2')
+    os.execute('touch /tmp/folder_1/folder_2/folder_3/file_3')
+
+    wat = fwt.deletion({'/tmp/folder_1'}, MAXWAIT, INTERVAL, {'NS', nil, 2}, {true, {0,2}, false})
+    fiber.sleep(2)
+    os.execute('rm /tmp/folder_1/file_1')
+    os.execute('rm /tmp/folder_1/folder_2/folder_3/file_1')
+    fiber.sleep(MAXWAIT)
+    res = mon.info(wat.wid)
+    prop = (res.ans==true) and (res.match==2)
+    t:is(prop, true, 'Recursive two levels watcher, 2 arbitrary deletion is delected')
+
+    os.execute('touch /tmp/folder_1/file_1')
+    MAXWAIT = 3
+    wat = fwt.deletion({'/tmp/folder_1'}, MAXWAIT, INTERVAL, nil, {true, {0}, false})
+    helper.remove_file('/tmp/folder_1/file_1', 1)
+    fiber.sleep(MAXWAIT+1)
+    res = mon.info(wat.wid)
+    prop = (res.ans==false) and (res.match==1)
+    t:is(prop, true, 'Recursive relative level zero for deletion, only one deletion')
+
+    --os.execute('rm - rf /tmp/file_1')
 
 end)
 
