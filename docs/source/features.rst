@@ -140,6 +140,9 @@ Inputs
    * - options
      - ``table``, ``optional``, ``default-value: {'NS', 0, 0}``
      - List of search options
+   * - recursion
+     - ``table``, ``optional``, ``default-value: nil`` or ``{false, {0}, false}``
+     - Recursion paramaters
 
 wlist
 *****
@@ -198,6 +201,86 @@ By default, the value of the option table is ``{sort = 'NS', cases = 0, match = 
 
    The value ``'NS'`` treats the list in the same order in which the elements 
    are passed to the list ``wlist``.
+
+recursion
+*********
+
+To enable directory recursion you must define the recursion parameter. 
+The recursion works only for an observable of type directory.
+
+The recursion value is a Lua table type composed of the following elements ``{recursive_mode, {deep_levels}, hidden_files}``:
+
+* **recursive_mode**: Boolean indicating whether or not to activate the recursive mode on the root directory. The default value is ``false``.
+* **deep_levels**: Numerical table indicating the levels of depth to be evaluated in the directory structure. The default value is ``{0}``
+* **hidden_files**: Boolean indicating whether hidden files will be evaluated in the recursion. The default value is ``false``.
+
+**How do the recursion levels work?**
+
+To understand how levels work in recursion, let's look at the following example.
+
+Imagine you have the following directory structure and you want to observe 
+the deletion of files from the path **'/folder_A/folder_B/'**. 
+
+.. image:: images/recursive-levels.png
+  :width: 250
+  :alt: Recursive levels
+
+The levels are determined from the object path or root path that will be used as input 
+in the watcher expression. In this case the path **'/folder_A/folder_B/'** has level zero and, 
+for each folder node a level will be added according to its depth. 
+The result is shown in the following summary table, which contains the list of files 
+for each level. 
+
+.. list-table:: Identification of the levels of recursion
+   :widths: 7 20 8 8 8 8
+   :header-rows: 1
+
+   * - 
+     - [Input] Level 0 ``{0}``
+     - Level 1 ``{1}``
+     - Level 2 ``{2}``
+     - Level 3 ``{3}``
+     - Level 4 ``{4}``
+   * - **folder**
+     - ``'/folder_A/folder_B/'``
+     - ``'folder_C'``
+     - ``'folder_D'``
+     - ``'folder_E'``
+     - ``'folder_N'``
+   * - **files**
+     - ``{A1}`` ``{B1, B2, .B3}``
+     - ``{C1, C2}``
+     - ``{.D1}``
+     - ``{E1, E2, .E3}``
+     - ``{N1, N2}``
+
+.. note::
+   
+   The files, ``.B3``, ``.D1`` and ``.E3`` are hidden files.
+
+.. list-table:: Observable files depending on the recursion level
+   :widths: 20 20
+   :header-rows: 1
+
+   * - ``recursion`` value
+     - Composition of the list of observable files ``wlist``
+   * - ``{true, {0}, false}``
+     - ``{A1, B1, B2}``
+   * - ``{true, {0}, true}``
+     - ``{A1, B1, B2, .B3}``
+   * - ``{true, {0, 1}, false}``
+     - ``{A1, B1, B2, C1, C2}``
+   * - ``{true, {0, 1}, true}``
+     - ``{A1, B1, B2, .B3, C1, C2}``
+   * - ``{true, {2}, false}``
+     - ``nil``
+   * - ``{true, {2}, true}``
+     - ``{.D1}``
+   * - ``{true, {0, 1, 2, 3, 4}, false}``
+     - ``{A1, B1, B2, C1, C2, E1, E2, N1, N2}``
+   * - ``{true, {0, 1, 2, 3, 4}, true}``
+     - ``{A1, B1, B2, .B3, C1, C2, .D1, E1, E2, .E3, N1, N2}``
+
 
 
 Output
@@ -518,6 +601,26 @@ In the example, the atomic function afu creates a backup copy for each element o
 
 Folder Recursion
 ----------------
+
+You can enable recursion on directories to detect changes in the file system. 
+Recursion is enabled based on a directory entry as a parameter that is considered as a 
+root directory. Starting from this root directory, considered as level zero, 
+you can selectively activate the observation of successive directory levels.
+
+.. code-block:: lua
+   :linenos:
+   :emphasize-lines: 7,8,9
+
+    fwa.deletion(
+        {'/tmp/folder_1'}, --Observed directory is considered a zero level root directory
+        nil,               --Maxwait, nil to take the value by omission
+        nil,               --Interval, nil to take the value by omission
+        nil,               --Options, nil to take the value by omission 
+        {
+            true,          --Activate recursion
+            {0, 1, 2},     --Levels of directories to be observed (root and levels 1 & 2)
+            false}         --Includes hidden files
+        )
 
 .. _Selective Path Level:
 
