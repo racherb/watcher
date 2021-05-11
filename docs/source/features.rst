@@ -214,7 +214,10 @@ The recursion value is a Lua table type composed of the following elements ``{re
 * **deep_levels**: Numerical table indicating the levels of depth to be evaluated in the directory structure. The default value is ``{0}``
 * **hidden_files**: Boolean indicating whether hidden files will be evaluated in the recursion. The default value is ``false``.
 
-**How do the recursion levels work?**
+.. _How do the recursion levels work:
+
+How do the recursion levels work?
+*********************************
 
 To understand how levels work in recursion, let's look at the following example.
 
@@ -258,6 +261,10 @@ for each level.
    
    The files, ``.B3``, ``.D1`` and ``.E3`` are hidden files.
 
+Now that we know how to set the recursion level, let's see an example of the 
+observable files depending on different values of the **recursion** parameter 
+for the above mentioned example.
+
 .. list-table:: Observable files depending on the recursion level
    :widths: 20 20
    :header-rows: 1
@@ -280,8 +287,6 @@ for each level.
      - ``{A1, B1, B2, C1, C2, E1, E2, N1, N2}``
    * - ``{true, {0, 1, 2, 3, 4}, true}``
      - ``{A1, B1, B2, .B3, C1, C2, .D1, E1, E2, .E3, N1, N2}``
-
-
 
 Output
 ******
@@ -532,6 +537,32 @@ This is useful to know if file system items have been created in an expected tim
    Note that the creation of the files may have been done preserving the attributes of the original file. 
    In that case you should consider the novelty rank accordingly.
 
+.. code-block:: lua
+   :linenos:
+   :emphasize-lines: 4
+
+    date_from  = os.time() - 24*60*60 --One day before the current date
+    date_to    = os.time() + 24*60*60 --One day after the current date
+    os.execute('touch /tmp/novelty_file.txt') --The file is created on the current date
+    fwt.creation({'/tmp/novelty_file.txt'}, 10, nil, 0, nil, {date_from, date_to})
+
+.. note::
+    For known dates you can use the Lua function **os.time()** as follows:
+
+   .. code-block:: lua
+      :linenos:
+
+        date_from = os.time(
+            {
+                year = 2020,
+                month = 6,
+                day = 4,
+                hour = 23,
+                min = 48,
+                sec = 10 
+            }
+        )
+
 .. _Qualitative Response:
 
 Qualitative Response
@@ -580,6 +611,32 @@ See usage for parameter :ref:`stability`
 Big Amounts of Files
 --------------------
 
+In the following example, watching the file deletion from the path "/" recursively 
+down to depth level 3 (``levels={0,1,2,3}``) yields a total of **163,170 watchable files**. 
+Note that the execution takes 85 seconds (on a typical desktop machine) but the maximum timeout 
+of the watcher has been specified as low as 10 seconds. 
+This means that 88% of the time is consumed in creating the watcher due to recursion.
+
+   .. code-block:: lua
+      :linenos:
+      :emphasize-lines: 9,13
+
+        tarantool> test=function() local ini=os.time() local fwa=fw.deletion({'/'}, 10, nil, {'NS', nil, 2}, {true, {0,1,2,3}, false}) print(os.time()-ini) print(fwa.wid) end
+        tarantool> test()
+        85
+        1620701962375155ULL
+        ---
+        tarantool> mon.info(1620701962375155ULL)
+        ---
+        - ans: true
+        match: 72
+        what: '{"/"}'
+        wid: 1620701962375155
+        type: FWD
+        nomatch: 163098
+        status: completed
+        ...
+
 .. _Atomic Function Injection:
 
 Atomic Function Injection
@@ -609,7 +666,7 @@ you can selectively activate the observation of successive directory levels.
 
 .. code-block:: lua
    :linenos:
-   :emphasize-lines: 7,8,9
+   :emphasize-lines: 6,7,8,9,10
 
     fwa.deletion(
         {'/tmp/folder_1'}, --Observed directory is considered a zero level root directory
@@ -619,39 +676,77 @@ you can selectively activate the observation of successive directory levels.
         {
             true,          --Activate recursion
             {0, 1, 2},     --Levels of directories to be observed (root and levels 1 & 2)
-            false}         --Includes hidden files
-        )
+            false          --Includes hidden files
+        }
+    )
+
+For more info see :ref:`How do the recursion levels work`.
 
 .. _Selective Path Level:
 
 Selective Path Level
 --------------------
 
+The recursion levels is a list of numerical values so you can specify (selectively) 
+the directory level you want to observe and ignore others. This is useful in situations where the full path 
+to the file is unknown but the depth or level of the file is known.
+
+.. code-block:: lua
+   :linenos:
+   :emphasize-lines: 8
+
+    fwa.deletion(
+        {'/bac/invoices'}, 
+        nil,               
+        nil,               
+        nil,                
+        {
+            true,          --Activate recursion
+            {3},           --Selective level 3
+            false          --Includes hidden files
+        }
+    )
+
+See use case ...
+
 .. _Watcher Monitoring:
 
 Watcher Monitoring
 ------------------
 
+``monit`` for Watcher monitoring allows you to monitor and explore the running status of a watcher.
 
-- [x] Watcher for different file groups
-- [x] Watcher for file naming patterns
-- [x] Watcher for Advanced File Deletion
-- [x] Watcher for Advanced File Creation
-- [x] Watcher for Advanced File Alteration
-- [x] Non-blocking execution with tarantool fibers
-- [x] Bulk file processing
-- [x] :new: Blocking execution with "*waitfor*" function
-- [x] :new: Decoupled execution between the creation of the watcher and its execution
-- [x] Discrimination of files by sorting and quantity
-- [x] Novelty detection for file creation
-- [x] Watcher for any changes or alteration in the file system
-- [x] Watcher for specific changes in the file system
-- [x] Qualitative response for each observed file
-- [x] Processing of large quantities of files
-- [x] Validation of the stability of the file when it is created
-- [x] Configuration of the file watcher conditions
-- [x] Validation of the minimum expected size of a file
-- [x] Detection of anomalies in the observation of the file
-- [x] :new: Injection of atomic functions on the watcher list
-- [x] :new: Folder recursion and selective path level
-- [x] :new: Watcher monitoring (info, match, nomatch)
+info
+****
+
+The output is a Lua table containing the following elements:
+
+- **ans** is a boolean value containing the response of the watcher. ``true`` means that the watcher has detected the expected changes that are defined in the parameters.
+- **match** is the number of cases that match the ``true`` value of **ans**.
+- **nomatch** is the number of cases that do not belong to the set of ``true`` **ans**.
+- **what** is a string containing the obserbables parameter.
+- **wid** is the unique identifier of the watcher.
+- **type** is the type of the watcher
+- **status** is the execution status of the watcher.
+
+.. code-block:: lua
+   :linenos:
+      
+      mon.info(1620701962375155ULL)
+
+        {
+            ans: true
+            match: 72
+            what: '{"/"}'
+            wid: 1620701962375155
+            type: 'FWD'
+            nomatch: 163098
+            status: 'completed'
+        }
+
+match
+*****
+
+
+nomatch
+*******
