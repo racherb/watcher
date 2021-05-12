@@ -16,12 +16,17 @@ local dig = require('digest')
 local errno = require('errno')
 local log = require('log')
 
+local pairs = pairs
+local ipairs = ipairs
+local type = type
+
 local os_time = os.time
 local string_find = string.find
 local fib_sleep = fiber.sleep
 local fio_glob = fio.glob
 local fio_is_dir = fio.path.is_dir
 local fio_listdir = fio.listdir
+local table_sort = table.sort
 
 local db = require('db.engine')
 local ut = require('util')
@@ -111,7 +116,7 @@ local function sort_files_by(
     if sort_by == SORT.NO_SORT then
         return take_n_items(flst, take_n)
     elseif sort_by == SORT.ALPHA_ASC then
-        table.sort(
+        table_sort(
             flst,
             function(a, b)
                 return a < b
@@ -120,7 +125,7 @@ local function sort_files_by(
         return take_n_items(flst, take_n)
 
     elseif sort_by == SORT.ALPHA_DSC then
-        table.sort(
+        table_sort(
             flst,
             function(a, b)
                 return a > b
@@ -130,7 +135,7 @@ local function sort_files_by(
 
     elseif sort_by == SORT.MTIME_ASC then
         local flst_ex = add_lst_modif(flst)
-        table.sort(
+        table_sort(
             flst_ex,
             function(a, b)
                 return a[2] < b[2]
@@ -141,7 +146,7 @@ local function sort_files_by(
 
     elseif sort_by == SORT.MTIME_DSC then
         local flst_ex = add_lst_modif(flst)
-        table.sort(
+        table_sort(
             flst_ex,
             function(a, b)
                 return a[2] > b[2]
@@ -346,6 +351,7 @@ local function recursive_tree(
                     end
                 end
             end
+            collectgarbage()
         end
     end
 

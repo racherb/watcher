@@ -20,6 +20,8 @@ local db = require('db.engine')
 local ut = require('util')
 local fwa = require('file_watcher')
 
+local assert = assert
+
 local WATCHER = require('types.file').WATCHER
 local OUTPUT = require('types.file').OUTPUT
 local EXIT = require('types.file').EXIT

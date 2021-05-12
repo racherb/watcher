@@ -1,11 +1,20 @@
+local type = type
+local ipairs = ipairs
+local pairs = pairs
+
+local table_insert = table.insert
+local string_gsub = string.gsub
+local string_match = string.match
+
+
 --http://lua-users.org/wiki/TableUtils
 local function val_to_str(v)
     if "string" == type(v) then
-      v = string.gsub(v, "\n", "\\n")
-      if string.match(string.gsub(v,"[^'\"]",""), '^"+$' ) then
+      v = string_gsub(v, "\n", "\\n")
+      if string_match(string_gsub(v,"[^'\"]",""), '^"+$' ) then
         return "'" .. v .. "'"
       end
-      return '"' .. string.gsub(v,'"', '\\"' ) .. '"'
+      return '"' .. string_gsub(v,'"', '\\"' ) .. '"'
     else
       return "table" == type(v) and tostring(v) or
         tostring(v)
@@ -13,7 +22,7 @@ local function val_to_str(v)
   end
 
   local function key_to_str(k)
-    if "string" == type(k) and string.match(k, "^[_%a][_%a%d]*$") then
+    if "string" == type(k) and string_match(k, "^[_%a][_%a%d]*$") then
       return k
     else
       return "[" .. val_to_str(k) .. "]"
@@ -23,12 +32,12 @@ local function val_to_str(v)
   local function tostring(tbl)
     local result, done = {}, {}
     for k, v in ipairs(tbl) do
-      table.insert(result, val_to_str(v))
+      table_insert(result, val_to_str(v))
       done[k] = true
     end
     for k, v in pairs(tbl) do
       if not done[k] then
-        table.insert(result,
+        table_insert(result,
           key_to_str(k) .. "=" .. val_to_str(v))
       end
     end
