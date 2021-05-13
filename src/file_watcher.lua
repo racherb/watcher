@@ -657,7 +657,7 @@ local function file_creation(
                 bulk[j] = val
                 if not string_find(val, '*') then
                     db_awatcher.add(wid, val)
-                else
+                --[[else
                     --TODO: Review this, it is necessary?
                     db_awatcher.add(
                         wid,
@@ -665,6 +665,7 @@ local function file_creation(
                         false,
                         FILE.IS_PATTERN
                     )
+                    ]]
                 end
             else
                 break
