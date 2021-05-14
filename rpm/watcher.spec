@@ -1,5 +1,5 @@
 Name: watcher
-Version: 0.2.1
+Version: 0.2.2
 Release: 1%{?dist}
 Summary: Watcher for watches the changes in the file system, variables and data records
 Group: Development/Libraries

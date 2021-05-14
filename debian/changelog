@@ -1,3 +1,11 @@
+watcher (0.2.2-1-g0e40729) stable; urgency=medium
+
+  * Small code refactoring for better performance and issues fixed
+  * Fix issue #13 "close func not work for alteration when the file not exist #13"
+  * Fix issue #12 "Monit's nomatch always returns the additional number of elements that are search patterns. #12"
+
+ -- Raciel Hernández <racherb@protonmail.com>  Wed, 12 May 2021 21:12:31 +0400
+
 watcher (0.2.1-1) unstable; urgency=medium
 
   * Fix tarantool-dev and libmsgpuck-dev dependencies
