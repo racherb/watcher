@@ -249,7 +249,8 @@ local function file_creation(
     --[[optional]] minsize,
     --[[optional]] stability,
     --[[optional]] novelty,
-    --[[optional]] nmatch
+    --[[optional]] nmatch,
+    --[[optional]] recursion
 )
     --Validate th user inputs
     local sck_wlist = sck.wlist(wlist)
@@ -282,11 +283,19 @@ local function file_creation(
         assert(sck_novelty.ans, sck_novelty.msg)
     end
 
+    local _recursion = recursion or {false, nil, false}
+    local isrecur = _recursion[1]
+    local deep = _recursion[2]
+    local hidden = _recursion[3]
+
     --Create watcher
     local watcher = create_watcher(
         wlist,
         WATCHER.FILE_CREATION,
-        nil
+        nil,
+        isrecur,
+        deep,
+        hidden
     )
 
     local nfiles
@@ -324,7 +333,8 @@ local function file_alteration(
     --[[optional]] maxwait,
     --[[optional]] interval,
     --[[optional]] awhat,
-    --[[optional]] nmatch
+    --[[optional]] nmatch,
+    --[[optional]] recursion
 )
 
     --Validate th user inputs
@@ -345,10 +355,18 @@ local function file_alteration(
         OUTPUT.ALTER_WATCH_NOT_VALID
     )
 
+    local _recursion = recursion or {false, nil, false}
+    local isrecur = _recursion[1]
+    local deep = _recursion[2]
+    local hidden = _recursion[3]
+
     local watcher = create_watcher(
         wlist,
         WATCHER.FILE_ALTERATION,
-        nil
+        nil,
+        isrecur,
+        deep,
+        hidden
     )
 
     local nfiles
