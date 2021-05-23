@@ -11,13 +11,11 @@
 ![GitHub top language](https://img.shields.io/github/languages/top/racherb/watcher)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/racherb/watcher)
 
-:warning: **WARNING:** *Watcher is currently in an unstable phase*.
-
 Watcher is an open source system to automate the detection of changes in the system, facilitating the integration of processes, workflows and the development of monitoring applications.
 
 Detecting changes to the file system or data structures in memory is useful for developers of security applications, resource monitoring or process integration.
 
-:construction: [Documentation](https://racherb.github.io/watcher/) (*Under construction*)
+[Documentation](https://watcher.readthedocs.io/en/latest/)
 
 ## Key features
 
