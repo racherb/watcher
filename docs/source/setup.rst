@@ -34,7 +34,7 @@ Quick installation from DEB Package:
    :linenos:
 
    curl -s https://packagecloud.io/install/repositories/iamio/watcher/script.deb.sh | sudo bash
-   sudo apt-get install watcher=0.2.1-1
+   sudo apt-get install watcher
 
 .. note::
     
@@ -90,3 +90,4 @@ From the ``terminal`` run the following command:
 .. code-block:: console
 
    luarocks install https://raw.githubusercontent.com/racherb/watcher/master/watcher-scm-1.rockspec
+

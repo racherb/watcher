@@ -26,3 +26,4 @@ Supported Platforms
 
 .. warning::
    Watcher has not been tested on POSIX Windows Systems.
+

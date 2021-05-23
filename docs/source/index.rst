@@ -11,7 +11,7 @@ Think of Watcher as an intercom or a bridge between different servers or between
 applications on the same server. Or you can simply take advantage of Watcher's capabilities 
 to develop your project.
 
-"Watch everything"
+"Watch everything" 
     Currently the functionality of detecting changes in the file system is implemented.
     However, the project has a larger scope and we invite you to collaborate with us 
     to achieve the goal of "Watch Everything".
@@ -41,13 +41,32 @@ detection that you can leverage for your project development.
 * **Getting started**:
   :doc:`Installation Prerequisites <prerreq>` |
   :doc:`Quick Installation <setup>` |
-  :doc:`With Http Watcher </intro/getting-started-with-http-watcher>` |
-  :doc:`Feature Overview </features>` |
-  :doc:`/choosing-a-site`
+  :doc:`Feature Overview </features>`
 
-* **Integrating your existing proyect**:
-  :doc:`Integration guide </intro/integration-guide>`
+File Watcher features
+---------------------
 
+Currently **Watcher** comprises the following features: 
+:ref:`Single File & Folders`, 
+:ref:`Multiples File Groups`,
+:ref:`File Patterns`,
+:ref:`Non-Bloking Execution`, 
+:ref:`Bloking Execution`,
+:ref:`Bulk File Processing`, 
+:ref:`Advanced File Deletion`, 
+:ref:`Advanced File Creation`, 
+:ref:`Advanced File Alteration`, 
+:ref:`Watcher for Any Alteration`,
+:ref:`Watcher for Specific Alteration`,
+:ref:`Decoupled Execution`,
+:ref:`Novelty Detection`,
+:ref:`Qualitative Response`,
+:ref:`Check File Stability`,
+:ref:`Big Amounts of Files`,
+:ref:`Atomic Function Injection`,
+:ref:`Folder Recursion`,
+:ref:`Selective Path Level`,
+:ref:`Watcher Monitoring`
 
 .. toctree::
    :maxdepth: 2
@@ -56,192 +75,11 @@ detection that you can leverage for your project development.
   
    /prerreq
    /setup
-   /intro/getting-started-with-http-watcher
-
-   /intro/integration-guide
-   /features
-   /choosing-a-site
-
-
-Getting started with Watcher
------------------------------------
-
-Learn more about configuring your automated documentation builds
-and some of the core features of Watcher.
-
-* **Overview of core features**:
-  :doc:`Incoming webhooks </webhooks>` |
-  :doc:`/custom_domains` |
-  :doc:`/versions` |
-  :doc:`/downloadable-documentation` |
-  :doc:`/hosting` |
-  :doc:`/server-side-search` |
-  :doc:`/analytics`
-  :doc:`/pull-requests`
-
-* **Connecting with GitHub, BitBucket, or GitLab**:
-  :doc:`Connecting your VCS account </connected-accounts>` |
-  :doc:`VCS webhooks </webhooks>`
-
-* **Watcher build process**:
-  :doc:`Configuration reference </config-file/index>` |
-  :doc:`Build process </builds>` |
-  :doc:`/badges` |
-
-* **Troubleshooting**:
-  :doc:`/support` |
-  :doc:`Frequently asked questions </faq>`
-
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-   :caption: Getting started
-
-   /config-file/index
-   /webhooks
-   /custom_domains
-   /versions
-   /downloadable-documentation
-   /hosting
-   /server-side-search
-   /analytics
-   /pull-requests
-
-   /connected-accounts
-
-   /builds
-   /badges
-
-   /support
-   /faq
-
-
-Step-by-step Guides
--------------------
-
-These guides will help walk you through specific use cases
-related to Watcher itself.
-
-* :doc:`/guides/tools`
-* :doc:`/guides/platform`
-* :doc:`/guides/commercial`
-
-.. toctree::
- :maxdepth: 2
- :hidden:
- :caption: Step-by-step Guides
-
- /guides/tools
- /guides/platform
- /guides/commercial
-
-Advanced features of Watcher
-----------------------------------
-
-Watcher offers many advanced features and options.
-Learn more about these integrations and how you can get the most out of Watcher.
-
-* **Advanced project configuration**:
-  :doc:`subprojects` |
-  :doc:`Single version docs <single_version>`
-
-* **Multi-language documentation**:
-  :doc:`Translations and localization <localization>`
-
-.. TODO: Move user-defined to Getting started, they are core functionality
-
-* **Redirects**:
-  :doc:`User defined redirects <user-defined-redirects>` |
-  :doc:`Automatic redirects <automatic-redirects>`
-
-* **Versions**
-  :doc:`Automation rules <automation-rules>`
-
-* **Topic specific guides**:
-  :doc:`How-to guides <guides/index>`
-
-* **Extending Watcher**:
-  :doc:`REST API <api/index>`
+   /quickstart
 
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :glob:
-   :caption: Advanced features
-
-   subprojects
-   single_version
-
-   localization
-
-   user-defined-redirects
-   automatic-redirects
-
-   automation-rules
-
-
-   api/index
-
-
-Watcher project and organization
-------------------------------------------
-
-Learn about Watcher, the project,
-and find out how you can get involved and contribute to the development and success
-of Watcher and the larger software documentation ecosystem.
-
-* **Getting involved with Watcher**:
-  :doc:`Contributing <contribute>` |
-  :doc:`Development installation </development/install>` |
-  :doc:`roadmap` |
-  :doc:`Code of conduct <code-of-conduct>`
-
-* **Policies & Process**:
-  :doc:`security` |
-  :doc:`Privacy policy <privacy-policy>` |
-  :doc:`Terms of service <terms-of-service>` |
-  :doc:`DMCA takedown policy <dmca/index>` |
-  :doc:`Policy for abandoned projects <abandoned-projects>` |
-  :doc:`Release notes & changelog <changelog>`
-
-* **The people and philosophy behind Watcher**:
-  :doc:`About Us </about>` |
-  :doc:`Team <team>` |
-  :doc:`Open source philosophy <open-source-philosophy>` |
-  :doc:`Our story <story>`
-
-* **Financial and material support**:
-  :doc:`advertising/index` |
-  :doc:`Sponsors <sponsors>`
-
-* **Watcher for Business**:
-  :doc:`Support and additional features <commercial/index>`
-
-
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-   :caption: About Watcher
-
-   contribute
-   development/index
-   roadmap
-   gsoc
-   code-of-conduct
-
-   security
-   privacy-policy
-   terms-of-service
-   dmca/index
-   abandoned-projects
-   changelog
-
-   about
-   team
-   open-source-philosophy
-   story
-
-   advertising/index
-   sponsors
-
-   commercial/index
+   :caption: Features
+  
+   /features
