@@ -1,5 +1,5 @@
-Watcher features
-=================
+File Watcher Features
+=====================
 
 The **Watcher** module has been designed with the typical use cases of the Banking 
 and Telecommunications industry in mind for *IT Batch Processing*.

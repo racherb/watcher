@@ -1,0 +1,899 @@
+#!/usr/bin/env tarantool
+
+package.path = package.path .. ';../watcher/src/?.lua;../src/?.lua;?.lua;../test/?.lua;test/?.lua'
+
+local box = box
+local acolor = require('ansicolors')
+
+box.cfg{log_level=5, log='watcher.log'}
+
+local WATCHER = require('types.file').WATCHER
+local STATE = require('types.file').STATE
+local fwt = require('watcher').file
+local mon = require('watcher').monit
+local core = require('watcher').core
+
+local string = require('string')
+
+local cli = {
+    title = "The Watcher Commandline",
+    tag = "watcher",
+    slogan = 'Watcher for better Observability',
+    description = "Watcher",
+    version = "0.1.1",
+    author = "Raciel Hernandez B.",
+    path = "/path/to/folder/contains/this/file",
+    help = true,
+    color = true,
+    release = '20211228'
+}
+
+local logo_color = {
+    "                   _       _               ",
+    "    __      ____ _| |_ ___| |__   ___ _ __ ",
+    "    \\ \\ /\\ / / _` | __/ __| '_ \\ / _ \\ '__| \t The Watcher Commandline",
+    "     \\ V  V / (_| | || (__| | | |  __/ |   \t %{dim}version-"..cli.version.."%{reset green bright}",
+    "      \\_/\\_/ \\__,_|\\__\\___|_| |_|\\___|_|   \t %{dim}MIT License",
+    "       %{white}Watcher for better Observability"
+}
+
+local logo = {
+    "                   _       _               ",
+    "    __      ____ _| |_ ___| |__   ___ _ __ ",
+    "    \\ \\ /\\ / / _` | __/ __| '_ \\ / _ \\ '__| \t The Watcher Commandline",
+    "     \\ V  V / (_| | || (__| | | |  __/ |   \t version: "..cli.version,
+    "      \\_/\\_/ \\__,_|\\__\\___|_| |_|\\___|_|   \t MIT License",
+    "       Watcher for better Observability"
+}
+
+local style = {}
+local help = {}
+
+function style.logo(theme)
+    local _theme = theme or 'default'
+    if _theme == 'default' then
+        return table.concat({'%{green bright}', table.concat(logo_color,'\n'), '%{reset}'},'')
+    else
+        return table.concat({table.concat(logo,'\n')},'')
+    end
+end
+
+function style.topic(txt, theme)
+    local _theme = theme or 'default'
+    if _theme == 'default' then
+        return table.concat({'%{white bright}🔸', txt, ':%{reset}'},'')
+    else
+        return txt..':'
+    end
+end
+
+function style.syntax(cmd, params, comment, theme)
+    local _theme = theme or 'default'
+    local _comment = comment or ''
+    if _theme == 'default' then
+        return table.concat(
+            {
+                '\t%{blue}+ %{white bright}',
+                cmd,
+                '%{reset}%{magenta}',
+                params,
+                '%{reset}',
+                _comment
+            },
+        '')
+    else
+        return table.concat({'\t+ ', cmd, params, _comment}, '')
+    end
+end
+
+function style.prompt(cmd, flags, subcmd, args, comment, theme)
+    local _theme = theme or 'default'
+    local _comment = comment or ''
+    if _theme == 'default' then
+        return table.concat(
+            {
+                '\t%{dim}$ %{reset white bright}', cmd,
+                '%{reset dim magenta}', flags,
+                '%{reset green}', subcmd, args,
+                '%{reset dim}',
+                _comment,
+                '%{reset}'
+            },
+        '')
+    else
+        return table.concat({'\t$ ', cmd, flags, subcmd, args, _comment}, '')
+    end
+end
+
+function style.ident(txt, n, theme, prefix, emoji, link)
+    local _theme = theme or 'default'
+    local _emoji = emoji or ''
+    local _prefix = prefix or ''
+    local _link = link or ''
+    if _theme == 'default' then
+        return table.concat(
+            {
+                string.rep(' ', n),
+                '%{dim}',
+                _prefix,
+                txt,
+                '%{reset}',
+                _emoji,
+                '%{blue}',
+                _link,
+                '%{reset}'
+            }, '')
+    else
+        return table.concat({string.rep(' ', n), txt, _link}, '')
+    end
+end
+
+function style.version(theme)
+    local _theme = theme or 'default'
+    if _theme == 'default' then
+        return table.concat(
+            {
+                '%{dim}version:%{reset} ',
+                cli.tag, '-', cli.version
+            },'')
+    else
+        return table.concat(
+            {
+                'version: ',
+                cli.tag, '-', cli.version
+            }, '')
+    end
+end
+
+function style.context(kind, flags, theme)
+    local _theme = theme or 'default'
+    if _theme == 'default' then
+        return table.concat(
+            {
+                '        ',
+                '%{bright green}',
+                kind,
+                ':%{reset}\t',
+                flags,
+                '%{reset}'
+            }, '')
+    else
+        return table.concat({kind, ':', flags}, '')
+    end
+end
+
+function style.defaults(flag, default, note, theme)
+    local _theme = theme or 'default'
+    local _note = note or ''
+    if _theme == 'default' then
+        return table.concat(
+            {
+                '\t%{magenta}--',
+                flag,
+                ' %{reset}',
+                '\t%{white}',
+                default,
+                '%{reset}',
+                '\t\t%{dim}',
+                _note,
+                '%{reset}'
+            }, '')
+    else
+        return table.concat(
+            {
+                '\t--',
+                flag,
+                ' \t',
+                default,
+                '\t\t',
+                note
+            }, '')
+    end
+end
+
+function style.itemdata(item, value, level, theme)
+    local _theme = theme or 'default'
+    local _level = level or 1
+    local tabsize = _level*2
+    if _theme == 'default' then
+        return table.concat({
+            string.rep(' ', tabsize),
+            '- ',
+            '%{dim}',
+            item,
+            ': ',
+            '%{reset blue}',
+            value,
+            '%{reset}',
+        }, '')
+    else
+        return table.concat({
+            string.rep(' ', tabsize),
+            '- ',
+            item,
+            ': ',
+            value,
+        }, '')
+    end
+end
+
+function style.itemheader(header, tab, theme)
+    local thme = theme or 'default'
+    if thme=='default' then
+        return '%{bright}'..table.concat(header, tab)..'%{reset}'
+    else
+        return table.concat(header, tab)
+    end
+end
+
+function help.usage(theme, topic)
+    local usage = {
+        '',
+        style.topic('USAGE', theme),
+        '',
+        style.prompt(cli.tag, ' [<flags>]', topic, ' <args>', '', theme)
+    }
+    if topic == ' new' then
+        usage[#usage+1] = ''
+        usage[#usage+1] = style.prompt(
+            cli.tag,
+            ' [<flags>]', topic,
+            ' CREATION <wlist>',
+            ' \t\t#Create a new watcher for detect file creation',
+            theme
+        )
+        usage[#usage+1] = style.prompt(
+            cli.tag,
+            ' [<flags>]', topic,
+            ' DELETION <wlist>',
+            ' \t\t#Create a new watcher for detect file deletion',
+            theme
+        )
+        usage[#usage+1] = style.prompt(
+            cli.tag,
+            ' [<flags>]', topic,
+            ' ALTERATION <wlist>',
+            ' \t#Create a new watcher for detect file alteration',
+            theme
+        )
+    end
+    return usage
+end
+
+function help.tostar(theme)
+    return {
+        '',
+        style.ident(
+            'To start working with "watcher", run the following command:',
+            8,
+            theme,
+            '',
+            '🐣'
+        ),
+        '',
+        style.prompt(
+            'watcher',
+            ' -i',
+            ' new',
+            '',
+            ' #This allows you to create a new watcher specification in interactive mode',
+            theme),
+        '',
+    }
+end
+
+function help.common(theme)
+    return {
+        '',
+        style.topic("WHAT'S NEXT?", theme),
+        '',
+        style.ident('The most commonly used commands are:', 4, theme),
+        '',
+        style.syntax('watcher', ' run', '\t\t Run a watcher', theme),
+        style.syntax('watcher', ' mon', '\t\t For monitoring watcher', theme),
+        '',
+        style.ident(
+            ' For more information visit the website: ',
+            8,
+            theme,
+            '❓',
+            '',
+            'https://watcher.readthedocs.io/en/latest/'
+        )
+    }
+end
+
+function help.commands(theme)
+    return {
+        '',
+        style.topic('AVAILABLE COMMANDS', theme),
+        '',
+        style.syntax('watcher', ' new', '\t\t Create a new watcher', theme),
+        style.syntax('watcher', ' run', '\t\t Run a watcher', theme),
+        style.syntax('watcher', ' mon', '\t\t For monitoring watcher', theme),
+        style.syntax('watcher', ' info', '\t\t Gets information from a previously executed watcher', theme),
+        style.syntax('watcher', ' match', '\t\t Gets the list of items detected by watcher', theme),
+        style.syntax('watcher', ' nomatch', '\t Gets the list of items not detected by watcher', theme),
+        style.syntax('watcher', ' config', '\t Set watcher configuration', theme),
+        style.syntax('watcher', ' wid', '\t\t Show the last watcher id', theme),
+        '',
+        style.syntax('watcher', ' env', '\t\t Environment', theme),
+        style.syntax('watcher', ' file', '\t\t File Watcher', theme),
+        '',
+        style.ident(
+            ' To get help on how to run a specific command, run:',
+            8,
+            theme,
+            '🔖'
+        ),
+        '',
+        style.prompt('watcher', '', ' <command>', ' --help', '', theme)
+    }
+end
+
+function help.flags(theme, scope)
+    local _scope = scope or 'short'
+    local flags = {
+        '',
+        style.topic('FLAGS', theme),
+        '',
+        '\t --help,        -h \t Help for watcher',
+        '\t --version,     -V \t Show watcher version',
+        '\t --nocolor,     -n \t Colorize output',
+        '\t --verbose,     -v \t Enable verbose logging',
+        '\t --path,        -p \t Set absolute path for watcher',
+        '\t --blocking,    -b \t Enable blocking execution for watcher',
+        '\t --interactive, -i \t Enable interactive mode',
+        '\t --defaults,    -d \t Defaults values',
+        '',
+        '\t --FILE_CREATION   \t Watcher for file creation',
+        '\t --FILE_DELETION   \t Watcher for file deletion',
+        '\t --FILE_ALTERATION \t Watcher for file alteration',
+        '',
+    }
+
+    if _scope == 'short' then
+        flags[#flags+1] = '\t ..(and more)'
+        flags[#flags+1] = ''
+        flags[#flags+1] = style.ident(
+            ' To see all the system flags, run the following command:',
+            8,
+            theme,
+            '💡'
+        )
+        flags[#flags+1] = ''
+        flags[#flags+1] = style.prompt('watcher', '', '', ' --flags', '\t\t# Displays all system flags', theme)
+        flags[#flags+1] = style.prompt('watcher', '', '', ' --flags <command>', '\t# Displays only the flags that apply to a given command', theme)
+        flags[#flags+1] = ''
+    elseif _scope == 'long' then
+        flags[#flags+1] =  ''
+        flags[#flags+1] = '\t --maxwait <value>   \t Maximum wait time in seconds'
+        flags[#flags+1] = '\t --interval <value>  \t Verification interval for watcher in seconds'
+        flags[#flags+1] = '\t --minsize <value>   \t Value of the minimum expected file size'
+        flags[#flags+1] = '\t --frecuency <value>   \t Defines the frequency of checking the file once it has arrived'
+        flags[#flags+1] = '\t --iterations <value>  \t The number of iterations used to determine the stability of the file'
+        flags[#flags+1] = '\t --minage <value>   \t Date and time "from" of the novelty of the file'
+        flags[#flags+1] = '\t --maxage <value>   \t Date and time "to" of the novelty of the file'
+        flags[#flags+1] = '\t --sort <value>   \t Ordering method of the wacth list'
+        flags[#flags+1] = '\t --cases <value> \t Number of cases to observe from the wlist'
+        flags[#flags+1] = '\t --match <value> \t Number of cases expected to satisfy the search'
+        flags[#flags+1] = '\t --recursive <value> \t Boolean indicating whether or not to activate the recursive mode on directory'
+        flags[#flags+1] = '\t --levels <value> \t Numerical table indicating the levels of depth to be evaluated in the directory structure'
+        flags[#flags+1] = '\t --hidden <value> \t Boolean indicating whether hidden files will be evaluated in the recursion'
+        flags[#flags+1] = '\t --awhat <value> \t Type of file alteration to be observed'
+        flags[#flags+1] = ''
+        flags[#flags+1] = style.ident(
+            ' Application context of the flags by "kind" of watcher:',
+            8,
+            theme,
+            '✨'
+        )
+        flags[#flags+1] = ''
+        flags[#flags+1] = style.context(
+            ' - FILE_CREATION',
+            ' --maxwait, --interval, --minsize, --frecuency, --iterations, --minage, --maxage, --match',
+            theme
+        )
+        flags[#flags+1] = style.context(
+            ' - FILE_DELETION',
+            ' --maxwait, --interval, --sort, --cases, --match, --recursive, --levels, --hidden',
+            theme
+        )
+        flags[#flags+1] = style.context(
+            ' - FILE_ALTERATION',
+            ' --maxwait, --interval, --awhat, --match',
+            theme
+        )
+        flags[#flags+1] = ''
+        flags[#flags+1] = style.ident(
+            ' To know the default values of the flags run:',
+            8,
+            theme,
+            '🔖'
+        )
+        flags[#flags+1] = ''
+        flags[#flags+1] = style.prompt('watcher', '', '', ' --defaults', '\t\t# Displays the default values of all the flags', theme)
+        flags[#flags+1] = style.prompt('watcher', '', '', ' --defaults <command>', '\t# Displays the default values of only the flags for the given command', theme)
+        flags[#flags+1] = ''
+    end
+
+    return table.concat(flags, '\n')
+
+end
+
+function help.args(theme, topic)
+    local _theme = theme or 'default'
+    if topic == 'new' then
+        if _theme == 'default' then
+            return {
+                '',
+                style.topic('ARGS', theme),
+                '',
+                '\t%{green}kind%{reset} \t\tKind of watcher\t%{blackbg red dim}<mandatory>%{reset} %{dim}option_list:%{reset} %{green bright underline}CREATION%{reset}, %{green bright underline}DELETION%{reset}, %{green bright underline}ALTERATION%{reset}',
+                '\t%{green}wlist%{reset} \t\tWatch list\t%{blackbg red dim}<mandatory>%{reset}%{dim} Value list as follows:%{reset green} "/path/to/file_a, /path/to/file_b, /path/fo/*, ..."%{reset}',
+                '',
+            }
+        else
+            return {
+                '',
+                style.topic('ARGS', theme),
+                '',
+                '\tKind of watcher\t <mandatory> option_list: CREATION, DELETION, ALTERATION',
+                '\tWatch list\t <mandatory> Value list as follows: "/path/to/file_a, /path/to/file_b, /path/fo/*, ..."',
+                '',
+            }
+        end
+    end
+end
+
+function help.defaults(scope, theme)
+    local _scope = scope or 'general'
+    local defaults = {
+        '',
+            style.topic('DEFAULTS', theme),
+            '',
+            style.defaults('maxwait', '60 seconds', '', theme),
+            style.defaults('interval', '0.5 seconds', '', theme)
+    }
+    if _scope == 'general' then
+        defaults[#defaults+1] = style.defaults('minsize', '0 Bytes', 'Ignore file size', theme)
+        defaults[#defaults+1] = style.defaults('frecuency', '1 second', '', theme)
+        defaults[#defaults+1] = style.defaults('iterations', '15', '', theme)
+        defaults[#defaults+1] = style.defaults('minage', '0', 'Expected minimum age of the novelty of the file', theme)
+        defaults[#defaults+1] = style.defaults('maxage', '0', 'Expected maximum age of the novelty of the file', theme)
+        defaults[#defaults+1] = style.defaults('match', '0', 'Referring to all files detected', theme)
+        defaults[#defaults+1] = style.defaults('sort', "\t'NS'", 'No sort', theme)
+        defaults[#defaults+1] = style.defaults('cases', '0', 'View all files in the list', theme)
+        defaults[#defaults+1] = style.defaults('recursion', 'false', 'Recursive mode is off', theme)
+        defaults[#defaults+1] = style.defaults('levels', '"{0}"', 'Referred to the root directory', theme)
+        defaults[#defaults+1] = style.defaults('hidden', 'false', 'Ignore hidden files', theme)
+        defaults[#defaults+1] = style.defaults('awhat', '1', 'Check for any file alteration', theme)
+    end
+
+    defaults[#defaults+1] = ''
+
+    return table.concat(defaults,'\n')
+end
+
+function help.print(theme, scope)
+    local _scope = scope or 'general'
+    if _scope == 'general' then
+        print(acolor(style.logo(theme)))
+        print(acolor(table.concat(help.usage(theme, ' <command>'), '\n')))
+        print(acolor(table.concat(help.tostar(theme), '\n')))
+        print(acolor(table.concat(help.common(theme), '\n')))
+        print(acolor(table.concat(help.commands(theme), '\n')))
+        print(acolor(help.flags(theme, 'short'), '\n'))
+    elseif _scope == 'new' then
+        print(acolor(table.concat(help.usage(theme, ' new'), '\n')))
+        print(acolor(table.concat(help.args(theme, 'new'), '\n')))
+        print(acolor(help.flags(theme, 'long'), '\n'))
+    end
+end
+
+local wargs = {...}
+
+local function make_wlist(list)
+    local wlist = {}
+    for file in string.gmatch(list, '([^,]+)') do
+        wlist[#wlist+1] = file
+    end
+    return wlist
+end
+
+local command = {}
+
+function command.new(kind, list)
+    local wlist = make_wlist(list)
+    return core.create(wlist, kind)
+end
+
+function command.run(watcher, parms, blocking)
+    local _blocking = blocking or 'false'
+    if _blocking == 'false' then
+        return core.run(watcher, parms)
+    else
+        --TODO:
+        print('Run watcher with waitfor')
+    end
+end
+
+function command.info(wid)
+    return mon.info(wid)
+end
+
+local flags_lst = {}
+flags_lst['--nocolor']      = 'n'
+flags_lst['-n']             = 'n'
+flags_lst['--version']      = 'V'
+flags_lst['-V']             = 'V'
+flags_lst['--help']         = 'h'
+flags_lst['-h']             = 'h'
+flags_lst['--interactive']  = 'i'
+flags_lst['-i']             = 'i'
+flags_lst['--blocking']     = 'b'
+flags_lst['-b']             = 'b'
+flags_lst['--verbose']      = 'v'
+flags_lst['-v']             = 'v'
+flags_lst['--robot']        = 'r'
+flags_lst['-r']             = 'r'
+flags_lst['--list']         = 'l'
+flags_lst['-l']             = 'l'
+flags_lst['--flags']        = 'f'
+flags_lst['-f']             = 'f'
+flags_lst['--defaults']     = 'd'
+flags_lst['-d']             = 'd'
+flags_lst['-l']             = 'l'
+flags_lst['--list']         = 'l'
+flags_lst['--maxwait']      = 'maxwait'
+flags_lst['--interval']     = 'interval'
+flags_lst['--minsize']      = 'minsize'
+flags_lst['--frecuency']    = 'frecuency'     --stability
+flags_lst['--iterations']   = 'iterations'    --stability
+flags_lst['--minage']       = 'minage'        --novelty
+flags_lst['--maxage']       = 'maxage'        --novelty
+flags_lst['--nmatch']       = 'nmatch'
+flags_lst['--sort']         = 'sort'          --options
+flags_lst['--cases']        = 'cases'         --options
+flags_lst['--match']        = 'match'         --options
+flags_lst['--recursive']    = 'recursive'     --recursion
+flags_lst['--levels']       = 'levels'        --recursion
+flags_lst['--hidden']       = 'hidden_files'  --recursion
+flags_lst['--awhat']        = 'awhat'
+
+flags_lst['--FILE_CREATION']   = 'creation'
+flags_lst['--FILE_DELETION']   = 'deletion'
+flags_lst['--FILE_ALTERATION'] = 'alteration'
+
+local cmd_lst = {}
+cmd_lst["new"]              = 'new'
+cmd_lst["run"]              = 'run'
+cmd_lst["mon"]              = 'mon'
+cmd_lst["info"]             = 'info'
+cmd_lst["file"]             = 'file'
+
+local _theme = 'default'
+local _interactive = false
+local _version = false
+local _blocking = false
+local _verbose = false
+local _robot = false
+local _nocolor
+local _help
+local _flags
+local _defaults
+local _ls
+local _command
+local _cargs = {}
+local _maxwait
+local _interval
+local _minsize
+local _frecuency
+local _iterations
+local _minage
+local _maxage
+local _nmatch
+local _sort
+local _cases
+local _match
+local _recursive
+local _levels
+local _hidden
+local _awhat
+local _creation
+local _alteration
+local _deletion
+
+local wcoll = {} --Watchers collection
+
+local function translate(term)
+
+    if term==WATCHER.ALTERATION then
+        return 'FILE ALTERATION'
+    elseif term==WATCHER.CREATION then
+        return 'FILE CREATION'
+    elseif term==WATCHER.DELETION then
+        return 'FILE DELETION'
+    else
+        return term
+    end
+
+end
+
+local function print_wheader(header, theme)
+    print(acolor(style.itemheader(header, '\t', theme)))
+end
+
+local function print_witem(nw, theme)
+    local thme = theme or 'default'
+    local _wid = tostring(nw.wid)
+    local swid = _wid:rstrip('ULL')
+    if thme =='default' then
+        print(acolor(table.concat(
+            {
+                translate(nw.kind),
+                swid,
+                tostring(#(nw.list)),
+                '%{red dim}\b',
+                'unstarted',
+                '%{reset}'
+        }, '\t')))
+    else
+        print(table.concat(
+            {
+                translate(nw.kind),
+                swid,
+                tostring(#(nw.list)),
+                'unstarted'
+            }, '\t'))
+    end
+end
+
+local function parser()
+    local j = 0
+    for i=1,#wargs do
+        --Scan flags
+        if flags_lst[wargs[i]]=='n' then
+            _nocolor = 'nocolor'
+            _theme = 'nocolor'
+        elseif flags_lst[wargs[i]]=='V' then
+            _version = true
+        elseif flags_lst[wargs[i]]=='f' then
+            _flags = true
+        elseif flags_lst[wargs[i]]=='d' then
+            _defaults = true
+        elseif flags_lst[wargs[i]]=='b' then
+            _blocking = true
+        elseif flags_lst[wargs[i]]=='v' then
+            _verbose = true
+        elseif flags_lst[wargs[i]]=='r' then
+            _robot = true
+        elseif flags_lst[wargs[i]]=='i' then
+            _interactive = true
+        elseif flags_lst[wargs[i]]=='h' then
+            _help = true
+        elseif flags_lst[wargs[i]]=='l' then
+                _ls = true
+        elseif flags_lst[wargs[i]]=='creation' then
+            _creation = true
+        elseif flags_lst[wargs[i]]=='deletion' then
+            _deletion = true
+        elseif flags_lst[wargs[i]]=='alteration' then
+            _alteration = true
+        elseif flags_lst[wargs[i]]=='maxwait' then
+            _maxwait = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='interval' then
+            _interval = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='minsize' then
+            _minsize = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='frecuency' then
+            _frecuency = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='iterations' then
+            _iterations = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='iterations' then
+            _iterations = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='minage' then
+            _minage = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='maxage' then
+            _maxage = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='nmatch' then
+            _nmatch = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='sort' then
+            _sort = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='cases' then
+            _cases = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='match' then
+            _match = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='recursive' then
+            _recursive = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='levels' then
+            _levels = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='hidden' then
+            _hidden = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='awhat' then
+            _awhat = wargs[i+1]
+        else
+            --It's a command?
+            if cmd_lst[wargs[i]]=='new' then
+                _command = 'new'
+            elseif cmd_lst[wargs[i]]=='run' then
+                _command = 'run'
+            elseif cmd_lst[wargs[i]]=='mon' then
+                _command = 'mon'
+            elseif cmd_lst[wargs[i]]=='info' then
+                _command = 'info'
+            elseif cmd_lst[wargs[i]]=='match' then
+                _command = 'match'
+            elseif cmd_lst[wargs[i]]=='nomatch' then
+                _command = 'nomatch'
+            elseif cmd_lst[wargs[i]]=='config' then
+                _command = 'config'
+            elseif cmd_lst[wargs[i]]=='wid' then
+                _command = 'wid'
+            elseif cmd_lst[wargs[i]]=='file' then
+                _command = 'file'
+            else
+                --Capture args
+                if _command then
+                    _cargs[j+1] = wargs[i]
+                    j = j + 1
+                else
+                    local a = string.find(wargs[i], '-', 1, 1)
+                    if not a then
+                        --print(wargs[i-1])
+                        if not (
+                               (_maxwait and wargs[i-1]=='--maxwait' and _maxwait == wargs[i])
+                            or (_interval and wargs[i-1]=='--interval' and _interval == wargs[i])
+                            or (_minsize and wargs[i-1]=='--minsize' and _minsize == wargs[i])
+                            or (_frecuency and wargs[i-1]=='--frecuency' and _frecuency == wargs[i])
+                            or (_iterations and wargs[i-1]=='--iterations' and _iterations == wargs[i])
+                            or (_minage and wargs[i-1]=='--minage' and _minage == wargs[i])
+                            or (_maxage and wargs[i-1]=='--maxage' and _maxage == wargs[i])
+                            or (_nmatch and wargs[i-1]=='--nmatch' and _nmatch == wargs[i])
+                            or (_sort and wargs[i-1]=='--sort' and _sort == wargs[i])
+                            or (_cases and wargs[i-1]=='--cases' and _cases == wargs[i])
+                            or (_match and wargs[i-1]=='--match' and _match == wargs[i])
+                            or (_recursive and wargs[i-1]=='--recursive' and _recursive == wargs[i])
+                            or (_levels and wargs[i-1]=='--levels' and _levels == wargs[i])
+                            or (_hidden and wargs[i-1]=='--hidden' and _hidden == wargs[i])
+                            or(_awhat and wargs[i-1]=='--awhat' and _awhat == wargs[i])
+                        ) then
+                            print(acolor('%{bright red}ERR7001: %{reset}Invalid entry. The command "'.. wargs[i]..'" is unknown'))
+                            print(acolor('%{bright}   HINT: %{reset dim}Some of the available commands are:%{green dim} new, run, mon, info, match, nomatch, ..'))
+                            print(acolor('%{bright}   HINT: %{reset dim}Run %{green dim}watcher --help%{reset} for help'))
+                            os.exit(7001)
+                        end
+                    else
+                        print(acolor('%{bright red}ERR7002: %{reset}Invalid entry. The flag "'.. wargs[i]..'" is unknown'))
+                        print(acolor('%{bright}   HINT: %{reset dim}The flags that are supported are: %{green dim} -h, -v, -i, -n, -e, -b, -r, ..'))
+                        print(acolor('%{bright}         %{reset dim}Run %{green dim}watcher --flags%{reset} to display watcher flags'))
+                        os.exit(7002)
+                    end
+                end
+            end
+        end
+    end
+
+    if _version then
+        print(acolor(style.version(_theme)))
+    end
+
+    if _help or #(wargs)==0 or (#(wargs)==1 and _nocolor) then
+        print(help.print(_theme, _command))
+    elseif not _help and _flags then
+        print(acolor(help.flags(_theme, 'long')))
+    elseif not _help and _defaults then
+        print(acolor(help.defaults('general', _theme)))
+    elseif not _help and (_flags and _defaults) then
+        print(acolor(help.flags(_theme, 'long')))
+        print(acolor(help.defaults('general', _theme)))
+    end
+
+    --print((_cargs[1]))
+
+    if _ls then
+        print('LSLSLSLS')
+    end
+
+    if _command and _interactive then
+        print('Ejecutando el comando '.._command..' en modo interactivo')
+    --    print('Args: '..#(_cargs))
+    elseif _command and not _interactive then
+        if _command == 'new' and #(_cargs) == 1 then
+            if _creation then
+                print(_cargs[1])
+                local nw = command.new(WATCHER.CREATION, _cargs[1])
+                wcoll[#wcoll+1] = nw
+            end
+            if _alteration then
+                local nw = command.new(WATCHER.ALTERATION, _cargs[1])
+                wcoll[#wcoll+1] = nw
+            end
+            if _deletion then
+                local nw = command.new(WATCHER.DELETION, _cargs[1])
+                wcoll[#wcoll+1] = nw
+            end
+        elseif _command == 'new' and #(_cargs) == 0 then
+            print('You must specify the parameters for the "new" command')
+        elseif _command == 'run' and #(_cargs) == 1 then
+            local wat = command.info(tonumber(_cargs[1]))
+            print(wat.ans)
+            local wrn = command.run(wat, {_maxwait, _interval}, 'false')
+        elseif _command == 'info' and #(_cargs) == 1 then
+            local inf = command.info(tonumber(_cargs[1]))
+            print('- wid: '..(tostring(inf.wid)):rstrip('ULL'))
+            print('- status: '..inf.status)
+            print('- what: '..inf.what)
+            print('- match: '..inf.match)
+            print('- nomatch: '..inf.nomatch)
+            print('- kind: '..tostring(inf.type))
+        elseif _command == 'file' then
+            print('File FILE FILE')
+        end
+    elseif not _command then
+        print('Debe especificar un comando')
+    end
+
+    --Sumarize output for watcher file
+    local wcreated = 0
+    if #wcoll == 1 then
+        local _nw = wcoll[1]
+        if _nw.ans == true then
+            print_wheader({'KIND', '\tWID', '\t\tITEMS', 'STATE'}, _theme)
+            print_witem(_nw, _theme)
+            wcreated = wcreated + 1
+        else
+            print('The creation of the watcher for '.._'nw.kind'..' has failed')
+        end
+    elseif #wcoll > 1 then
+        print_wheader({'KIND', '\tWID', '\t\tITEMS', 'STATE'}, _theme)
+        for i=1,#wcoll do
+            local _nw = wcoll[i]
+            if _nw.ans == true then
+                print_witem(_nw, _theme)
+                wcreated = wcreated + 1
+            else
+                print('The creation of the watcher for '.._nw.kind..' has failed')
+            end
+        end
+    end
+
+    if wcreated==0 and #wcoll~=0 then
+        print('No watcher has been created')
+    elseif wcreated==1 then
+        print('A watcher has been successfully created')
+    elseif wcreated>0 then
+        print(wcreated ..' watchers have been successfully created')
+    end
+
+    os.exit(0)
+
+end
+
+parser()
+
+--if _verbose then
+--    print('Modo vervose activado')
+--end
+
+--if _robot then
+--    print('Modo robot activado')
+--end
+
+--if _interactive then
+--    print('Modo interactivo activado')
+--end
+
+--if _blocking then
+--    print('Ejecucion bloqueandte activada')
+--end
+
+--if _maxwait then
+--    print(_maxwait)
+--end
+
+
+
+--if _command=='help' then
+    --help.print(_theme)
+--end

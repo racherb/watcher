@@ -6,7 +6,6 @@ local table_insert = table.insert
 local string_gsub = string.gsub
 local string_match = string.match
 
-
 --http://lua-users.org/wiki/TableUtils
 local function val_to_str(v)
     if "string" == type(v) then

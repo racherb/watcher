@@ -18,7 +18,8 @@ local schema = {
             {name="what", type="string"},   --What is watching
             {name="dini", type="long"},     --Begin datetimete
             {name="dend", type="long"},     --End for watcher
-            {name="answ", type="string"}    --Answer or end status
+            {name="answ", type="string"},   --Answer or end status
+            {name="fid",  type="long"}      --Fiber Id
         }
     },
     watchables = {

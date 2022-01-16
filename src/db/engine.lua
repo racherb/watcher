@@ -30,10 +30,12 @@ local function create_spaces()
         box.space.awatcher:create_index('awa_pk',
         {
             type = 'hash',
+            unique = true,
             parts = {1, 'unsigned'}
-        }
-    )
+        })
     end
+
+    log.info('The awatcher scheme index has been successfully created')
 
     if not pcall(box.schema.create_space, 'watchables') then
         return false
@@ -121,11 +123,12 @@ local function new(
         what = what,
         dini = clock.realtime64(),
         dend = 0,
-        answ = ''
+        answ = '',
+        fid = 0
         }
 
     local ok, tuple = awa.flatten(nawa)
-
+    print(ok)
     if ok then
         box.space.awatcher:insert(tuple)
         return {
@@ -138,6 +141,16 @@ local function new(
             wid = nil
         }
     end
+end
+
+--Set the fiber id when watcher is running
+local function set(wid, fid)
+    box.space.awatcher:update(
+        wid,
+        {
+            {'=', 7, fid}
+        }
+    )
 end
 
 local function get(wid)
@@ -334,6 +347,7 @@ end
 local awatcher = {
     wig = wig,        --Generate a Watcher Id
     new = new,        --Create a new Watcher
+    set = set,        --Set fiber id
     add = add,        --Add watchables to Watcher
     put = put,
     get = get,        --Get the active watcher from wid

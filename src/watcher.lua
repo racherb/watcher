@@ -23,6 +23,7 @@ local fwa = require('file_watcher')
 local assert = assert
 
 local WATCHER = require('types.file').WATCHER
+local STATE = require('types.file').STATE
 local OUTPUT = require('types.file').OUTPUT
 local EXIT = require('types.file').EXIT
 local SORT = require('types.file').SORT
@@ -111,6 +112,7 @@ local function run_watcher(watcher, parm)
             )
             if fib then
                 fib:name(string.format('FWD-%s', tostring(watcher.wid)))
+                db.awatcher.set(watcher.wid, fib.id)
                 return {
                     fid = fib:id(),
                     wid = watcher.wid
@@ -130,6 +132,7 @@ local function run_watcher(watcher, parm)
             )
             if fib then
                 fib:name(string.format('FWC-%s', tostring(watcher.wid)))
+                db.awatcher.set(watcher.wid, fib.id)
                 return {
                     fid = fib:id(),
                     wid = watcher.wid
@@ -147,6 +150,7 @@ local function run_watcher(watcher, parm)
             )
             if fib then
                 fib:name(string.format('FWA-%s', tostring(watcher.wid)))
+                db.awatcher.set(watcher.wid, fib.id)
                 return
                 {
                     fid = fib:id(),
@@ -327,7 +331,6 @@ local function file_creation(
     )
 end
 
-
 local function file_alteration(
     --[[required]] wlist,
     --[[optional]] maxwait,
@@ -426,15 +429,18 @@ local function info(wid)
     local watcher = awa:select(wid)
     if watcher and watcher[1] then
         if watcher[1][5]~=0 then
-            status = 'completed'
+            status = STATE.COMPLETED
             answer = watcher[1][6]
+        elseif watcher[1][7]==0 then
+            status = STATE.UNSTARTED
+            answer = 'waiting'
         else
-            status = 'started'
+            status = STATE.RUNNING --'started'
             answer = 'waiting'
         end
         return {
             wid = watcher[1][1],
-            type = watcher[1][2],
+            kind = watcher[1][2],
             what = watcher[1][3],
             status = status,
             ans = answer,

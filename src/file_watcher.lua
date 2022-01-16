@@ -320,7 +320,8 @@ local function recursive_tree(
     local function get_level (path)
         local folders={}
         for str in string.gmatch(path, "([^/]+)") do
-                table.insert(folders, str)
+            --table.insert(folders, str)
+            folders[#folders+1] = str
         end
         return #folders
     end
