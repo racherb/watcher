@@ -40,8 +40,12 @@ build = {
       ["watcher.types.file"]      = "src/types/file.lua",
       ["watcher.util"]            = "src/util.lua",
       ["watcher.watcher"]         = "src/watcher.lua"
-   }
+   },
+   install = {
+       bin = {
+           watcher = 'bin/watcher',
+        }
+    }
 }
-
 
 -- vim: syntax=lua ts=4 sts=4 sw=4 et

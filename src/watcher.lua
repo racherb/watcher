@@ -33,6 +33,7 @@ local sck = require('sanity_check') --for sanity check
 
 local awa = db.spaces.awatcher
 local wat = db.spaces.watchables.index.wat_ak_answ --box.space.watchables.index.wat_ak_answ
+local db_awatcher = db.awatcher
 
 strict.on()
 
@@ -62,10 +63,11 @@ local function create_watcher(
     end
 
     local wid
-    local nwid = db.awatcher.new(
+    local nwid = db_awatcher.new(
         ut.tostring(wlist),
         wkind
     )
+
     if nwid.ans then
         wid = nwid.wid
     else
@@ -112,7 +114,7 @@ local function run_watcher(watcher, parm)
             )
             if fib then
                 fib:name(string.format('FWD-%s', tostring(watcher.wid)))
-                db.awatcher.set(watcher.wid, fib.id)
+                db_awatcher.set(watcher.wid, fib.id())
                 return {
                     fid = fib:id(),
                     wid = watcher.wid
@@ -132,7 +134,7 @@ local function run_watcher(watcher, parm)
             )
             if fib then
                 fib:name(string.format('FWC-%s', tostring(watcher.wid)))
-                db.awatcher.set(watcher.wid, fib.id)
+                db_awatcher.set(watcher.wid, fib.id())
                 return {
                     fid = fib:id(),
                     wid = watcher.wid
@@ -150,7 +152,7 @@ local function run_watcher(watcher, parm)
             )
             if fib then
                 fib:name(string.format('FWA-%s', tostring(watcher.wid)))
-                db.awatcher.set(watcher.wid, fib.id)
+                db_awatcher.set(watcher.wid, fib.id())
                 return
                 {
                     fid = fib:id(),

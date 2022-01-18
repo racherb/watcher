@@ -18,24 +18,24 @@ local avro_create = avro.create
 
 strict.on()
 
-local function mk_awatcher()
+local function compile_awatcher()
     local s_ok, s_awatcher = avro_create(
         schema.awatcher
     )
     if s_ok then
         local c_ok, c_awatcher = avro_compile(s_awatcher)
         if c_ok then
-            log.info('Schema compilation is ok for awatcher')
+            log.info('Schema compilation is ok for active watcher')
             return c_awatcher
         else
-            log.error('Schema compilation failed for aWatcher')
+            log.error('Schema compilation failed for active watcher')
         end
     else
-        log.error('Schema creation failed for aWatcher')
+        log.error('Schema creation failed for active watcher')
     end
 end
 
-local function mk_watchables()
+local function compile_watchables()
     local s_ok, s_watchables = avro_create(
         schema.watchables
     )
@@ -47,14 +47,14 @@ local function mk_watchables()
             log.info('Schema compilation is ok for watchables')
             return c_watchables
         else
-            log.error('Schema compilation failed for Watchables')
+            log.error('Schema compilation failed for watchables')
         end
     else
-        log.error('Schema creation failed for Watchables')
+        log.error('Schema creation failed for watchables')
     end
 end
 
 return {
-    awatcher = mk_awatcher,
-    watchables = mk_watchables
+    awatcher = compile_awatcher,
+    watchables = compile_watchables
 }

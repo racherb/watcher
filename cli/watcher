@@ -801,7 +801,6 @@ local function parser()
     elseif _command and not _interactive then
         if _command == 'new' and #(_cargs) == 1 then
             if _creation then
-                print(_cargs[1])
                 local nw = command.new(WATCHER.CREATION, _cargs[1])
                 wcoll[#wcoll+1] = nw
             end
@@ -843,7 +842,7 @@ local function parser()
             print_witem(_nw, _theme)
             wcreated = wcreated + 1
         else
-            print('The creation of the watcher for '.._'nw.kind'..' has failed')
+            print('The creation of the watcher for '..'_nw.kind'..' has failed')
         end
     elseif #wcoll > 1 then
         print_wheader({'KIND', '\tWID', '\t\tITEMS', 'STATE'}, _theme)

@@ -100,10 +100,15 @@ local function start()
     end)
 end
 
+start()
+
+local box_space_awatcher = box.space.awatcher
+local box_space_watchables = box.space.watchables
+
 -- Id Generator for awatcher table
 local function wig()
     local nid = clock.realtime64()/1e3
-    while box.space.awatcher:get(nid) do
+    while box_space_awatcher:get(nid) do
         nid = nid + 1
     end
     return nid
@@ -128,9 +133,9 @@ local function new(
         }
 
     local ok, tuple = awa.flatten(nawa)
-    print(ok)
+
     if ok then
-        box.space.awatcher:insert(tuple)
+        box_space_awatcher:insert(tuple)
         return {
             ans = true,
             wid = id
@@ -144,17 +149,12 @@ local function new(
 end
 
 --Set the fiber id when watcher is running
-local function set(wid, fid)
-    box.space.awatcher:update(
-        wid,
-        {
-            {'=', 7, fid}
-        }
-    )
+local function set_fid(wid, fid)
+    box_space_awatcher:update(wid, {{'=', 7, fid}})
 end
 
 local function get(wid)
-    return box.space.awatcher:get(wid)
+    return box_space_awatcher:get(wid)
 end
 
 --Add watchables
@@ -183,7 +183,7 @@ local function add(
         local ok, tuple = wat.flatten(watchb)
 
         if ok then
-            box.space.watchables:insert(tuple)
+            box_space_watchables:insert(tuple)
             return true, object
         else
             return false, tuple
@@ -215,7 +215,7 @@ local function put(
         local ok, tuple = wat.flatten(watchb)
 
         if ok then
-            box.space.watchables:insert(tuple)
+            box_space_watchables:insert(tuple)
             return true, object
         else
             return false, tuple
@@ -229,7 +229,7 @@ local function del(
     wid
 )
 
-    local s = box.space.watchables.index.wat_uk
+    local s = box_space_watchables.index.wat_uk
     local sel = s:select(wid)
 
     for _,v in pairs(sel) do
@@ -242,8 +242,8 @@ end
 
 -- Truncate watcher table
 local function trun()
-    box.space.watchables:truncate()
-    box.space.awatcher:truncate()
+    box_space_watchables:truncate()
+    box_space_awatcher:truncate()
 end
 
 local function upd(
@@ -252,7 +252,7 @@ local function upd(
     ans,
     msg
 )
-    box.space.watchables.index.wat_uk:update(
+    box_space_watchables.index.wat_uk:update(
         {
             wid,
             object
@@ -270,7 +270,7 @@ local function match(
     wtype
 )
     local _wtype = wtype or 'FWC' --WATCHER.FILE_CREATION is Default
-    local s = box.space.watchables.index.wat_ak_mssg
+    local s = box_space_watchables.index.wat_ak_mssg
 
     if _wtype == WATCHER.FILE_CREATION then
         return s:count(
@@ -303,7 +303,7 @@ local function stat(
     local sel = box.space.watchables.index.wat_ak_mssg
 
     return {
-        total = box.space.watchables:len(),
+        total = box_space_watchables:len(),
         match = sel:count(
             {
                 wid,
@@ -331,7 +331,7 @@ local function close(
 
     if t_watcher then
         local v_end = clock.realtime64()
-        box.space.awatcher:update(
+        box_space_awatcher:update(
             wid,
             {
                 {'=', 5, v_end},
@@ -347,7 +347,7 @@ end
 local awatcher = {
     wig = wig,        --Generate a Watcher Id
     new = new,        --Create a new Watcher
-    set = set,        --Set fiber id
+    set = set_fid,    --Set fiber id
     add = add,        --Add watchables to Watcher
     put = put,
     get = get,        --Get the active watcher from wid
@@ -359,13 +359,10 @@ local awatcher = {
     match = match
 }
 
-start()
-
 local spaces = {
-    awatcher = box.space.awatcher,
-    watchables = box.space.watchables
+    awatcher = box_space_awatcher,
+    watchables = box_space_watchables
 }
-
 
 return {
     start = start,
