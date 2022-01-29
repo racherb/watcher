@@ -49,10 +49,26 @@ local logo = {
 local style = {}
 local help = {}
 
+--[[emojis and icons
+    ✔
+    ❌
+    ✅
+    🔐
+    🤏
+    🔑
+    💭
+    ❓
+--]]
+
 function style.logo(theme)
     local _theme = theme or 'default'
     if _theme == 'default' then
-        return table.concat({'%{green bright}', table.concat(logo_color,'\n'), '%{reset}'},'')
+        return table.concat(
+            {
+                '%{green bright}',
+                table.concat(logo_color,'\n'),
+                '%{reset}'
+        },'')
     else
         return table.concat({table.concat(logo,'\n')},'')
     end
@@ -237,22 +253,22 @@ function help.usage(theme, topic)
         usage[#usage+1] = ''
         usage[#usage+1] = style.prompt(
             cli.tag,
-            ' [<flags>]', topic,
-            ' CREATION <wlist>',
-            ' \t\t#Create a new watcher for detect file creation',
+            ' --FILE_CREATION [<flags>]', topic,
+            ' <wlist>',
+            ' \t#Create a new watcher for detect file creation',
             theme
         )
         usage[#usage+1] = style.prompt(
             cli.tag,
-            ' [<flags>]', topic,
-            ' DELETION <wlist>',
-            ' \t\t#Create a new watcher for detect file deletion',
+            ' --FILE_DELETION [<flags>]', topic,
+            ' <wlist>',
+            ' \t#Create a new watcher for detect file deletion',
             theme
         )
         usage[#usage+1] = style.prompt(
             cli.tag,
-            ' [<flags>]', topic,
-            ' ALTERATION <wlist>',
+            ' --FILE_ALTERATION [<flags>]', topic,
+            ' <wlist>',
             ' \t#Create a new watcher for detect file alteration',
             theme
         )
@@ -312,10 +328,12 @@ function help.commands(theme)
         style.syntax('watcher', ' run', '\t\t Run a watcher', theme),
         style.syntax('watcher', ' mon', '\t\t For monitoring watcher', theme),
         style.syntax('watcher', ' info', '\t\t Gets information from a previously executed watcher', theme),
+        style.syntax('watcher', ' ls', '\t\t List existing watchers', theme),
+        style.syntax('watcher', ' rm', '\t\t Removes a given watcher', theme),
         style.syntax('watcher', ' match', '\t\t Gets the list of items detected by watcher', theme),
         style.syntax('watcher', ' nomatch', '\t Gets the list of items not detected by watcher', theme),
         style.syntax('watcher', ' config', '\t Set watcher configuration', theme),
-        style.syntax('watcher', ' wid', '\t\t Show the last watcher id', theme),
+        style.syntax('watcher', ' name', '\t\t Name a watcher', theme),
         '',
         style.syntax('watcher', ' env', '\t\t Environment', theme),
         style.syntax('watcher', ' file', '\t\t File Watcher', theme),
@@ -349,7 +367,6 @@ function help.flags(theme, scope)
         '\t --FILE_CREATION   \t Watcher for file creation',
         '\t --FILE_DELETION   \t Watcher for file deletion',
         '\t --FILE_ALTERATION \t Watcher for file alteration',
-        '',
     }
 
     if _scope == 'short' then
@@ -429,8 +446,7 @@ function help.args(theme, topic)
                 '',
                 style.topic('ARGS', theme),
                 '',
-                '\t%{green}kind%{reset} \t\tKind of watcher\t%{blackbg red dim}<mandatory>%{reset} %{dim}option_list:%{reset} %{green bright underline}CREATION%{reset}, %{green bright underline}DELETION%{reset}, %{green bright underline}ALTERATION%{reset}',
-                '\t%{green}wlist%{reset} \t\tWatch list\t%{blackbg red dim}<mandatory>%{reset}%{dim} Value list as follows:%{reset green} "/path/to/file_a, /path/to/file_b, /path/fo/*, ..."%{reset}',
+                '\t%{green}wlist%{reset} \tWatch list\t%{blackbg red dim}<mandatory>%{reset}%{dim} Value list as follows:%{reset green} "/path/to/file_a, /path/to/file_b, /path/fo/*, ..."%{reset}',
                 '',
             }
         else
@@ -438,7 +454,6 @@ function help.args(theme, topic)
                 '',
                 style.topic('ARGS', theme),
                 '',
-                '\tKind of watcher\t <mandatory> option_list: CREATION, DELETION, ALTERATION',
                 '\tWatch list\t <mandatory> Value list as follows: "/path/to/file_a, /path/to/file_b, /path/fo/*, ..."',
                 '',
             }
@@ -459,15 +474,15 @@ function help.defaults(scope, theme)
         defaults[#defaults+1] = style.defaults('minsize', '0 Bytes', 'Ignore file size', theme)
         defaults[#defaults+1] = style.defaults('frecuency', '1 second', '', theme)
         defaults[#defaults+1] = style.defaults('iterations', '15', '', theme)
-        defaults[#defaults+1] = style.defaults('minage', '0', 'Expected minimum age of the novelty of the file', theme)
-        defaults[#defaults+1] = style.defaults('maxage', '0', 'Expected maximum age of the novelty of the file', theme)
-        defaults[#defaults+1] = style.defaults('match', '0', 'Referring to all files detected', theme)
-        defaults[#defaults+1] = style.defaults('sort', "\t'NS'", 'No sort', theme)
-        defaults[#defaults+1] = style.defaults('cases', '0', 'View all files in the list', theme)
+        defaults[#defaults+1] = style.defaults('minage', '0', 'Expected minimum age of the novelty of the file. Zero ignores the minimum age', theme)
+        defaults[#defaults+1] = style.defaults('maxage', '0', 'Expected maximum age of the novelty of the file. Zero ignores the maximum age', theme)
+        defaults[#defaults+1] = style.defaults('match', '0', 'Zero is referring to all files detected', theme)
+        defaults[#defaults+1] = style.defaults('sort', "\t'NS'", 'NS means "No sort" for watcher list', theme)
+        defaults[#defaults+1] = style.defaults('cases', '0', 'Zero for check all files in the list', theme)
         defaults[#defaults+1] = style.defaults('recursion', 'false', 'Recursive mode is off', theme)
         defaults[#defaults+1] = style.defaults('levels', '"{0}"', 'Referred to the root directory', theme)
-        defaults[#defaults+1] = style.defaults('hidden', 'false', 'Ignore hidden files', theme)
-        defaults[#defaults+1] = style.defaults('awhat', '1', 'Check for any file alteration', theme)
+        defaults[#defaults+1] = style.defaults('hidden', 'false', 'false for ignore hidden files', theme)
+        defaults[#defaults+1] = style.defaults('awhat', '1', 'Value of 1 indicates: check for any file alteration', theme)
     end
 
     defaults[#defaults+1] = ''
@@ -489,6 +504,10 @@ function help.print(theme, scope)
         print(acolor(table.concat(help.args(theme, 'new'), '\n')))
         print(acolor(help.flags(theme, 'long'), '\n'))
     end
+end
+
+local function wid2string(wid)
+    return ((tostring(wid)):rstrip('ULL'))
 end
 
 local wargs = {...}
@@ -518,6 +537,50 @@ function command.run(watcher, parms, blocking)
     end
 end
 
+function command.list(wid)
+    if not wid then
+        return mon.list()
+    else
+        --TODO: List watchables when wid is present
+        print('watchebles')
+    end
+end
+
+function command.remove(wid)
+    return core.remove(wid)
+end
+
+local function split(str, delimiter)
+    local result = {};
+    for match in (str..delimiter):gmatch("(.-)"..delimiter) do
+        --table.insert(result, match);
+        result[#result+1] = match
+    end
+    return result;
+end
+
+local function get_wid(val)
+    if tonumber(val) then
+        return tonumber(val)
+    else
+        local nametag = split(val, ':')
+        local name = nametag[1]
+        local tag = nametag[2]
+        if name=='' and tag=='' then
+            return val
+        else
+            return core.widbyname(name, tag)
+        end
+    end
+end
+
+function command.name(wid, strname)
+    local nametag = split(strname, ':')
+    local name = nametag[1] or ''
+    local tag = nametag[2] or ''
+    return core.name(tonumber(wid), name, tag)
+end
+
 function command.info(wid)
     return mon.info(wid)
 end
@@ -537,14 +600,10 @@ flags_lst['--verbose']      = 'v'
 flags_lst['-v']             = 'v'
 flags_lst['--robot']        = 'r'
 flags_lst['-r']             = 'r'
-flags_lst['--list']         = 'l'
-flags_lst['-l']             = 'l'
 flags_lst['--flags']        = 'f'
 flags_lst['-f']             = 'f'
 flags_lst['--defaults']     = 'd'
 flags_lst['-d']             = 'd'
-flags_lst['-l']             = 'l'
-flags_lst['--list']         = 'l'
 flags_lst['--maxwait']      = 'maxwait'
 flags_lst['--interval']     = 'interval'
 flags_lst['--minsize']      = 'minsize'
@@ -571,6 +630,10 @@ cmd_lst["run"]              = 'run'
 cmd_lst["mon"]              = 'mon'
 cmd_lst["info"]             = 'info'
 cmd_lst["file"]             = 'file'
+cmd_lst["name"]             = 'name'
+cmd_lst["list"]             = 'list'
+cmd_lst["ls"]               = 'ls'  --alias for command list
+cmd_lst["rm"]               = 'rm'  --remove watcher
 
 local _theme = 'default'
 local _interactive = false
@@ -582,7 +645,6 @@ local _nocolor
 local _help
 local _flags
 local _defaults
-local _ls
 local _command
 local _cargs = {}
 local _maxwait
@@ -607,13 +669,20 @@ local _deletion
 local wcoll = {} --Watchers collection
 
 local function translate(term)
-
-    if term==WATCHER.ALTERATION then
-        return 'FILE ALTERATION'
-    elseif term==WATCHER.CREATION then
-        return 'FILE CREATION'
-    elseif term==WATCHER.DELETION then
-        return 'FILE DELETION'
+    if term==WATCHER.FILE_ALTERATION then
+        return 'FILE_ALTERATION'
+    elseif term==WATCHER.FILE_CREATION then
+        return 'FILE_CREATION'
+    elseif term==WATCHER.FILE_DELETION then
+        return 'FILE_DELETION'
+    elseif term==STATE.RUNNING then
+        return 'running'
+    elseif term==STATE.COMPLETED then
+        return 'completed'
+    elseif term==STATE.UNSTARTED then
+        return 'unstarted'
+    elseif term=='' then
+        return '<none>'
     else
         return term
     end
@@ -626,8 +695,7 @@ end
 
 local function print_witem(nw, theme)
     local thme = theme or 'default'
-    local _wid = tostring(nw.wid)
-    local swid = _wid:rstrip('ULL')
+    local swid = wid2string(nw.wid)
     if thme =='default' then
         print(acolor(table.concat(
             {
@@ -649,11 +717,53 @@ local function print_witem(nw, theme)
     end
 end
 
+local function print_winfo(inf, theme)
+    local thme = theme or 'default'
+    if thme=='default' then
+        print(acolor(table.concat(
+            {
+                '- wid: %{bright}',
+                wid2string(inf.wid),
+                '\n%{reset}- kind: ',
+                tostring(inf.kind),
+                '\n- state: ',
+                translate(inf.status),
+                '\n- what: ',
+                inf.what,
+                '\n- match: ',
+                inf.match,
+                '\n- nomatch: ',
+                inf.nomatch,
+                '\n- answ: %{dim}',
+                inf.ans,
+                '%{reset}'
+            }, '')))
+    else
+        print(table.concat(
+            {
+                '- wid: ',
+                wid2string(inf.wid),
+                '\n- kind: ',
+                tostring(inf.kind),
+                '\n- state: ',
+                translate(inf.status),
+                '\n- what: ',
+                inf.what,
+                '\n- match: ',
+                inf.match,
+                '\n- nomatch: ',
+                inf.nomatch,
+                '\n- answ: ',
+                inf.ans
+            }, ''))
+    end
+end
+
 local function parser()
     local j = 0
     for i=1,#wargs do
         --Scan flags
-        if flags_lst[wargs[i]]=='n' then
+        if flags_lst[wargs[i]]=='n' or os.getenv ("NO_COLOR") then
             _nocolor = 'nocolor'
             _theme = 'nocolor'
         elseif flags_lst[wargs[i]]=='V' then
@@ -672,8 +782,6 @@ local function parser()
             _interactive = true
         elseif flags_lst[wargs[i]]=='h' then
             _help = true
-        elseif flags_lst[wargs[i]]=='l' then
-                _ls = true
         elseif flags_lst[wargs[i]]=='creation' then
             _creation = true
         elseif flags_lst[wargs[i]]=='deletion' then
@@ -728,10 +836,14 @@ local function parser()
                 _command = 'nomatch'
             elseif cmd_lst[wargs[i]]=='config' then
                 _command = 'config'
-            elseif cmd_lst[wargs[i]]=='wid' then
-                _command = 'wid'
+            elseif cmd_lst[wargs[i]]=='name' then
+                _command = 'name'
             elseif cmd_lst[wargs[i]]=='file' then
                 _command = 'file'
+            elseif cmd_lst[wargs[i]]=='ls' or cmd_lst[wargs[i]]=='list' then
+                _command = 'list'
+            elseif cmd_lst[wargs[i]]=='rm' then
+                _command = 'rm'
             else
                 --Capture args
                 if _command then
@@ -791,46 +903,90 @@ local function parser()
 
     --print((_cargs[1]))
 
-    if _ls then
-        print('LSLSLSLS')
-    end
-
     if _command and _interactive then
         print('Ejecutando el comando '.._command..' en modo interactivo')
+        io.write('Hello, what is your name? ')
+        local name = io.read()
+        io.write('Nice to meet you, ', name, '!\n')
     --    print('Args: '..#(_cargs))
     elseif _command and not _interactive then
         if _command == 'new' and #(_cargs) == 1 then
             if _creation then
-                local nw = command.new(WATCHER.CREATION, _cargs[1])
+                local nw = command.new(WATCHER.FILE_CREATION, _cargs[1])
                 wcoll[#wcoll+1] = nw
             end
             if _alteration then
-                local nw = command.new(WATCHER.ALTERATION, _cargs[1])
+                local nw = command.new(WATCHER.FILE_ALTERATION, _cargs[1])
                 wcoll[#wcoll+1] = nw
             end
             if _deletion then
-                local nw = command.new(WATCHER.DELETION, _cargs[1])
+                local nw = command.new(WATCHER.FILE_DELETION, _cargs[1])
                 wcoll[#wcoll+1] = nw
             end
         elseif _command == 'new' and #(_cargs) == 0 then
             print('You must specify the parameters for the "new" command')
+        elseif _command == 'name' and #(_cargs) == 2 then
+            command.name(_cargs[2], _cargs[1])
+        elseif _command == 'name' and #(_cargs) < 2 then
+            print('Debe especificar un nombre repo:tag y un watcher id')
+        elseif _command=='list' then
+            local lst = command.list(_cargs[1])
+            print_wheader(
+                {
+                    'REPOSITORY',
+                    'TAG',
+                    '\tWATCHER ID',
+                    '\tKIND',
+                    'CREATED',
+                    '\tOBSERVABLES'
+                }, _theme)
+            for i=1,#lst do
+                print(table.concat(
+                    {
+                        string.ljust(translate(lst[i][8]), 11, ' '),
+                        '\t', string.ljust((translate(lst[i][9])), 11, ' '),
+                        '\t', wid2string(lst[i][1]),
+                        '\t', lst[i][2],
+                        '\t', os.date("%Y-%m-%d", wid2string(lst[i][1]/1e6)),
+                        '\t', lst[i][3]
+                    }, '')
+                )
+            end
         elseif _command == 'run' and #(_cargs) == 1 then
-            local wat = command.info(tonumber(_cargs[1]))
-            print(wat.ans)
-            local wrn = command.run(wat, {_maxwait, _interval}, 'false')
+            local wid = get_wid(_cargs[1])
+            --local wrn = command.run(wat, {_maxwait, _interval}, 'false')
+            local wlist = make_wlist(_cargs[1])
+            local dd = fwt.creation(wlist)
         elseif _command == 'info' and #(_cargs) == 1 then
-            local inf = command.info(tonumber(_cargs[1]))
-            print('- wid: '..(tostring(inf.wid)):rstrip('ULL'))
-            print('- status: '..inf.status)
-            print('- what: '..inf.what)
-            print('- match: '..inf.match)
-            print('- nomatch: '..inf.nomatch)
-            print('- kind: '..tostring(inf.type))
+            local wid = get_wid(_cargs[1])
+            if wid then
+                local inf = command.info(wid)
+                if not inf.err then
+                    print_winfo(inf, _theme)
+                else
+                    --TODO: Normalizar exito code para el error
+                    print(inf.err)
+                end
+            else
+                --TODO: Normalizar exito code para el error
+                print('The name:tag does not exist')
+            end
+        elseif _command == 'rm' and #(_cargs) == 1 then
+            local wid = get_wid(_cargs[1])
+            if wid then
+                local ans = command.remove(wid)
+                if not ans then
+                    print('Watcher could not be deleted or no longer exists')
+                end
+            else
+                --TODO: Normalizar exito code para el error
+                print('The name:tag does not exist')
+            end
         elseif _command == 'file' then
             print('File FILE FILE')
         end
     elseif not _command then
-        print('Debe especificar un comando')
+        print('You must specify a command')
     end
 
     --Sumarize output for watcher file
@@ -842,7 +998,7 @@ local function parser()
             print_witem(_nw, _theme)
             wcreated = wcreated + 1
         else
-            print('The creation of the watcher for '..'_nw.kind'..' has failed')
+            print('The creation of the watcher for has failed')
         end
     elseif #wcoll > 1 then
         print_wheader({'KIND', '\tWID', '\t\tITEMS', 'STATE'}, _theme)
@@ -852,7 +1008,7 @@ local function parser()
                 print_witem(_nw, _theme)
                 wcreated = wcreated + 1
             else
-                print('The creation of the watcher for '.._nw.kind..' has failed')
+                print('The creation of the watcher has failed')
             end
         end
     end
@@ -860,9 +1016,9 @@ local function parser()
     if wcreated==0 and #wcoll~=0 then
         print('No watcher has been created')
     elseif wcreated==1 then
-        print('A watcher has been successfully created')
+        print('✔ A watcher has been successfully created')
     elseif wcreated>0 then
-        print(wcreated ..' watchers have been successfully created')
+        print('✔ '..wcreated ..' watchers have been successfully created')
     end
 
     os.exit(0)

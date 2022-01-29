@@ -420,7 +420,7 @@ local function wait_for_watcher(wid)
     return {
         wid = watcher[1][1],
         ans = watcher[1][6],
-        time = (watcher[1][5] - watcher[1][4])/1000000000 --to seconds
+        time = (watcher[1][5] - watcher[1][4])/1e9 --to seconds
     }
 
 end
@@ -435,11 +435,12 @@ local function info(wid)
             answer = watcher[1][6]
         elseif watcher[1][7]==0 then
             status = STATE.UNSTARTED
-            answer = 'waiting'
+            answer = '<none>'
         else
             status = STATE.RUNNING --'started'
-            answer = 'waiting'
+            answer = '<waiting>'
         end
+
         return {
             wid = watcher[1][1],
             kind = watcher[1][2],
@@ -458,19 +459,22 @@ local function info(wid)
 end
 
 local function match(wid)
-    local mwa = wat:select({wid, true})
-    return mwa
+    return wat:select({wid, true})
 end
 
 local function nomatch(wid)
-    local nwa = wat:select({wid, false})
-    return nwa
+    return wat:select({wid, false})
+end
+
+local function list()
+    return db_awatcher.list()
 end
 
 local monitor = {}
 monitor.info = info
 monitor.match = match
 monitor.nomatch = nomatch
+monitor.list = list
 --monitor.why = why
 --monitor.diff = diff
 
@@ -484,6 +488,10 @@ core.create = create_watcher
 core.run = run_watcher
 core.waitfor = wait_for_watcher
 core.start = db.start
+core.name = db_awatcher.name
+core.widbyname = db_awatcher.widbn
+core.remove = db_awatcher.del
+--core.tb2str = ut.tostring
 --core.forever = forever
 
 return {

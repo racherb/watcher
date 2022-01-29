@@ -1,0 +1,14 @@
+watcher environment create --?
+watcher environment add
+watcher environment update
+watcher environment delete
+
+watcher new
+watcher run
+watcher exec
+watcher reset
+watcher rerun
+watcher ls
+watcher name <repo:tag> <wid>
+
+FLAGS

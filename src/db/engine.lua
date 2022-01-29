@@ -33,6 +33,12 @@ local function create_spaces()
             unique = true,
             parts = {1, 'unsigned'}
         })
+        box.space.awatcher:create_index('awa_name',
+        {
+            type = 'tree',
+            unique = false,
+            parts = {{8, 'str'}, {9, 'str'}}
+        })
     end
 
     log.info('The awatcher scheme index has been successfully created')
@@ -114,6 +120,11 @@ local function wig()
     return nid
 end
 
+--Active Watcher List
+local function list()
+    return box_space_awatcher:select()
+end
+
 -- Register a new watcher
 local function new(
     what,
@@ -126,11 +137,13 @@ local function new(
         wid = id,
         type = kind,
         what = what,
-        dini = clock.realtime64(),
+        dini = clock.realtime64(),  --wall time in nanosecs
         dend = 0,
         answ = '',
-        fid = 0
-        }
+        fid = 0,
+        repo = '',
+        tag = ''
+    }
 
     local ok, tuple = awa.flatten(nawa)
 
@@ -141,6 +154,8 @@ local function new(
             wid = id
         }
     else
+        --TODO: Este valor 'tuple' devuelve el error en caso de ocurrir
+        --print(tuple)
         return {
             ans = false,
             wid = nil
@@ -153,8 +168,39 @@ local function set_fid(wid, fid)
     box_space_awatcher:update(wid, {{'=', 7, fid}})
 end
 
+local function wid_by_name(name, tag)
+    local s = box_space_awatcher.index.awa_name
+    local watcher = s:select({name, tag})
+    if watcher[1] then
+        return watcher[1][1]
+    else
+        return nil
+    end
+end
+
 local function get(wid)
     return box_space_awatcher:get(wid)
+end
+
+local function set_name(wid, name, tag)
+    local _name = name or ''
+    local _tag = tag or ''
+    local _wid = wid_by_name(_name, _tag)
+    local _widx = get(wid)
+    if not _widx then
+        print('No existe un watcher con el identificador dado')
+    elseif (_wid and _wid==wid) or not _wid then
+        box_space_awatcher:update(
+            wid,
+            {
+                {'=', 8, _name},
+                {'=', 9, _tag}
+            }
+        )
+    else
+        --TODO: Normalizar salida
+        print('Ya existe un repoitorio con ese nombre')
+    end
 end
 
 --Add watchables
@@ -162,7 +208,8 @@ local function add(
     wid,
     object,
     answer,
-    message
+    message,
+    dyn_index
 )
     local the_watcher = get(wid)
 
@@ -170,6 +217,7 @@ local function add(
     if the_watcher and the_watcher[5]==0 then
         local _answer = answer or false
         local _message = message or FILE.NOT_YET_CREATED --'FILE_NOT_CREATED_YET'
+        local _dyn = dyn_index or 0
 
         local watchb = {
             wid = wid,
@@ -177,7 +225,8 @@ local function add(
             dre = clock.realtime64(),
             ans = _answer,
             msg = _message,
-            den = 0
+            den = 0,
+            dyn = _dyn
         }
 
         local ok, tuple = wat.flatten(watchb)
@@ -196,7 +245,8 @@ end
 local function put(
     wid,
     object,
-    ans,msg
+    ans,
+    msg
 )
     local the_watcher = get(wid)
 
@@ -236,7 +286,7 @@ local function del(
         s:delete({wid, v[3]})
     end
 
-    box.space.awatcher:delete(wid)
+    return box_space_awatcher:delete(wid)
 
 end
 
@@ -356,7 +406,10 @@ local awatcher = {
     del = del,        --Delete active watchers and watchables by wid
     trun = trun,
     stat = stat,
-    match = match
+    match = match,
+    list = list,
+    name = set_name,
+    widbn = wid_by_name
 }
 
 local spaces = {
