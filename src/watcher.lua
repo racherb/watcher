@@ -100,7 +100,7 @@ end
 
 --Run Watcher
 local function run_watcher(watcher, parm)
-    if watcher.ans then
+    if watcher.ans and watcher.ans == true then
         if watcher.kind == WATCHER.FILE_DELETION then
             local fib = fiber.create(
                 fwa.deletion,
@@ -117,7 +117,8 @@ local function run_watcher(watcher, parm)
                 db_awatcher.set(watcher.wid, fib.id())
                 return {
                     fid = fib:id(),
-                    wid = watcher.wid
+                    wid = watcher.wid,
+                    stt = 'running'
                 }
             end
         elseif watcher.kind == WATCHER.FILE_CREATION then
@@ -137,7 +138,8 @@ local function run_watcher(watcher, parm)
                 db_awatcher.set(watcher.wid, fib.id())
                 return {
                     fid = fib:id(),
-                    wid = watcher.wid
+                    wid = watcher.wid,
+                    stt = 'running'
                 }
             end
         elseif watcher.kind == WATCHER.FILE_ALTERATION then
@@ -156,7 +158,8 @@ local function run_watcher(watcher, parm)
                 return
                 {
                     fid = fib:id(),
-                    wid = watcher.wid
+                    wid = watcher.wid,
+                    stt = 'running'
                 }
             end
         end
@@ -466,8 +469,8 @@ local function nomatch(wid)
     return wat:select({wid, false})
 end
 
-local function list()
-    return db_awatcher.list()
+local function list(wid)
+    return db_awatcher.list(wid)
 end
 
 local monitor = {}
@@ -491,6 +494,9 @@ core.start = db.start
 core.name = db_awatcher.name
 core.widbyname = db_awatcher.widbn
 core.remove = db_awatcher.del
+core.deduplicate = ut.deduplicate
+core.consolidate = fwa.consolidate
+core.sleep = fiber.sleep
 --core.tb2str = ut.tostring
 --core.forever = forever
 

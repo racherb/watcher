@@ -537,13 +537,10 @@ function command.run(watcher, parms, blocking)
     end
 end
 
+--If wid is nil then list awatchers
+--else list watchablesf
 function command.list(wid)
-    if not wid then
-        return mon.list()
-    else
-        --TODO: List watchables when wid is present
-        print('watchebles')
-    end
+    return mon.list(wid)
 end
 
 function command.remove(wid)
@@ -624,6 +621,19 @@ flags_lst['--FILE_CREATION']   = 'creation'
 flags_lst['--FILE_DELETION']   = 'deletion'
 flags_lst['--FILE_ALTERATION'] = 'alteration'
 
+local defaults = {
+    maxwait = WATCHER.MAXWAIT,
+    interval = WATCHER.INTERVAL,
+    minsize = 0,
+    sort = WATCHER.NO_SORT,
+    cases = 0,
+    match = nil,
+    recursive = false,
+    levels = {0},
+    hidden = false,
+    forever = 9e10
+}
+
 local cmd_lst = {}
 cmd_lst["new"]              = 'new'
 cmd_lst["run"]              = 'run'
@@ -647,20 +657,20 @@ local _flags
 local _defaults
 local _command
 local _cargs = {}
-local _maxwait
-local _interval
-local _minsize
+local _maxwait = defaults.maxwait
+local _interval = defaults.interval
+local _minsize = defaults.minsize
 local _frecuency
 local _iterations
 local _minage
 local _maxage
 local _nmatch
-local _sort
-local _cases
-local _match
-local _recursive
-local _levels
-local _hidden
+local _sort = defaults.sort
+local _cases = defaults.cases
+local _match = defaults.match
+local _recursive = defaults.recursive
+local _levels = defaults.levels
+local _hidden = defaults.hidden
 local _awhat
 local _creation
 local _alteration
@@ -930,33 +940,106 @@ local function parser()
         elseif _command == 'name' and #(_cargs) < 2 then
             print('Debe especificar un nombre repo:tag y un watcher id')
         elseif _command=='list' then
-            local lst = command.list(_cargs[1])
-            print_wheader(
-                {
-                    'REPOSITORY',
-                    'TAG',
-                    '\tWATCHER ID',
-                    '\tKIND',
-                    'CREATED',
-                    '\tOBSERVABLES'
-                }, _theme)
-            for i=1,#lst do
-                print(table.concat(
+            if not _cargs[1] then --list awatchers
+                local lst = command.list()
+                print_wheader(
                     {
-                        string.ljust(translate(lst[i][8]), 11, ' '),
-                        '\t', string.ljust((translate(lst[i][9])), 11, ' '),
-                        '\t', wid2string(lst[i][1]),
-                        '\t', lst[i][2],
-                        '\t', os.date("%Y-%m-%d", wid2string(lst[i][1]/1e6)),
-                        '\t', lst[i][3]
-                    }, '')
-                )
+                        'REPOSITORY',
+                        'TAG',
+                        '\tWATCHER ID',
+                        '\tKIND',
+                        'CREATED',
+                        '\tOBSERVABLES'
+                    }, _theme)
+                for i=1,#lst do
+                    print(table.concat(
+                        {
+                            string.ljust(translate(lst[i][8]), 11, ' '),
+                            '\t', string.ljust((translate(lst[i][9])), 11, ' '),
+                            '\t', wid2string(lst[i][1]),
+                            '\t', lst[i][2],
+                            '\t', os.date("%Y-%m-%d", wid2string(lst[i][1]/1e6)),
+                            '\t', lst[i][3]
+                        }, '')
+                    )
+                end
+                print('✔ '..#lst..' watchers found')
+            else --List watchables
+                local wid = get_wid(_cargs[1])
+                if wid then
+                    local lst = command.list(tonumber(wid))
+                    print('Anja')
+                    print('✔ '..#lst..' watchables have been found for the given watcher')
+                else
+                    --TODO: Normalize output
+                    print('The name:tag does not exist')
+                end
             end
         elseif _command == 'run' and #(_cargs) == 1 then
             local wid = get_wid(_cargs[1])
-            --local wrn = command.run(wat, {_maxwait, _interval}, 'false')
-            local wlist = make_wlist(_cargs[1])
-            local dd = fwt.creation(wlist)
+            if wid then
+                local winf = mon.info(wid)
+                local kind = winf.kind
+                if not winf.err then
+                    local watcher = {}
+                    watcher.wid = winf.wid
+                    watcher.ans = true
+                    watcher.kind = kind
+                    local cwlist
+                    if winf.type == WATCHER.FILE_CREATION then
+                        cwlist = core.deduplicate(winf.what)
+                    else
+                        cwlist = core.consolidate(
+                            make_wlist(winf.what), _recursive, _levels, _hidden
+                        )
+                    end
+                    watcher.list = cwlist
+                    local parms
+                    if kind == WATCHER.FILE_CREATION then
+                        parms = {
+                            _maxwait,
+                            _interval,
+                            _minsize,
+                            {
+                                _frecuency,
+                                _iterations
+                            },
+                            {
+                                _minage,
+                                _maxage
+                            },
+                            _match
+                        }
+                    elseif kind == WATCHER.FILE_DELETION then
+                        parms = {
+                            _maxwait,
+                            _interval,
+                            _sort,
+                            _cases,
+                            _match
+                        }
+                    elseif kind == WATCHER.FILE_ALTERATION then
+                        parms = {
+                            _maxwait,
+                            _interval,
+                            _awhat,
+                            _match
+
+                        }
+                    else
+                        parms = {nil, nil, nil, nil, nil, nil, nil, nil}
+                    end
+                    local run_ans = core.run(watcher, parms)
+                    print(run_ans.stt)
+                    print(run_ans.fid)
+                else
+                    --TODO: Normalizar exito code para el error
+                    print(winf.err)
+                end
+            else
+                --TODO: Normalizar exito code para el error
+                print('The name:tag does not exist')
+            end
         elseif _command == 'info' and #(_cargs) == 1 then
             local wid = get_wid(_cargs[1])
             if wid then

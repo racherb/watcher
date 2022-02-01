@@ -50,7 +50,7 @@ local FW_DEFAULT = {
 }
 ]]
 
-local BULK_CAPACITY = 1000000
+local BULK_CAPACITY = 1e6
 
 -- Add the last date of file modification
 local function add_lst_modif( tbl )
@@ -109,9 +109,14 @@ local function sort_files_by(
     --[[required]] take_n)
 
     local size = #flst
+
     if take_n == 0 then return {} end
     if size == 0 then return flst end
     if take_n > size or not take_n then take_n = size end
+
+    if #flst <= 1 then
+        return flst
+    end
 
     if sort_by == SORT.NO_SORT then
         return take_n_items(flst, take_n)
@@ -156,7 +161,7 @@ local function sort_files_by(
     end
 end
 
-local bfd_end = fiber.cond() --Bulk file deletion end
+local BULK_FILE_DELETION_END = fiber.cond() --Bulk file deletion end
 
 --- Watcher for Bulk File Deletion
 local function bulk_file_deletion(
@@ -186,10 +191,10 @@ local function bulk_file_deletion(
         end
         fib_sleep(interval)
     end
-    bfd_end:signal()
+    BULK_FILE_DELETION_END:signal()
 end
 
-local bfa_end = fiber.cond() --Bulk file alteration end
+local BULK_FILE_ALTERATION_END = fiber.cond() --Bulk file alteration end
 
 --- Watcher for Bulk File Alteration
 local function bulk_file_alteration(
@@ -303,7 +308,7 @@ local function bulk_file_alteration(
             break
         end
     end
-    bfa_end:signal()
+    BULK_FILE_ALTERATION_END:signal()
 end
 
 --deep: {0, 1,2,3,4,5..}
@@ -450,7 +455,7 @@ local function is_stable_size(
     return is_stable, mssg
 end
 
-local bfc_end = fiber.cond() --Bulk file creacion end
+local BULK_FILE_CREATION_END = fiber.cond() --Bulk file creacion end
 
 local function bulk_file_creation(
     wid,
@@ -573,7 +578,7 @@ local function bulk_file_creation(
         fib_sleep(interval)
     end
     --'MAXWAIT_TIMEOUT'
-    bfc_end:signal()
+    BULK_FILE_CREATION_END:signal()
 end
 
 --File watcher deletion
@@ -584,10 +589,24 @@ local function file_deletion(
     interval,
     sort,
     cases,
-    match)
+    match
+)
 
-    local cwlist_o = sort_files_by(cwlist, sort, cases)
-    local nbulks = math.floor(1 + (#cwlist)/BULK_CAPACITY)
+    local nfiles = #cwlist
+    local _cases = cases or 0
+    local _match = match or 0
+
+    if _cases==0 then _cases = nfiles end
+    if _match==0 then _match = nfiles end
+
+    local cwlist_o
+    if #cwlist == 1 then
+        cwlist_o = cwlist
+    else
+        cwlist_o = sort_files_by(cwlist, sort, _cases)
+    end
+
+    local nbulks = math.floor(1 + (#cwlist_o)/BULK_CAPACITY)
     local bulk_fibs = {} --Fiber list
     local pos = 0
 
@@ -610,13 +629,13 @@ local function file_deletion(
             bulk,
             maxwait,
             interval,
-            match
+            _match
         )
         bfid:name('fwd-bulk-d')
         bulk_fibs[i] = bfid
     end
 
-    bfd_end:wait()
+    BULK_FILE_DELETION_END:wait()
 
     --Cancel fibers
     for _, fib in pairs(bulk_fibs) do
@@ -687,7 +706,7 @@ local function file_creation(
         bulk_fibs[i] = bfid
     end
 
-    bfc_end:wait()
+    BULK_FILE_CREATION_END:wait()
 
     --Cancel fibers
     for _, fib in pairs(bulk_fibs) do
@@ -791,7 +810,7 @@ local function file_alteration(
         end
     end
     if bulk_fibs[1] then
-        bfa_end:wait() --Waiting for ended
+        BULK_FILE_ALTERATION_END:wait() --Waiting for ended
         --Cancel fibers
         for _, fib in pairs(bulk_fibs) do
             local fid = fiber.id(fib)

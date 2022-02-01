@@ -73,6 +73,8 @@ local SORT = {
     MTIME_DSC = 'MD'
 }
 
+WATCHER.NO_SORT = SORT.NO_SORT
+
 local STATE = {}
 
 STATE.RUNNING = 'R'

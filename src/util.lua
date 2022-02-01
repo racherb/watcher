@@ -40,7 +40,7 @@ local function val_to_str(v)
           key_to_str(k) .. "=" .. val_to_str(v))
       end
     end
-    return "{" .. table.concat(result, ",") .. "}"
+    return table.concat(result, ",") --'{}'
   end
 
   --Determines whether a value exists in a given table

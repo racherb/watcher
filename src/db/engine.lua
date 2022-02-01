@@ -121,8 +121,12 @@ local function wig()
 end
 
 --Active Watcher List
-local function list()
-    return box_space_awatcher:select()
+local function list(wid)
+    if not wid then
+        return box_space_awatcher:select()
+    else
+        return box_space_watchables:select({wid})
+    end
 end
 
 -- Register a new watcher
@@ -168,6 +172,7 @@ local function set_fid(wid, fid)
     box_space_awatcher:update(wid, {{'=', 7, fid}})
 end
 
+--Get wid by given name
 local function wid_by_name(name, tag)
     local s = box_space_awatcher.index.awa_name
     local watcher = s:select({name, tag})
@@ -208,8 +213,7 @@ local function add(
     wid,
     object,
     answer,
-    message,
-    dyn_index
+    message
 )
     local the_watcher = get(wid)
 
@@ -217,7 +221,6 @@ local function add(
     if the_watcher and the_watcher[5]==0 then
         local _answer = answer or false
         local _message = message or FILE.NOT_YET_CREATED --'FILE_NOT_CREATED_YET'
-        local _dyn = dyn_index or 0
 
         local watchb = {
             wid = wid,
@@ -225,8 +228,7 @@ local function add(
             dre = clock.realtime64(),
             ans = _answer,
             msg = _message,
-            den = 0,
-            dyn = _dyn
+            den = 0
         }
 
         local ok, tuple = wat.flatten(watchb)
