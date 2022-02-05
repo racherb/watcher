@@ -2,10 +2,14 @@
 
 package.path = package.path .. ';../watcher/src/?.lua;../src/?.lua;?.lua;../test/?.lua;test/?.lua'
 
-local box = box
-local acolor = require('ansicolors')
+local box = require('box')
+local color = require('ansicolors')
 
-box.cfg{log_level=5, log='watcher.log'}
+box.cfg{
+    listen = 3301,
+    log_level=5,
+    log='watcher.log'
+}
 
 local WATCHER = require('types.file').WATCHER
 local STATE = require('types.file').STATE
@@ -357,10 +361,9 @@ function help.flags(theme, scope)
         '',
         '\t --help,        -h \t Help for watcher',
         '\t --version,     -V \t Show watcher version',
-        '\t --nocolor,     -n \t Colorize output',
+        '\t --no-color,    -n \t No colorize output',
         '\t --verbose,     -v \t Enable verbose logging',
         '\t --path,        -p \t Set absolute path for watcher',
-        '\t --blocking,    -b \t Enable blocking execution for watcher',
         '\t --interactive, -i \t Enable interactive mode',
         '\t --defaults,    -d \t Defaults values',
         '',
@@ -380,7 +383,10 @@ function help.flags(theme, scope)
         )
         flags[#flags+1] = ''
         flags[#flags+1] = style.prompt('watcher', '', '', ' --flags', '\t\t# Displays all system flags', theme)
-        flags[#flags+1] = style.prompt('watcher', '', '', ' --flags <command>', '\t# Displays only the flags that apply to a given command', theme)
+        flags[#flags+1] = style.prompt(
+            'watcher', '', '', ' --flags <command>', '\t# Displays only the flags that apply to a given command',
+            theme
+        )
         flags[#flags+1] = ''
     elseif _scope == 'long' then
         flags[#flags+1] =  ''
@@ -493,16 +499,16 @@ end
 function help.print(theme, scope)
     local _scope = scope or 'general'
     if _scope == 'general' then
-        print(acolor(style.logo(theme)))
-        print(acolor(table.concat(help.usage(theme, ' <command>'), '\n')))
-        print(acolor(table.concat(help.tostar(theme), '\n')))
-        print(acolor(table.concat(help.common(theme), '\n')))
-        print(acolor(table.concat(help.commands(theme), '\n')))
-        print(acolor(help.flags(theme, 'short'), '\n'))
+        print(color(style.logo(theme)))
+        print(color(table.concat(help.usage(theme, ' <command>'), '\n')))
+        print(color(table.concat(help.tostar(theme), '\n')))
+        print(color(table.concat(help.common(theme), '\n')))
+        print(color(table.concat(help.commands(theme), '\n')))
+        print(color(help.flags(theme, 'short'), '\n'))
     elseif _scope == 'new' then
-        print(acolor(table.concat(help.usage(theme, ' new'), '\n')))
-        print(acolor(table.concat(help.args(theme, 'new'), '\n')))
-        print(acolor(help.flags(theme, 'long'), '\n'))
+        print(color(table.concat(help.usage(theme, ' new'), '\n')))
+        print(color(table.concat(help.args(theme, 'new'), '\n')))
+        print(color(help.flags(theme, 'long'), '\n'))
     end
 end
 
@@ -512,29 +518,15 @@ end
 
 local wargs = {...}
 
-local function make_wlist(list)
-    local wlist = {}
-    for file in string.gmatch(list, '([^,]+)') do
-        wlist[#wlist+1] = file
-    end
-    return wlist
-end
-
 local command = {}
 
 function command.new(kind, list)
-    local wlist = make_wlist(list)
+    local wlist = core.string2wlist(list)
     return core.create(wlist, kind)
 end
 
-function command.run(watcher, parms, blocking)
-    local _blocking = blocking or 'false'
-    if _blocking == 'false' then
-        return core.run(watcher, parms)
-    else
-        --TODO:
-        print('Run watcher with waitfor')
-    end
+function command.run(watcher, parms)
+    return core.run(watcher, parms)
 end
 
 --If wid is nil then list awatchers
@@ -583,7 +575,7 @@ function command.info(wid)
 end
 
 local flags_lst = {}
-flags_lst['--nocolor']      = 'n'
+flags_lst['--no-color']     = 'n'
 flags_lst['-n']             = 'n'
 flags_lst['--version']      = 'V'
 flags_lst['-V']             = 'V'
@@ -591,8 +583,6 @@ flags_lst['--help']         = 'h'
 flags_lst['-h']             = 'h'
 flags_lst['--interactive']  = 'i'
 flags_lst['-i']             = 'i'
-flags_lst['--blocking']     = 'b'
-flags_lst['-b']             = 'b'
 flags_lst['--verbose']      = 'v'
 flags_lst['-v']             = 'v'
 flags_lst['--robot']        = 'r'
@@ -608,7 +598,7 @@ flags_lst['--frecuency']    = 'frecuency'     --stability
 flags_lst['--iterations']   = 'iterations'    --stability
 flags_lst['--minage']       = 'minage'        --novelty
 flags_lst['--maxage']       = 'maxage'        --novelty
-flags_lst['--nmatch']       = 'nmatch'
+flags_lst['--match']        = 'match'
 flags_lst['--sort']         = 'sort'          --options
 flags_lst['--cases']        = 'cases'         --options
 flags_lst['--match']        = 'match'         --options
@@ -648,7 +638,6 @@ cmd_lst["rm"]               = 'rm'  --remove watcher
 local _theme = 'default'
 local _interactive = false
 local _version = false
-local _blocking = false
 local _verbose = false
 local _robot = false
 local _nocolor
@@ -664,7 +653,6 @@ local _frecuency
 local _iterations
 local _minage
 local _maxage
-local _nmatch
 local _sort = defaults.sort
 local _cases = defaults.cases
 local _match = defaults.match
@@ -693,6 +681,14 @@ local function translate(term)
         return 'unstarted'
     elseif term=='' then
         return '<none>'
+    elseif term=='_' then
+        return 'NOT_YET_CREATED'
+    elseif term=='C' then
+        return 'HAS_BEEN_CREATED'
+    elseif term=='E' then
+        return 'NOT_DELETED'
+    elseif term=='X' then
+        return 'DELETED'
     else
         return term
     end
@@ -700,14 +696,14 @@ local function translate(term)
 end
 
 local function print_wheader(header, theme)
-    print(acolor(style.itemheader(header, '\t', theme)))
+    print(color(style.itemheader(header, '\t', theme)))
 end
 
 local function print_witem(nw, theme)
     local thme = theme or 'default'
     local swid = wid2string(nw.wid)
     if thme =='default' then
-        print(acolor(table.concat(
+        print(color(table.concat(
             {
                 translate(nw.kind),
                 swid,
@@ -730,7 +726,7 @@ end
 local function print_winfo(inf, theme)
     local thme = theme or 'default'
     if thme=='default' then
-        print(acolor(table.concat(
+        print(color(table.concat(
             {
                 '- wid: %{bright}',
                 wid2string(inf.wid),
@@ -745,7 +741,7 @@ local function print_winfo(inf, theme)
                 '\n- nomatch: ',
                 inf.nomatch,
                 '\n- answ: %{dim}',
-                inf.ans,
+                tostring(inf.ans),
                 '%{reset}'
             }, '')))
     else
@@ -764,7 +760,7 @@ local function print_winfo(inf, theme)
                 '\n- nomatch: ',
                 inf.nomatch,
                 '\n- answ: ',
-                inf.ans
+                tostring(inf.ans)
             }, ''))
     end
 end
@@ -782,8 +778,6 @@ local function parser()
             _flags = true
         elseif flags_lst[wargs[i]]=='d' then
             _defaults = true
-        elseif flags_lst[wargs[i]]=='b' then
-            _blocking = true
         elseif flags_lst[wargs[i]]=='v' then
             _verbose = true
         elseif flags_lst[wargs[i]]=='r' then
@@ -814,8 +808,8 @@ local function parser()
             _minage = wargs[i+1]
         elseif flags_lst[wargs[i]]=='maxage' then
             _maxage = wargs[i+1]
-        elseif flags_lst[wargs[i]]=='nmatch' then
-            _nmatch = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='match' then
+            _match = wargs[i+1]
         elseif flags_lst[wargs[i]]=='sort' then
             _sort = wargs[i+1]
         elseif flags_lst[wargs[i]]=='cases' then
@@ -871,24 +865,23 @@ local function parser()
                             or (_iterations and wargs[i-1]=='--iterations' and _iterations == wargs[i])
                             or (_minage and wargs[i-1]=='--minage' and _minage == wargs[i])
                             or (_maxage and wargs[i-1]=='--maxage' and _maxage == wargs[i])
-                            or (_nmatch and wargs[i-1]=='--nmatch' and _nmatch == wargs[i])
+                            or (_match and wargs[i-1]=='--match' and _match == wargs[i])
                             or (_sort and wargs[i-1]=='--sort' and _sort == wargs[i])
                             or (_cases and wargs[i-1]=='--cases' and _cases == wargs[i])
-                            or (_match and wargs[i-1]=='--match' and _match == wargs[i])
                             or (_recursive and wargs[i-1]=='--recursive' and _recursive == wargs[i])
                             or (_levels and wargs[i-1]=='--levels' and _levels == wargs[i])
                             or (_hidden and wargs[i-1]=='--hidden' and _hidden == wargs[i])
                             or(_awhat and wargs[i-1]=='--awhat' and _awhat == wargs[i])
                         ) then
-                            print(acolor('%{bright red}ERR7001: %{reset}Invalid entry. The command "'.. wargs[i]..'" is unknown'))
-                            print(acolor('%{bright}   HINT: %{reset dim}Some of the available commands are:%{green dim} new, run, mon, info, match, nomatch, ..'))
-                            print(acolor('%{bright}   HINT: %{reset dim}Run %{green dim}watcher --help%{reset} for help'))
+                            print(color('%{bright red}ERR7001: %{reset}Invalid entry. The command "'.. wargs[i]..'" is unknown'))
+                            print(color('%{bright}   HINT: %{reset dim}Some of the available commands are:%{green dim} new, run, mon, info, match, nomatch, ..'))
+                            print(color('%{bright}   HINT: %{reset dim}Run %{green dim}watcher --help%{reset} for help'))
                             os.exit(7001)
                         end
                     else
-                        print(acolor('%{bright red}ERR7002: %{reset}Invalid entry. The flag "'.. wargs[i]..'" is unknown'))
-                        print(acolor('%{bright}   HINT: %{reset dim}The flags that are supported are: %{green dim} -h, -v, -i, -n, -e, -b, -r, ..'))
-                        print(acolor('%{bright}         %{reset dim}Run %{green dim}watcher --flags%{reset} to display watcher flags'))
+                        print(color('%{bright red}ERR7002: %{reset}Invalid entry. The flag "'.. wargs[i]..'" is unknown'))
+                        print(color('%{bright}   HINT: %{reset dim}The flags that are supported are: %{green dim} -h, -v, -i, -n, -e, -b, -r, ..'))
+                        print(color('%{bright}         %{reset dim}Run %{green dim}watcher --flags%{reset} to display watcher flags'))
                         os.exit(7002)
                     end
                 end
@@ -897,18 +890,18 @@ local function parser()
     end
 
     if _version then
-        print(acolor(style.version(_theme)))
+        print(color(style.version(_theme)))
     end
 
     if _help or #(wargs)==0 or (#(wargs)==1 and _nocolor) then
         print(help.print(_theme, _command))
     elseif not _help and _flags then
-        print(acolor(help.flags(_theme, 'long')))
+        print(color(help.flags(_theme, 'long')))
     elseif not _help and _defaults then
-        print(acolor(help.defaults('general', _theme)))
+        print(color(help.defaults('general', _theme)))
     elseif not _help and (_flags and _defaults) then
-        print(acolor(help.flags(_theme, 'long')))
-        print(acolor(help.defaults('general', _theme)))
+        print(color(help.flags(_theme, 'long')))
+        print(color(help.defaults('general', _theme)))
     end
 
     --print((_cargs[1]))
@@ -958,7 +951,7 @@ local function parser()
                             '\t', string.ljust((translate(lst[i][9])), 11, ' '),
                             '\t', wid2string(lst[i][1]),
                             '\t', lst[i][2],
-                            '\t', os.date("%Y-%m-%d", wid2string(lst[i][1]/1e6)),
+                            '\t', os.date("%Y-%m-%d", wid2string(lst[i][4]/1e9)),
                             '\t', lst[i][3]
                         }, '')
                     )
@@ -968,7 +961,29 @@ local function parser()
                 local wid = get_wid(_cargs[1])
                 if wid then
                     local lst = command.list(tonumber(wid))
-                    print('Anja')
+                    print_wheader(
+                    {
+                        string.ljust('OBJECT', 90),
+                        '\tMATCH',
+                        'STATE',
+                        '\tDETECTED'
+                    }, _theme)
+                    for i=1,#lst do
+                        local detected
+                        if lst[i][6]~=0 then
+                            detected = tostring(os.date("%Y-%m-%d %X", wid2string(lst[i][6]/1e9)))
+                        else
+                            detected = '<none>'
+                        end
+                        print(table.concat(
+                            {
+                                '- '..string.ljust(lst[i][2], 90),
+                                '\t\t', tostring(lst[i][4]),
+                                '\t', string.ljust(translate(tostring(lst[i][5])), 16),
+                                '', detected
+                            }, '')
+                        )
+                    end
                     print('✔ '..#lst..' watchables have been found for the given watcher')
                 else
                     --TODO: Normalize output
@@ -981,19 +996,6 @@ local function parser()
                 local winf = mon.info(wid)
                 local kind = winf.kind
                 if not winf.err then
-                    local watcher = {}
-                    watcher.wid = winf.wid
-                    watcher.ans = true
-                    watcher.kind = kind
-                    local cwlist
-                    if winf.type == WATCHER.FILE_CREATION then
-                        cwlist = core.deduplicate(winf.what)
-                    else
-                        cwlist = core.consolidate(
-                            make_wlist(winf.what), _recursive, _levels, _hidden
-                        )
-                    end
-                    watcher.list = cwlist
                     local parms
                     if kind == WATCHER.FILE_CREATION then
                         parms = {
@@ -1029,9 +1031,15 @@ local function parser()
                     else
                         parms = {nil, nil, nil, nil, nil, nil, nil, nil}
                     end
-                    local run_ans = core.run(watcher, parms)
-                    print(run_ans.stt)
-                    print(run_ans.fid)
+                    local run_ans = core.run(wid, parms)
+                    print(table.concat({
+                        'Watcher is ',
+                        run_ans.stt,
+                        ' on fiber ',
+                        run_ans.fid
+                    }, ''))
+                    print('Estimated maximum time for this execution: '.._maxwait..'s')
+                    core.waitfor(wid)
                 else
                     --TODO: Normalizar exito code para el error
                     print(winf.err)
@@ -1120,10 +1128,6 @@ parser()
 
 --if _interactive then
 --    print('Modo interactivo activado')
---end
-
---if _blocking then
---    print('Ejecucion bloqueandte activada')
 --end
 
 --if _maxwait then

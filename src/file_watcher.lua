@@ -172,6 +172,7 @@ local function bulk_file_deletion(
     nmatch
 )
     fib_sleep(0.1)
+
     local fio_exists = fio.path.lexists
     local ini = os_time()
     local notdelyet = bulk
@@ -183,6 +184,7 @@ local function bulk_file_deletion(
                 db_awatcher.upd(
                     wid, file, true, FILE.DELETED
                 )
+                print('- FILE DELETED:' ..file)
                 notdelyet[i] = nil
             end
         end
@@ -381,7 +383,6 @@ local function consolidate(
     local _wlist = ut.deduplicate(wlist)
 
     local t = {}
-
     for _,v in pairs(_wlist) do
         if v ~= '' then
             if string_find(v, '*') then
@@ -600,6 +601,7 @@ local function file_deletion(
     if _match==0 then _match = nfiles end
 
     local cwlist_o
+
     if #cwlist == 1 then
         cwlist_o = cwlist
     else
@@ -613,7 +615,7 @@ local function file_deletion(
     for i = 1, nbulks do
         local bulk = {}
         local val
-        for j = 1, BULK_CAPACITY do
+        for j = 1,BULK_CAPACITY,1 do
             pos = pos + 1
             val = cwlist_o[pos]
             if val then

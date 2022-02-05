@@ -12,6 +12,7 @@
 package.path = package.path .. ';src/?.lua'
 
 local strict = require('strict')
+local box = require('box')
 local fiber = require('fiber')
 local errno = require('errno')
 local log = require('log')
@@ -31,11 +32,12 @@ local FILE = require('types.file').FILE
 
 local sck = require('sanity_check') --for sanity check
 
+strict.on()
+box.cfg{}
+
 local awa = db.spaces.awatcher
 local wat = db.spaces.watchables.index.wat_ak_answ --box.space.watchables.index.wat_ak_answ
 local db_awatcher = db.awatcher
-
-strict.on()
 
 local message
 
@@ -43,6 +45,15 @@ local function apply_func(atomic_func, wlist)
     for i=1,#wlist do
         atomic_func(wlist[i])
     end
+end
+
+--String to watcher list table
+local function string2wlist(list)
+    local wlist = {}
+    for file in string.gmatch(list, '([^,]+)') do
+        wlist[#wlist+1] = string.gsub(file, '%"', '') --remove quotes
+    end
+    return wlist
 end
 
 --Create Watcher
@@ -98,63 +109,116 @@ local function create_watcher(
     end
 end
 
+local function info(wid)
+    local status
+    local answer
+    local watcher = awa:select(wid)
+    if watcher and watcher[1] then
+        if watcher[1][5]~=0 then
+            status = STATE.COMPLETED
+            answer = watcher[1][6]
+        elseif watcher[1][7]==0 then
+            status = STATE.UNSTARTED
+            answer = '<none>'
+        else
+            status = STATE.RUNNING --'started'
+            answer = '<waiting>'
+        end
+
+        return {
+            wid = watcher[1][1],
+            kind = watcher[1][2],
+            what = watcher[1][3],
+            status = status,
+            ans = answer,
+            match = wat:count({wid, true}),
+            nomatch = wat:count({wid, false})
+        }
+    else
+        return {
+            wid = wid,
+            err = 'Watcher not found'
+        }
+    end
+end
+
 --Run Watcher
-local function run_watcher(watcher, parm)
-    if watcher.ans and watcher.ans == true then
-        if watcher.kind == WATCHER.FILE_DELETION then
+local function run_watcher(watcher, parm, recursion, deep, hidden)
+    local _watcher
+    if type(watcher)~='table' then
+        local winf = info(watcher)
+        local wlist = string2wlist(winf.what)
+        local cwlist
+        if winf.kind == WATCHER.FILE_CREATION then
+            cwlist = ut.deduplicate(wlist)
+        else
+            cwlist = fwa.consolidate(wlist, recursion, deep, hidden)
+        end
+        local wconst = {}
+        wconst.wid = watcher
+        wconst.list = cwlist
+        wconst.kind = winf.kind
+        wconst.ans = true
+        _watcher = wconst
+    else
+        _watcher = watcher
+    end
+
+    if _watcher.ans and _watcher.ans == true then
+        if _watcher.kind == WATCHER.FILE_DELETION then
             local fib = fiber.create(
                 fwa.deletion,
-                watcher.wid,  --watcher id
-                watcher.list, --watch list consolidate
-                parm[1],      --maxwait
-                parm[2],      --interval
-                parm[3],      --orden
-                parm[4],      --cases
-                parm[5]       --match
+                _watcher.wid,  --watcher id
+                _watcher.list, --watch list consolidate
+                parm[1],       --maxwait
+                parm[2],       --interval
+                parm[3],       --orden
+                parm[4],       --cases
+                parm[5]        --match
             )
             if fib then
-                fib:name(string.format('FWD-%s', tostring(watcher.wid)))
-                db_awatcher.set(watcher.wid, fib.id())
+                --fib:name(string.format('FWD-%s', tostring(_watcher.wid)))
+                db_awatcher.set(_watcher.wid, fib.id())
                 return {
                     fid = fib:id(),
-                    wid = watcher.wid,
+                    wid = _watcher.wid,
                     stt = 'running'
                 }
             end
-        elseif watcher.kind == WATCHER.FILE_CREATION then
+        elseif _watcher.kind == WATCHER.FILE_CREATION then
             local fib = fiber.create(
                 fwa.creation,
-                watcher.wid,  --watcher id
-                watcher.list, --watch list consolidate
-                parm[1],      --maxwait
-                parm[2],      --interval
-                parm[3],      --minsize
-                parm[4],      --stability
-                parm[5],      --novelty
-                parm[6]       --match
+                _watcher.wid,  --watcher id
+                _watcher.list, --watch list consolidate
+                parm[1],       --maxwait
+                parm[2],       --interval
+                parm[3],       --minsize
+                parm[4],       --stability
+                parm[5],       --novelty
+                parm[6]        --match
             )
             if fib then
-                fib:name(string.format('FWC-%s', tostring(watcher.wid)))
-                db_awatcher.set(watcher.wid, fib.id())
+                fib:name(string.format('FWC-%s', tostring(_watcher.wid)))
+                db_awatcher.set(_watcher.wid, fib.id())
                 return {
                     fid = fib:id(),
-                    wid = watcher.wid,
+                    wid = _watcher.wid,
                     stt = 'running'
                 }
             end
-        elseif watcher.kind == WATCHER.FILE_ALTERATION then
+        elseif _watcher.kind == WATCHER.FILE_ALTERATION then
             local fib = fiber.create(
                 fwa.alteration,
-                watcher.wid,  --watcher id
-                watcher.list, --watch list consolidate
-                parm[1],      --maxwait
-                parm[2],      --interval
-                parm[3],      --awhat
-                parm[4]       --nmatch
+                _watcher.wid,  --watcher id
+                _watcher.list, --watch list consolidate
+                parm[1],       --maxwait
+                parm[2],       --interval
+                parm[3],       --awhat
+                parm[4]        --nmatch
             )
             if fib then
-                fib:name(string.format('FWA-%s', tostring(watcher.wid)))
-                db_awatcher.set(watcher.wid, fib.id())
+                fib:name(string.format('FWA-%s', tostring(_watcher.wid)))
+                db_awatcher.set(_watcher.wid, fib.id())
                 return
                 {
                     fid = fib:id(),
@@ -167,7 +231,7 @@ local function run_watcher(watcher, parm)
     --Fail
     return {
         fid = nil,
-        wid = watcher.wid,
+        wid = _watcher.wid,
         stt = 'failed'
     }
 end
@@ -428,39 +492,6 @@ local function wait_for_watcher(wid)
 
 end
 
-local function info(wid)
-    local status
-    local answer
-    local watcher = awa:select(wid)
-    if watcher and watcher[1] then
-        if watcher[1][5]~=0 then
-            status = STATE.COMPLETED
-            answer = watcher[1][6]
-        elseif watcher[1][7]==0 then
-            status = STATE.UNSTARTED
-            answer = '<none>'
-        else
-            status = STATE.RUNNING --'started'
-            answer = '<waiting>'
-        end
-
-        return {
-            wid = watcher[1][1],
-            kind = watcher[1][2],
-            what = watcher[1][3],
-            status = status,
-            ans = answer,
-            match = wat:count({wid, true}),
-            nomatch = wat:count({wid, false})
-        }
-    else
-        return {
-            wid = wid,
-            err = 'Watcher not found'
-        }
-    end
-end
-
 local function match(wid)
     return wat:select({wid, true})
 end
@@ -496,6 +527,7 @@ core.widbyname = db_awatcher.widbn
 core.remove = db_awatcher.del
 core.deduplicate = ut.deduplicate
 core.consolidate = fwa.consolidate
+core.string2wlist = string2wlist
 core.sleep = fiber.sleep
 --core.tb2str = ut.tostring
 --core.forever = forever

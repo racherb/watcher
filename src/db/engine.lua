@@ -77,15 +77,6 @@ end
 
 local function start()
 
-    box.cfg{}
-    --[[
-    box.cfg {
-        listen = 3301,
-        background = true,
-        log = 'watcher.log',
-        pid_file = 'watcher.pid'
-     }
-    --]]
     box.once('init', function()
         local ok = create_spaces()
         if not ok then
@@ -106,8 +97,7 @@ local function start()
     end)
 end
 
-start()
-
+box.cfg{}
 local box_space_awatcher = box.space.awatcher
 local box_space_watchables = box.space.watchables
 
@@ -369,19 +359,22 @@ end
 local function close(
     wid,
     dmatch,
-    wtype
+    kind
 )
 
-    local t_watcher = get(wid)
+    local watcher = get(wid)
+    local _kind = kind or watcher.kind
+    local _dmatch = dmatch or box_space_watchables:count({wid})
+
     local result
 
-    if match(wid, wtype) >= dmatch then
+    if match(wid, _kind) >= _dmatch then
         result = true
     else
         result = false
     end
 
-    if t_watcher then
+    if watcher then
         local v_end = clock.realtime64()
         box_space_awatcher:update(
             wid,
@@ -418,6 +411,8 @@ local spaces = {
     awatcher = box_space_awatcher,
     watchables = box_space_watchables
 }
+
+start()
 
 return {
     start = start,
