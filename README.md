@@ -255,7 +255,7 @@ This is a simple example of automatic processing of a file once the file is crea
 #!/usr/bin/env tarantool
 
 local filewatcher = require('watcher').file
-local waitfor = require('watcher').waitfor
+local waitfor = require('watcher').core.waitfor
 
 --Function that processes a file after it arrives
 local function process_file(the_file)
