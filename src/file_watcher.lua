@@ -374,7 +374,8 @@ local function consolidate(
     wlist,
     recur,
     deep,
-    hidden
+    hidden,
+    ignored
 )
     local _recur = recur or false
     local _deep = deep or {0}
@@ -384,12 +385,16 @@ local function consolidate(
 
     local t = {}
     for _,v in pairs(_wlist) do
-        if v ~= '' then
+        if v ~= '' and not ut.is_val_of(ignored, v) then
             if string_find(v, '*') then
                 local pattern_result = fio_glob(v)
                 --Merge pattern items result with t
-                for _,nv in ipairs(pattern_result) do
-                    t[#t+1] = nv
+                if #pattern_result~=0 then
+                    for _,nv in ipairs(pattern_result) do
+                        t[#t+1] = nv
+                    end
+                else
+                    t[#t+1] = v
                 end
             else
                 if (_recur==true) and fio_is_dir(v) then

@@ -9,7 +9,7 @@
 -- @copyright Raciel Hernández 2019
 --
 
-package.path = package.path .. ';src/?.lua'
+package.path = package.path .. ';/home/rhernandez/lucy/prj/dev/watcher/src/?.lua'
 
 local strict = require('strict')
 local box = require('box')
@@ -63,14 +63,22 @@ local function create_watcher(
     --[[optional]] afunc,       --Function(watch_list)
     --[[optional]] recursion,   --recursive mode?
     --[[optional]] deep,        --folder level or deep
-    --[[optional]] hidden       --include hidden files?
+    --[[optional]] hidden,      --include hidden files?
+    --[[optional]] ignored      --ignore files list
 )
 
     local cwlist
     if wkind == WATCHER.FILE_CREATION then
         cwlist = ut.deduplicate(wlist)
     else
-        cwlist = fwa.consolidate(wlist, recursion, deep, hidden)
+        cwlist = fwa.consolidate(wlist, recursion, deep, hidden, ignored)
+    end
+
+    if #cwlist==0 then
+        return {
+            wid = nil,
+            err = 'There is nothing to watch'
+        }
     end
 
     local wid
@@ -246,7 +254,8 @@ local function file_deletion(
     --[[optional]] maxwait,
     --[[optional]] interval,
     --[[optional]] options,
-    --[[optional]] recursion
+    --[[optional]] recursion,
+    --[[optional]] ignored
 )
 
     local sck_wlist = sck.wlist(wlist)
@@ -272,14 +281,16 @@ local function file_deletion(
         nil,
         isrecur,
         deep,
-        hidden
+        hidden,
+        ignored
     )
     --function(x, y) os.execute('cp ' ..x .. ' /tmp/_copy/') end
 
     local nfiles
-    if watcher then
+    if not watcher.err then
         nfiles = #(watcher.list)
     else
+        print(watcher.err)
         log.error(string.format('%s - Unable to create the watcher', OUTPUT.WATCHER_WAS_NOT_CREATED))
         os.exit(EXIT.WATCHER_WAS_NOT_CREATED)
     end
@@ -323,7 +334,8 @@ local function file_creation(
     --[[optional]] stability,
     --[[optional]] novelty,
     --[[optional]] nmatch,
-    --[[optional]] recursion
+    --[[optional]] recursion,
+    --[[optional]] ignored
 )
     --Validate th user inputs
     local sck_wlist = sck.wlist(wlist)
@@ -368,7 +380,8 @@ local function file_creation(
         nil,
         isrecur,
         deep,
-        hidden
+        hidden,
+        ignored
     )
 
     local nfiles
@@ -406,7 +419,8 @@ local function file_alteration(
     --[[optional]] interval,
     --[[optional]] awhat,
     --[[optional]] nmatch,
-    --[[optional]] recursion
+    --[[optional]] recursion,
+    --[[optional]] ignored
 )
 
     --Validate th user inputs
@@ -438,7 +452,8 @@ local function file_alteration(
         nil,
         isrecur,
         deep,
-        hidden
+        hidden,
+        ignored
     )
 
     local nfiles
