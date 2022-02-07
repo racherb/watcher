@@ -9,10 +9,7 @@
 -- @copyright Raciel Hernández 2019
 --
 
-package.path = package.path .. ';/home/rhernandez/lucy/prj/dev/watcher/src/?.lua'
-
 local strict = require('strict')
-local box = require('box')
 local fiber = require('fiber')
 local errno = require('errno')
 local log = require('log')
@@ -33,7 +30,6 @@ local FILE = require('types.file').FILE
 local sck = require('sanity_check') --for sanity check
 
 strict.on()
-box.cfg{}
 
 local awa = db.spaces.awatcher
 local wat = db.spaces.watchables.index.wat_ak_answ --box.space.watchables.index.wat_ak_answ
@@ -61,17 +57,21 @@ local function create_watcher(
     --[[required]] wlist,       --Watch List
     --[[required]] wkind,       --Watch Kind
     --[[optional]] afunc,       --Function(watch_list)
-    --[[optional]] recursion,   --recursive mode?
-    --[[optional]] deep,        --folder level or deep
-    --[[optional]] hidden,      --include hidden files?
-    --[[optional]] ignored      --ignore files list
+    --[[optional]] cparm        --Parms for consolidation files
 )
 
     local cwlist
     if wkind == WATCHER.FILE_CREATION then
         cwlist = ut.deduplicate(wlist)
     else
-        cwlist = fwa.consolidate(wlist, recursion, deep, hidden, ignored)
+        local _cparm = cparm or {false, nil, false, {''}}
+        cwlist = fwa.consolidate(
+            wlist,
+            _cparm.recursion,
+            _cparm.deep,
+            _cparm.hidden,
+            _cparm.ignored
+        )
     end
 
     if #cwlist==0 then
@@ -151,7 +151,7 @@ local function info(wid)
 end
 
 --Run Watcher
-local function run_watcher(watcher, parm, recursion, deep, hidden)
+local function run_watcher(watcher, wparms, cparm)
     local _watcher
     if type(watcher)~='table' then
         local winf = info(watcher)
@@ -160,7 +160,19 @@ local function run_watcher(watcher, parm, recursion, deep, hidden)
         if winf.kind == WATCHER.FILE_CREATION then
             cwlist = ut.deduplicate(wlist)
         else
-            cwlist = fwa.consolidate(wlist, recursion, deep, hidden)
+            local _cparm = cparm or {
+                recursion = false,
+                deep = nil,
+                hidden = false,
+                ignored = {''}
+            }
+            cwlist = fwa.consolidate(
+                wlist,
+                _cparm.recursion,
+                _cparm.deep,
+                _cparm.hidden,
+                _cparm.ignored
+            )
         end
         local wconst = {}
         wconst.wid = watcher
@@ -178,11 +190,11 @@ local function run_watcher(watcher, parm, recursion, deep, hidden)
                 fwa.deletion,
                 _watcher.wid,  --watcher id
                 _watcher.list, --watch list consolidate
-                parm[1],       --maxwait
-                parm[2],       --interval
-                parm[3],       --orden
-                parm[4],       --cases
-                parm[5]        --match
+                wparms[1],       --maxwait
+                wparms[2],       --interval
+                wparms[3],       --orden
+                wparms[4],       --cases
+                wparms[5]        --match
             )
             if fib then
                 --fib:name(string.format('FWD-%s', tostring(_watcher.wid)))
@@ -198,12 +210,12 @@ local function run_watcher(watcher, parm, recursion, deep, hidden)
                 fwa.creation,
                 _watcher.wid,  --watcher id
                 _watcher.list, --watch list consolidate
-                parm[1],       --maxwait
-                parm[2],       --interval
-                parm[3],       --minsize
-                parm[4],       --stability
-                parm[5],       --novelty
-                parm[6]        --match
+                wparms[1],       --maxwait
+                wparms[2],       --interval
+                wparms[3],       --minsize
+                wparms[4],       --stability
+                wparms[5],       --novelty
+                wparms[6]        --match
             )
             if fib then
                 fib:name(string.format('FWC-%s', tostring(_watcher.wid)))
@@ -219,10 +231,10 @@ local function run_watcher(watcher, parm, recursion, deep, hidden)
                 fwa.alteration,
                 _watcher.wid,  --watcher id
                 _watcher.list, --watch list consolidate
-                parm[1],       --maxwait
-                parm[2],       --interval
-                parm[3],       --awhat
-                parm[4]        --nmatch
+                wparms[1],       --maxwait
+                wparms[2],       --interval
+                wparms[3],       --awhat
+                wparms[4]        --nmatch
             )
             if fib then
                 fib:name(string.format('FWA-%s', tostring(_watcher.wid)))
@@ -230,7 +242,7 @@ local function run_watcher(watcher, parm, recursion, deep, hidden)
                 return
                 {
                     fid = fib:id(),
-                    wid = watcher.wid,
+                    wid = _watcher.wid,
                     stt = 'running'
                 }
             end
@@ -270,19 +282,19 @@ local function file_deletion(
     assert(sck_interval.ans, sck_interval.msg)
 
     local _recursion = recursion or {false, nil, false}
-    local isrecur = _recursion[1]
-    local deep = _recursion[2]
-    local hidden = _recursion[3]
+
+    local cparm = {}
+    cparm.recursion = _recursion[1]
+    cparm.deep = _recursion[2]
+    cparm.hidden = _recursion[3]
+    cparm.ignored = ignored or {''}
 
     --Create watcher
     local watcher = create_watcher(
         wlist,
         WATCHER.FILE_DELETION,
         nil,
-        isrecur,
-        deep,
-        hidden,
-        ignored
+        cparm
     )
     --function(x, y) os.execute('cp ' ..x .. ' /tmp/_copy/') end
 
@@ -369,19 +381,19 @@ local function file_creation(
     end
 
     local _recursion = recursion or {false, nil, false}
-    local isrecur = _recursion[1]
-    local deep = _recursion[2]
-    local hidden = _recursion[3]
+
+    local cparm = {}
+    cparm.recursion = _recursion[1]
+    cparm.deep = _recursion[2]
+    cparm.hidden = _recursion[3]
+    cparm.ignored = ignored or {''}
 
     --Create watcher
     local watcher = create_watcher(
         wlist,
         WATCHER.FILE_CREATION,
         nil,
-        isrecur,
-        deep,
-        hidden,
-        ignored
+        cparm
     )
 
     local nfiles
@@ -442,18 +454,18 @@ local function file_alteration(
     )
 
     local _recursion = recursion or {false, nil, false}
-    local isrecur = _recursion[1]
-    local deep = _recursion[2]
-    local hidden = _recursion[3]
+
+    local cparm = {}
+    cparm.recursion = _recursion[1]
+    cparm.deep = _recursion[2]
+    cparm.hidden = _recursion[3]
+    cparm.ignored = ignored or {''}
 
     local watcher = create_watcher(
         wlist,
         WATCHER.FILE_ALTERATION,
         nil,
-        isrecur,
-        deep,
-        hidden,
-        ignored
+        cparm
     )
 
     local nfiles
@@ -507,6 +519,7 @@ local function wait_for_watcher(wid)
 
 end
 
+--[[
 local function match(wid)
     return wat:select({wid, true})
 end
@@ -515,14 +528,16 @@ local function nomatch(wid)
     return wat:select({wid, false})
 end
 
+--]]
+
 local function list(wid)
     return db_awatcher.list(wid)
 end
 
 local monitor = {}
 monitor.info = info
-monitor.match = match
-monitor.nomatch = nomatch
+--monitor.match = match
+--monitor.nomatch = nomatch
 monitor.list = list
 --monitor.why = why
 --monitor.diff = diff

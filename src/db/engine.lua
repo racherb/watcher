@@ -79,9 +79,14 @@ end
 local function start()
 
     box.cfg{
-        listen = 3301,
-        log_level=5,
-        log='watcher.log'
+        listen = 3301, --listen = os.getenv("LISTEN_URI"),
+        log_level = 5,
+        log = 'watcher.log',
+        background = false,
+        pid_file = 'watcher.pid',
+        --work_dir = '/tmp/',
+        checkpoint_interval = 60,
+        force_recovery = true
     }
 
     box.once('init', function()

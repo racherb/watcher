@@ -228,6 +228,7 @@ local function bulk_file_alteration(
                     db_awatcher.upd(
                         wid, file, true, FILE.DISAPPEARED_UNEXPECTEDLY
                     )
+                    print('- FILE_DISAPPEARED_UNEXPECTEDLY:' ..file)
                     not_alter_yet[i] = nil
                 else
                     local alter_lst = ''
@@ -250,51 +251,61 @@ local function bulk_file_alteration(
                             sha256 = dig_sha256(ut.tostring(lstdir))
                         end
                     end
+                    local alter
                     if sha256 ~= attr.sha256 then
                         alter_lst = string.format(
                             '%s%s', alter_lst, FILE.CONTENT_ALTERATION
                         )
+                        alter = 'FILE_CONTENT_ALTERATION'
                     end
                     if flf.size ~= attr.size then
                         alter_lst = string.format(
                             '%s%s', alter_lst, FILE.SIZE_ALTERATION
                         )
+                        alter = 'FILE_SIZE_ALTERATION'
                     end
                     if flf.ctime ~= attr.ctime then
                         alter_lst = string.format(
                             '%s%s', alter_lst, FILE.CHANGE_TIME_ALTERATION
                         )
+                        alter = 'FILE_CHANGE_TIME_ALTERATION'
                     end
                     if flf.mtime ~= attr.mtime then
                         alter_lst = string.format(
                             '%s%s', alter_lst, FILE.MODIFICATION_TIME_ALTERATION
                         )
+                        alter = 'FILE_MODIFICATION_TIME_ALTERATION'
                     end
                     if flf.uid ~= attr.uid then
                         alter_lst = string.format(
                             '%s%s', alter_lst, FILE.OWNER_ALTERATION
                         )
+                        alter = 'FILE_OWNER_ALTERATION'
                     end
                     if flf.gid ~= attr.gid then
                         alter_lst = string.format(
                             '%s%s', alter_lst, FILE.GROUP_ALTERATION
                         )
+                        alter = 'FILE_GROUP_ALTERATION'
                     end
                     if flf.inode ~= attr.inode then
                         alter_lst = string.format(
                             '%s%s', alter_lst, FILE.INODE_ALTERATION
                         )
+                        alter = 'FILE_INODE_ALTERATION'
                     end
                     if awhat == '1' and alter_lst ~= '' then
                         db_awatcher.upd(
                             wid, file, true, FILE.ANY_ALTERATION
                         )
+                        print('- FILE_ANY_ALTERATION:' ..file)
                         not_alter_yet[i] = nil --Exclude item
                     else
                         if string_find(alter_lst, awhat) then
                             db_awatcher.upd(
                                 wid, file, true, awhat
                             )
+                            print('- '..alter..':' ..file)
                             not_alter_yet[i] = nil --Exclude item
                         end
                     end
@@ -506,6 +517,7 @@ local function bulk_file_creation(
                             db_awatcher.upd(
                                 wid, data, false, FILE.IS_NOT_NOVELTY
                             )
+                            print('- FILE_IS_NOT_NOVELTY:' ..data)
                             return
                         end
                     end
@@ -519,6 +531,7 @@ local function bulk_file_creation(
                             db_awatcher.upd(
                                 wid, data, false, FILE.UNSTABLE_SIZE
                             )
+                            print('- FILE_UNSTABLE_SIZE:' ..data)
                             if merr then
                                 db_awatcher.upd(wid, data, false, merr)
                             end
@@ -528,10 +541,12 @@ local function bulk_file_creation(
                     if _minsize then
                         if not (fio_lstat(data).size >= minsize) then
                             db_awatcher.upd(wid, data, false, FILE.UNEXPECTED_SIZE)
+                            print('- FILE_UNEXPECTED_SIZE:' ..data)
                             return
                         end
                     end
                     db_awatcher.upd(wid, data, true, FILE.HAS_BEEN_CREATED)
+                    print('- FILE_HAS_BEEN_CREATED:' ..data)
                 end
             )
         end
@@ -558,6 +573,7 @@ local function bulk_file_creation(
                         db_awatcher.upd(
                             wid, v, true, FILE.HAS_BEEN_CREATED
                         )
+                        print('- FILE_HAS_BEEN_CREATED:' ..v)
                     end
                 end
             else
@@ -572,6 +588,7 @@ local function bulk_file_creation(
                                 ch_cff:put(u, 0)
                             else
                                 db_awatcher.put(wid, u, true, FILE.HAS_BEEN_CREATED)
+                                print('- FILE_HAS_BEEN_CREATED:' ..u)
                             end
                         end
                     end
