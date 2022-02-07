@@ -44,7 +44,7 @@ local function val_to_str(v)
   end
 
   --Determines whether a value exists in a given table
-local function is_valof(tbl, value)
+local function is_val_of(tbl, value)
   for _,v in pairs(tbl) do
     if v == value then
       return true
@@ -54,7 +54,7 @@ local function is_valof(tbl, value)
 end
 
 -- Determines if a key exists in a given table
-local function is_keyof(tbl, key)
+local function is_key_of(tbl, key)
     for k,_ in pairs(tbl) do
       if k == key then
         return true
@@ -81,8 +81,8 @@ end
 
 local util = {
   tostring = tostring,
-  is_valof = is_valof,
-  is_keyof = is_keyof,
+  is_val_of = is_val_of,
+  is_key_of = is_key_of,
   deduplicate = remove_duplicates
 }
 

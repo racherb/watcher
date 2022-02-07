@@ -1,15 +1,9 @@
 #!/usr/bin/env tarantool
 
-package.path = package.path .. ';../watcher/src/?.lua;../src/?.lua;?.lua;../test/?.lua;test/?.lua'
+package.path = package.path .. ';/home/rhernandez/lucy/prj/dev/watcher/src/?.lua'
 
 local box = require('box')
 local color = require('ansicolors')
-
-box.cfg{
-    listen = 3301,
-    log_level=5,
-    log='watcher.log'
-}
 
 local WATCHER = require('types.file').WATCHER
 local STATE = require('types.file').STATE
@@ -404,6 +398,7 @@ function help.flags(theme, scope)
         flags[#flags+1] = '\t --levels <value> \t Numerical table indicating the levels of depth to be evaluated in the directory structure'
         flags[#flags+1] = '\t --hidden <value> \t Boolean indicating whether hidden files will be evaluated in the recursion'
         flags[#flags+1] = '\t --awhat <value> \t Type of file alteration to be observed'
+        flags[#flags+1] = '\t --ignore <list> \t List of cases to be ignore fron watchable list'
         flags[#flags+1] = ''
         flags[#flags+1] = style.ident(
             ' Application context of the flags by "kind" of watcher:',
@@ -414,17 +409,17 @@ function help.flags(theme, scope)
         flags[#flags+1] = ''
         flags[#flags+1] = style.context(
             ' - FILE_CREATION',
-            ' --maxwait, --interval, --minsize, --frecuency, --iterations, --minage, --maxage, --match',
+            ' --maxwait, --interval, --minsize, --frecuency, --iterations, --minage, --maxage, --match --ignore',
             theme
         )
         flags[#flags+1] = style.context(
             ' - FILE_DELETION',
-            ' --maxwait, --interval, --sort, --cases, --match, --recursive, --levels, --hidden',
+            ' --maxwait, --interval, --sort, --cases, --match, --recursive, --levels, --hidden --ignore',
             theme
         )
         flags[#flags+1] = style.context(
             ' - FILE_ALTERATION',
-            ' --maxwait, --interval, --awhat, --match',
+            ' --maxwait, --interval, --awhat, --match --ignore',
             theme
         )
         flags[#flags+1] = ''
@@ -489,6 +484,7 @@ function help.defaults(scope, theme)
         defaults[#defaults+1] = style.defaults('levels', '"{0}"', 'Referred to the root directory', theme)
         defaults[#defaults+1] = style.defaults('hidden', 'false', 'false for ignore hidden files', theme)
         defaults[#defaults+1] = style.defaults('awhat', '1', 'Value of 1 indicates: check for any file alteration', theme)
+        defaults[#defaults+1] = style.defaults('ignore', '', 'Empty value: cDo not ignore any cases', theme)
     end
 
     defaults[#defaults+1] = ''
@@ -606,6 +602,7 @@ flags_lst['--recursive']    = 'recursive'     --recursion
 flags_lst['--levels']       = 'levels'        --recursion
 flags_lst['--hidden']       = 'hidden_files'  --recursion
 flags_lst['--awhat']        = 'awhat'
+flags_lst['--ignore']       = 'ignore'        --ignore cases fron watchable list
 
 flags_lst['--FILE_CREATION']   = 'creation'
 flags_lst['--FILE_DELETION']   = 'deletion'
@@ -621,6 +618,8 @@ local defaults = {
     recursive = false,
     levels = {0},
     hidden = false,
+    awhat = 1,
+    ignore = {''},
     forever = 9e10
 }
 
@@ -659,7 +658,8 @@ local _match = defaults.match
 local _recursive = defaults.recursive
 local _levels = defaults.levels
 local _hidden = defaults.hidden
-local _awhat
+local _awhat = defaults.awhat
+local _ignore = defaults.ignore
 local _creation
 local _alteration
 local _deletion
@@ -730,17 +730,17 @@ local function print_winfo(inf, theme)
             {
                 '- wid: %{bright}',
                 wid2string(inf.wid),
-                '\n%{reset}- kind: ',
+                '\n%{reset}  kind: ',
                 tostring(inf.kind),
-                '\n- state: ',
+                '\n  state: ',
                 translate(inf.status),
-                '\n- what: ',
+                '\n  what: ',
                 inf.what,
-                '\n- match: ',
+                '\n  match: ',
                 inf.match,
-                '\n- nomatch: ',
+                '\n  nomatch: ',
                 inf.nomatch,
-                '\n- answ: %{dim}',
+                '\n  answ: %{dim}',
                 tostring(inf.ans),
                 '%{reset}'
             }, '')))
@@ -802,8 +802,6 @@ local function parser()
             _frecuency = wargs[i+1]
         elseif flags_lst[wargs[i]]=='iterations' then
             _iterations = wargs[i+1]
-        elseif flags_lst[wargs[i]]=='iterations' then
-            _iterations = wargs[i+1]
         elseif flags_lst[wargs[i]]=='minage' then
             _minage = wargs[i+1]
         elseif flags_lst[wargs[i]]=='maxage' then
@@ -824,6 +822,8 @@ local function parser()
             _hidden = wargs[i+1]
         elseif flags_lst[wargs[i]]=='awhat' then
             _awhat = wargs[i+1]
+        elseif flags_lst[wargs[i]]=='ignore' then
+            _ignore = wargs[i+1]
         else
             --It's a command?
             if cmd_lst[wargs[i]]=='new' then
@@ -872,6 +872,7 @@ local function parser()
                             or (_levels and wargs[i-1]=='--levels' and _levels == wargs[i])
                             or (_hidden and wargs[i-1]=='--hidden' and _hidden == wargs[i])
                             or(_awhat and wargs[i-1]=='--awhat' and _awhat == wargs[i])
+                            or(_awhat and wargs[i-1]=='--ignore' and _ignore== wargs[i])
                         ) then
                             print(color('%{bright red}ERR7001: %{reset}Invalid entry. The command "'.. wargs[i]..'" is unknown'))
                             print(color('%{bright}   HINT: %{reset dim}Some of the available commands are:%{green dim} new, run, mon, info, match, nomatch, ..'))
@@ -915,7 +916,11 @@ local function parser()
     elseif _command and not _interactive then
         if _command == 'new' and #(_cargs) == 1 then
             if _creation then
-                local nw = command.new(WATCHER.FILE_CREATION, _cargs[1])
+                local wlist = core.string2wlist(_cargs[1])
+                local nw = core.create(
+                    wlist,
+                    WATCHER.FILE_CREATION
+                )
                 wcoll[#wcoll+1] = nw
             end
             if _alteration then
@@ -923,6 +928,7 @@ local function parser()
                 wcoll[#wcoll+1] = nw
             end
             if _deletion then
+                print(_ignore)
                 local nw = command.new(WATCHER.FILE_DELETION, _cargs[1])
                 wcoll[#wcoll+1] = nw
             end
@@ -1124,10 +1130,6 @@ parser()
 
 --if _robot then
 --    print('Modo robot activado')
---end
-
---if _interactive then
---    print('Modo interactivo activado')
 --end
 
 --if _maxwait then

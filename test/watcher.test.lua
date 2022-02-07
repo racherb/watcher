@@ -1,6 +1,6 @@
 #!/usr/bin/env tarantool
 
-package.path = package.path .. ';../watcher/src/?.lua;../src/?.lua;?.lua;../test/?.lua;test/?.lua'
+package.path = package.path .. ';/home/rhernandez/lucy/prj/dev/watcher/src/?.lua'
 
 local tap = require('tap')
 local fiber = require('fiber')

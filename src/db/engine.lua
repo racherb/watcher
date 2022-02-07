@@ -14,10 +14,6 @@ local log = require('log')
 
 strict.on()
 
-local enty = require('db.entity')
-local awa = enty.awatcher()
-local wat = enty.watchables()
-
 local FILE = require('types.file').FILE
 local WATCHER = require('types.file').WATCHER
 
@@ -55,6 +51,8 @@ local function create_spaces()
                 unique = true
             }
         )
+        log.info('Index wat_uk has been successfully created')
+
         box.space.watchables:create_index('wat_ak_mssg',
             {
                 type = 'tree',
@@ -62,6 +60,8 @@ local function create_spaces()
                 unique = false
             }
         )
+        log.info('Index wat_ak_mssg has been successfully created')
+
         box.space.watchables:create_index('wat_ak_answ',
             {
                 type = 'tree',
@@ -69,6 +69,7 @@ local function create_spaces()
                 unique = false
             }
         )
+        log.info('Index wat_ak_answ has been successfully created')
     end
 
     return true
@@ -76,6 +77,12 @@ local function create_spaces()
 end
 
 local function start()
+
+    box.cfg{
+        listen = 3301,
+        log_level=5,
+        log='watcher.log'
+    }
 
     box.once('init', function()
         local ok = create_spaces()
@@ -95,9 +102,17 @@ local function start()
             log.error('The plugin schemes could not be generated')
         end
     end)
+
+    local enty = require('db.entity')
+    local awa = enty.awatcher()
+    local wat = enty.watchables()
+
+    return awa, wat
+
 end
 
-box.cfg{}
+local awa, wat = start()
+
 local box_space_awatcher = box.space.awatcher
 local box_space_watchables = box.space.watchables
 

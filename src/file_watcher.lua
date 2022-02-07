@@ -350,7 +350,7 @@ local function recursive_tree(
                     local ofile
                     if (string.byte(file, 1) ~= 46) or (_shidden == true) then
                         ofile = string.format('%s/%s', dir, file)
-                        if (_deep[1]==0) or (ut.is_valof(_deep, level)) then
+                        if (_deep[1]==0) or (ut.is_val_of(_deep, level)) then
                             t[#t+1] = ofile
                         end
                         if fio_is_dir(ofile) then
@@ -372,20 +372,21 @@ end
 -- Expand patterns types if exists and Remove duplicates for FW Deletion
 local function consolidate(
     wlist,
-    recur,
+    recursion,
     deep,
     hidden,
     ignored
 )
-    local _recur = recur or false
+    local _recursion = recursion or false
     local _deep = deep or {0}
     local _hidden = hidden or false
+    local _ignored = ignored or {''}
 
     local _wlist = ut.deduplicate(wlist)
 
     local t = {}
     for _,v in pairs(_wlist) do
-        if v ~= '' and not ut.is_val_of(ignored, v) then
+        if v ~= '' and not ut.is_val_of(_ignored, v) then
             if string_find(v, '*') then
                 local pattern_result = fio_glob(v)
                 --Merge pattern items result with t
@@ -397,7 +398,7 @@ local function consolidate(
                     t[#t+1] = v
                 end
             else
-                if (_recur==true) and fio_is_dir(v) then
+                if (_recursion==true) and fio_is_dir(v) then
                     local tr = recursive_tree(v, _deep, _hidden)
                     for rv = 1, #tr do
                         t[#t+1] = tr[rv]
