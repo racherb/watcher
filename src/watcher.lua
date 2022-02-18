@@ -64,11 +64,11 @@ local function create_watcher(
     if wkind == WATCHER.FILE_CREATION then
         cwlist = ut.deduplicate(wlist)
     else
-        local _cparm = cparm or {false, nil, false, {''}}
+        local _cparm = cparm or {recursion = false, levels = {0}, hidden = false, ignored = {''}}
         cwlist = fwa.consolidate(
             wlist,
             _cparm.recursion,
-            _cparm.deep,
+            _cparm.levels,
             _cparm.hidden,
             _cparm.ignored
         )
@@ -151,7 +151,12 @@ local function info(wid)
 end
 
 --Run Watcher
-local function run_watcher(watcher, wparms, cparm)
+local function run_watcher(
+    watcher,
+    wparms,
+    cparm
+)
+
     local _watcher
     if type(watcher)~='table' then
         local winf = info(watcher)
@@ -162,14 +167,14 @@ local function run_watcher(watcher, wparms, cparm)
         else
             local _cparm = cparm or {
                 recursion = false,
-                deep = nil,
+                levels = {0},
                 hidden = false,
                 ignored = {''}
             }
             cwlist = fwa.consolidate(
                 wlist,
                 _cparm.recursion,
-                _cparm.deep,
+                _cparm.levels,
                 _cparm.hidden,
                 _cparm.ignored
             )
@@ -188,13 +193,13 @@ local function run_watcher(watcher, wparms, cparm)
         if _watcher.kind == WATCHER.FILE_DELETION then
             local fib = fiber.create(
                 fwa.deletion,
-                _watcher.wid,  --watcher id
-                _watcher.list, --watch list consolidate
-                wparms[1],       --maxwait
-                wparms[2],       --interval
-                wparms[3],       --orden
-                wparms[4],       --cases
-                wparms[5]        --match
+                _watcher.wid,
+                _watcher.list,
+                wparms.maxwait,
+                wparms.interval,
+                wparms.sort,
+                wparms.cases,
+                wparms.match
             )
             if fib then
                 --fib:name(string.format('FWD-%s', tostring(_watcher.wid)))
@@ -208,14 +213,14 @@ local function run_watcher(watcher, wparms, cparm)
         elseif _watcher.kind == WATCHER.FILE_CREATION then
             local fib = fiber.create(
                 fwa.creation,
-                _watcher.wid,  --watcher id
-                _watcher.list, --watch list consolidate
-                wparms[1],       --maxwait
-                wparms[2],       --interval
-                wparms[3],       --minsize
-                wparms[4],       --stability
-                wparms[5],       --novelty
-                wparms[6]        --match
+                _watcher.wid,
+                _watcher.list,
+                wparms.maxwait,
+                wparms.interval,
+                wparms.minsize,
+                wparms.stability,
+                wparms.novelty,
+                wparms.match
             )
             if fib then
                 fib:name(string.format('FWC-%s', tostring(_watcher.wid)))
@@ -229,15 +234,15 @@ local function run_watcher(watcher, wparms, cparm)
         elseif _watcher.kind == WATCHER.FILE_ALTERATION then
             local fib = fiber.create(
                 fwa.alteration,
-                _watcher.wid,  --watcher id
-                _watcher.list, --watch list consolidate
-                wparms[1],       --maxwait
-                wparms[2],       --interval
-                wparms[3],       --awhat
-                wparms[4]        --nmatch
+                _watcher.wid,
+                _watcher.list,
+                wparms.maxwait,
+                wparms.interval,
+                wparms.what,
+                wparms.match
             )
             if fib then
-                fib:name(string.format('FWA-%s', tostring(_watcher.wid)))
+                --fib:name(string.format('FWA-%s', tostring(_watcher.wid)))
                 db_awatcher.set(_watcher.wid, fib.id())
                 return
                 {
@@ -281,12 +286,12 @@ local function file_deletion(
     local sck_interval = sck.maxwait(_interval)
     assert(sck_interval.ans, sck_interval.msg)
 
-    local _recursion = recursion or {false, nil, false}
+    local _recursion = recursion or {recursive = false, levels = {0}, hidden = false}
 
     local cparm = {}
-    cparm.recursion = _recursion[1]
-    cparm.deep = _recursion[2]
-    cparm.hidden = _recursion[3]
+    cparm.recursion = _recursion.recursive
+    cparm.levels = _recursion.levels
+    cparm.hidden = _recursion.hidden
     cparm.ignored = ignored or {''}
 
     --Create watcher
@@ -314,9 +319,9 @@ local function file_deletion(
 
     local _options = options or {sort = SORT.NO_SORT, cases = 0, match = 0}
 
-    local _sort = _options[1] or SORT.NO_SORT
-    local _cases = _options[2] or 0
-    local _match = _options[3] or 0
+    local _sort = _options.sort or SORT.NO_SORT
+    local _cases = _options.cases or 0
+    local _match = _options.match or 0
 
     if _cases==0 then _cases = nfiles end
     if _match==0 then _match = nfiles end
@@ -328,11 +333,11 @@ local function file_deletion(
    return run_watcher(
        watcher,
        {
-           _maxwait,
-           _interval,
-           _sort,
-           _cases,
-           _match
+           maxwait = _maxwait,
+           interval = _interval,
+           sort = _sort,
+           cases = _cases,
+           match = _match
         }
    )
 
@@ -370,22 +375,22 @@ local function file_creation(
         assert(sck_stability.ans, sck_stability.msg)
     end
 
-    local dfrom, duntil, _novelty
+    local _minage, _maxage, _novelty
 
     if novelty then
-        dfrom = novelty[1] or 0
-        duntil = novelty[2] or WATCHER.INFINITY_DATE --Arbitrary infinite date (5138-11-16T09:46:39Z)
-        _novelty = {dfrom, duntil}
+        _minage = novelty.minage or 0
+        _maxage = novelty.maxage or WATCHER.INFINITY_DATE --Arbitrary infinite date (5138-11-16T09:46:39Z)
+        _novelty = {minage = _minage, maxage = _maxage}
         local sck_novelty = sck.novelty(_novelty)
         assert(sck_novelty.ans, sck_novelty.msg)
     end
 
-    local _recursion = recursion or {false, nil, false}
+    local _recursion = recursion or {recursive = false, levels = {0}, hidden = false}
 
     local cparm = {}
-    cparm.recursion = _recursion[1]
-    cparm.deep = _recursion[2]
-    cparm.hidden = _recursion[3]
+    cparm.recursion = _recursion.recursive
+    cparm.levels = _recursion.levels
+    cparm.hidden = _recursion.hidden
     cparm.ignored = ignored or {''}
 
     --Create watcher
@@ -415,12 +420,12 @@ local function file_creation(
     return run_watcher(
         watcher,
         {
-            _maxwait,
-            _interval,
-            _minsize,
-            stability,
-            _novelty,
-            _match
+            maxwait = _maxwait,
+            interval = _interval,
+            minsize = _minsize,
+            stability = stability,
+            novelty = _novelty,
+            match = _match
          }
     )
 end
@@ -429,7 +434,7 @@ local function file_alteration(
     --[[required]] wlist,
     --[[optional]] maxwait,
     --[[optional]] interval,
-    --[[optional]] awhat,
+    --[[optional]] what,
     --[[optional]] nmatch,
     --[[optional]] recursion,
     --[[optional]] ignored
@@ -447,18 +452,18 @@ local function file_alteration(
     local sck_interval = sck.maxwait(_interval)
     assert(sck_interval.ans, sck_interval.msg)
 
-    local _awhat = awhat or FILE.ANY_ALTERATION
+    local _what = what or FILE.ANY_ALTERATION
     assert(
-        tonumber(_awhat) and _awhat <= '8',
+        tonumber(_what) and _what <= '8',
         OUTPUT.ALTER_WATCH_NOT_VALID
     )
 
-    local _recursion = recursion or {false, nil, false}
+    local _recursion = recursion or {recursive = false, levels = {0}, hidden = false}
 
     local cparm = {}
-    cparm.recursion = _recursion[1]
-    cparm.deep = _recursion[2]
-    cparm.hidden = _recursion[3]
+    cparm.recursion = _recursion.recursive
+    cparm.levels = _recursion.levels
+    cparm.hidden = _recursion.hidden
     cparm.ignored = ignored or {''}
 
     local watcher = create_watcher(
@@ -487,39 +492,45 @@ local function file_alteration(
    return run_watcher(
         watcher,
         {
-            _maxwait,
-            _interval,
-            _awhat,
-            _match
+            maxwait =_maxwait,
+            interval = _interval,
+            what = _what,
+            match = _match
         }
     )
 end
 
 --Wait for a watcher to finish
-local function wait_for_watcher(wid)
+local function wait_for_watcher(wid, timeout)
+    local clock_realtime64 = require('clock').realtime64
     local waiting = true
-    --local s = box.space.awatcher
     local watcher
 
-    while (waiting) do
-        fiber.sleep(0.2)
+    local _timeout = timeout or WATCHER.MAXWAIT
+
+    local ini = clock_realtime64()
+
+    while waiting do
+        fiber.sleep(0.25)
         watcher = awa:select(wid)
 
         if watcher[1][5] ~=0 then
             waiting = false
-            --break
+        end
+        if ((clock_realtime64() - ini)/1e9 > _timeout) then
+            print('timeout')
+            return {wid = wid, err = 'timeout'}
         end
     end
 
     return {
-        wid = watcher[1][1],
+        wid = wid,
         ans = watcher[1][6],
         time = (watcher[1][5] - watcher[1][4])/1e9 --to seconds
     }
 
 end
 
---[[
 local function match(wid)
     return wat:select({wid, true})
 end
@@ -528,16 +539,14 @@ local function nomatch(wid)
     return wat:select({wid, false})
 end
 
---]]
-
 local function list(wid)
     return db_awatcher.list(wid)
 end
 
 local monitor = {}
 monitor.info = info
---monitor.match = match
---monitor.nomatch = nomatch
+monitor.match = match
+monitor.nomatch = nomatch
 monitor.list = list
 --monitor.why = why
 --monitor.diff = diff
@@ -559,7 +568,7 @@ core.deduplicate = ut.deduplicate
 core.consolidate = fwa.consolidate
 core.string2wlist = string2wlist
 core.sleep = fiber.sleep
---core.tb2str = ut.tostring
+core.tbl2str = ut.tostring
 --core.forever = forever
 
 return {

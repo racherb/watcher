@@ -105,10 +105,10 @@ local function validate_stability(stability)
 end
 
 local function validate_novelty(novelty)
-    if (novelty) and (type(novelty)=='table') and (#novelty~=0) then
-        if (novelty[1]) and (type(novelty[1])=='number') then
-            if (novelty[2]) and (type(novelty[2])=='number') then
-                if (novelty[2] >= novelty[1]) then
+    if novelty and type(novelty)=='table' and novelty.minage and novelty.maxage then
+        if (novelty.minage) and (type(novelty.minage)=='number') then
+            if (novelty.maxage) and (type(novelty.maxage)=='number') then
+                if (novelty.maxage >= novelty.minage) then
                     return {
                         ans = true,
                         msg = 'okay'
