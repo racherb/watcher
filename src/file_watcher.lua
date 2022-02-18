@@ -37,6 +37,8 @@ local SORT = require('types.file').SORT
 
 local db_awatcher = db.awatcher
 
+local prompt = 'watcher>'
+
 strict.on()
 
 --[[
@@ -184,7 +186,7 @@ local function bulk_file_deletion(
                 db_awatcher.upd(
                     wid, file, true, FILE.DELETED
                 )
-                print('- FILE DELETED:' ..file)
+                print(prompt..'FILE_DELETED:' ..file)
                 notdelyet[i] = nil
             end
         end
@@ -228,7 +230,7 @@ local function bulk_file_alteration(
                     db_awatcher.upd(
                         wid, file, true, FILE.DISAPPEARED_UNEXPECTEDLY
                     )
-                    print('- FILE_DISAPPEARED_UNEXPECTEDLY:' ..file)
+                    print(prompt..'FILE_DISAPPEARED_UNEXPECTEDLY:' ..file)
                     not_alter_yet[i] = nil
                 else
                     local alter_lst = ''
@@ -298,14 +300,14 @@ local function bulk_file_alteration(
                         db_awatcher.upd(
                             wid, file, true, FILE.ANY_ALTERATION
                         )
-                        print('- FILE_ANY_ALTERATION:' ..file)
+                        print(prompt..'FILE_ANY_ALTERATION:' ..file)
                         not_alter_yet[i] = nil --Exclude item
                     else
                         if string_find(alter_lst, awhat) then
                             db_awatcher.upd(
                                 wid, file, true, awhat
                             )
-                            print('- '..alter..':' ..file)
+                            print(prompt..alter..':' ..file)
                             not_alter_yet[i] = nil --Exclude item
                         end
                     end
@@ -324,16 +326,16 @@ local function bulk_file_alteration(
     BULK_FILE_ALTERATION_END:signal()
 end
 
---deep: {0, 1,2,3,4,5..}
+--levels: {0, 1,2,3,4,5..}
 local function recursive_tree(
     --[[required]] root,
-    --[[optional]] deep,
+    --[[optional]] levels,
     --[[optional]] shidden
 )
-    local _deep = deep or {0}          --zero for all directory deep
+    local _levels = levels or {0}          --zero for all directory levels
     local _shidden = shidden or false  --false for ignore the hidden files and folders
 
-    table.sort(_deep) --Sort _deep
+    table.sort(_levels) --Sort _levels
 
     local function get_level (path)
         local folders={}
@@ -350,7 +352,7 @@ local function recursive_tree(
 
     local function explore_dir(dir)
         local level = get_level(dir) - level_root
-        if (level > _deep[#_deep]) then
+        if (level > _levels[#_levels]) then
             return t
         end
         if fio_is_dir(dir) then
@@ -361,7 +363,7 @@ local function recursive_tree(
                     local ofile
                     if (string.byte(file, 1) ~= 46) or (_shidden == true) then
                         ofile = string.format('%s/%s', dir, file)
-                        if (_deep[1]==0) or (ut.is_val_of(_deep, level)) then
+                        if (_levels[1]==0) or (ut.is_val_of(_levels, level)) then
                             t[#t+1] = ofile
                         end
                         if fio_is_dir(ofile) then
@@ -384,12 +386,12 @@ end
 local function consolidate(
     wlist,
     recursion,
-    deep,
+    levels,
     hidden,
     ignored
 )
     local _recursion = recursion or false
-    local _deep = deep or {0}
+    local _levels = levels or {0}
     local _hidden = hidden or false
     local _ignored = ignored or {''}
 
@@ -410,7 +412,7 @@ local function consolidate(
                 end
             else
                 if (_recursion==true) and fio_is_dir(v) then
-                    local tr = recursive_tree(v, _deep, _hidden)
+                    local tr = recursive_tree(v, _levels, _hidden)
                     for rv = 1, #tr do
                         t[#t+1] = tr[rv]
                     end
@@ -483,7 +485,8 @@ local function bulk_file_creation(
     minsize,
     stability,
     novelty,
-    nmatch)
+    nmatch
+)
 
     fib_sleep(0.1)
     local fio_lexists = fio.path.lexists
@@ -513,25 +516,25 @@ local function bulk_file_creation(
                 function()
                     if _novelty then
                         local lmod = fio_lstat(data).mtime
-                        if not (lmod >= _novelty[1] and lmod <= _novelty[2]) then
+                        if not (lmod >= _novelty.minage and lmod <= _novelty.maxage) then
                             db_awatcher.upd(
                                 wid, data, false, FILE.IS_NOT_NOVELTY
                             )
-                            print('- FILE_IS_NOT_NOVELTY:' ..data)
+                            print(prompt..'FILE_IS_NOT_NOVELTY:' ..data)
                             return
                         end
                     end
                     if _stability then
                         local stble, merr = is_stable_size(
                             data,
-                            _stability[1],
-                            _stability[2]
+                            _stability.frecuency, --[1], --frec
+                            _stability.iterations --[2] --iterations
                         )
                         if not stble then
                             db_awatcher.upd(
                                 wid, data, false, FILE.UNSTABLE_SIZE
                             )
-                            print('- FILE_UNSTABLE_SIZE:' ..data)
+                            print(prompt..'FILE_UNSTABLE_SIZE:' ..data)
                             if merr then
                                 db_awatcher.upd(wid, data, false, merr)
                             end
@@ -541,12 +544,12 @@ local function bulk_file_creation(
                     if _minsize then
                         if not (fio_lstat(data).size >= minsize) then
                             db_awatcher.upd(wid, data, false, FILE.UNEXPECTED_SIZE)
-                            print('- FILE_UNEXPECTED_SIZE:' ..data)
+                            print(prompt..'FILE_UNEXPECTED_SIZE:' ..data)
                             return
                         end
                     end
                     db_awatcher.upd(wid, data, true, FILE.HAS_BEEN_CREATED)
-                    print('- FILE_HAS_BEEN_CREATED:' ..data)
+                    print(prompt..'FILE_HAS_BEEN_CREATED:' ..data)
                 end
             )
         end
@@ -573,14 +576,14 @@ local function bulk_file_creation(
                         db_awatcher.upd(
                             wid, v, true, FILE.HAS_BEEN_CREATED
                         )
-                        print('- FILE_HAS_BEEN_CREATED:' ..v)
+                        print(prompt..'FILE_HAS_BEEN_CREATED:' ..v)
                     end
                 end
             else
                 local pit = fio_glob(v) --pattern_items
                 if #pit~=0 then
                     for _,u in pairs(pit) do
-                        if not ut.is_valof(fnd, u) then
+                        if not ut.is_val_of(fnd, u) then
                             fnd[#fnd+1]=u
                             nfp = nfp + 1
                             if stability or minsize or novelty then
@@ -588,7 +591,7 @@ local function bulk_file_creation(
                                 ch_cff:put(u, 0)
                             else
                                 db_awatcher.put(wid, u, true, FILE.HAS_BEEN_CREATED)
-                                print('- FILE_HAS_BEEN_CREATED:' ..u)
+                                print(prompt..'FILE_HAS_BEEN_CREATED:' ..u)
                             end
                         end
                     end
@@ -619,6 +622,7 @@ local function file_deletion(
     local nfiles = #cwlist
     local _cases = cases or 0
     local _match = match or 0
+    local _sort = sort or SORT.NO_SORT
 
     if _cases==0 then _cases = nfiles end
     if _match==0 then _match = nfiles end
@@ -628,7 +632,7 @@ local function file_deletion(
     if #cwlist == 1 then
         cwlist_o = cwlist
     else
-        cwlist_o = sort_files_by(cwlist, sort, _cases)
+        cwlist_o = sort_files_by(cwlist, _sort, _cases)
     end
 
     local nbulks = math.floor(1 + (#cwlist_o)/BULK_CAPACITY)
