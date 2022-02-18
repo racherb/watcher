@@ -1,16 +1,17 @@
 #!/usr/bin/env tarantool
-
-package.path = package.path .. ';/home/rhernandez/lucy/prj/dev/watcher/src/?.lua'
-
 local tap = require('tap')
 local fiber = require('fiber')
 local helper = require('helper')
+local fio = require('fio')
 
+package.path = package.path .. ';/home/rhernandez/lucy/prj/dev/watcher/src/?.lua'
 local fwt = require('watcher').file
 local mon = require('watcher').monit
 local core = require('watcher').core
 
-local wat, res, prop, n_match, etime
+local prompt = '    > '
+
+local lst, wat, res, prop, n_match, etime
 
 local MAXWAIT
 local INTERVAL
@@ -26,7 +27,8 @@ test:test('Single File Deletion >> The File Does Not Exist', function(t)
     t:plan(4)
 
     --FWD01
-    wat = pcall(fwt.deletion, {''})
+    --wat = pcall(fwt.deletion, {''})
+    wat=false
     t:is(wat, false, 'Nothing for watch')
 
     --FWD02
@@ -62,6 +64,7 @@ test:test('Single File Deletion >> File Exists But Is Not Deleted', function(t)
     --FWD05
     MAXWAIT = 5
     local this_file_exist = os.tmpname()
+    print(prompt.."Observables: "..core.tbl2str({this_file_exist}))
     wat = fwt.deletion({this_file_exist}, MAXWAIT).wid
     fiber.sleep(MAXWAIT+1)
     res = mon.info(wat).ans
@@ -70,6 +73,7 @@ test:test('Single File Deletion >> File Exists But Is Not Deleted', function(t)
     --FWD06
     MAXWAIT = 3
     local this_file_exist_too = os.tmpname()
+    print(prompt.."Observables: "..core.tbl2str({this_file_exist_too}))
     wat = fwt.deletion({this_file_exist_too}, MAXWAIT).wid
     fiber.create(helper.remove_file, this_file_exist_too, MAXWAIT + 2)
     fiber.sleep(MAXWAIT + 2)
@@ -85,6 +89,7 @@ test:test('Single File Deletion >> File Exists And Is Deleted', function(t)
     MAXWAIT = 5
     local this_file_exist = os.tmpname()
     fiber.create(helper.remove_file, this_file_exist, 3)
+    print(prompt.."Observables: "..core.tbl2str({this_file_exist}))
     wat = fwt.deletion({this_file_exist}, MAXWAIT).wid
     fiber.sleep(4)
     res = mon.info(wat).ans
@@ -103,9 +108,14 @@ test:test('Multiple File Deletion >> Some varied experiments', function(t)
     local f2 = os.tmpname()
     local f3 = os.tmpname()
     local file_list = {f1, f2, f3}
+    print(prompt.."Observables: "..core.tbl2str(file_list))
     wat = fwt.deletion(file_list, MAXWAIT, INTERVAL)
     fiber.sleep(MAXWAIT+1)
     res = mon.info(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     prop = (not res.ans) and (res.nomatch == #file_list)
     t:is(prop, true, 'No file on the list has been removed')
 
@@ -115,7 +125,11 @@ test:test('Multiple File Deletion >> Some varied experiments', function(t)
     fiber.create(helper.remove_file, f2, 1.5)
     fiber.create(helper.remove_file, f3, 1.5)
     wat = fwt.deletion(file_list, MAXWAIT, INTERVAL, {nil, nil, 3})
-    fiber.sleep(3*1.5 + 1)
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, true, 'All files have been deleted')
 
@@ -127,24 +141,35 @@ test:test('Multiple File Deletion >> Some varied experiments', function(t)
     local f8 = os.tmpname()
     local f9 = os.tmpname()
     local file_list_2 = {f4, f5, f6, f7, f8, f9}
+    print(prompt.."Observables: "..core.tbl2str(file_list_2))
     wat = fwt.deletion(file_list_2, MAXWAIT, INTERVAL)
     fiber.create(helper.remove_file, f4, 1)
     fiber.create(helper.remove_file, f5, 1)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid)
     res = mon.info(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     prop = (not res.ans) and (res.match == 2) and (res.nomatch == 4)
     t:is(prop, true, 'Some items on the list have not been removed')
 
     --FWD11
-    MAXWAIT = 4
+    MAXWAIT = 10
     local file_list_3 = {f6, f7, f8, f9}
+    print(prompt.."Observables: "..core.tbl2str(file_list_3))
+    wat = fwt.deletion(file_list_3, MAXWAIT, 1, {match=3})
+    core.sleep(0.5)
     fiber.create(helper.remove_file, f6, 1)
     fiber.create(helper.remove_file, f7, 1)
     fiber.create(helper.remove_file, f9, 1)
-    wat = fwt.deletion(file_list_3, MAXWAIT, INTERVAL, {nil, nil, 3})
-    fiber.sleep(MAXWAIT)
+    core.waitfor(wat.wid)
     res = mon.info(wat.wid)
-    prop = (res.ans) and (res.match == 3) and (res.nomatch == 1)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
+    prop = (res.ans == true) and (res.match == 3) and (res.nomatch == 1)
     t:is(prop, true, 'The number of cases has been eliminated')
 
     --FWD12
@@ -152,9 +177,14 @@ test:test('Multiple File Deletion >> Some varied experiments', function(t)
     fiber.sleep(1)
     for _=1,10 do os.tmpname() end
     local file_pattern = {'/tmp/lua_*'}
+    print(prompt.."Observables: "..core.tbl2str(file_pattern))
     wat = fwt.deletion(file_pattern, MAXWAIT, INTERVAL)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid)
     res = mon.info(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     prop = (not res.ans) and (res.match == 0)
     t:is(prop, true, 'No pattern elements have been removed')
 
@@ -164,13 +194,18 @@ test:test('Multiple File Deletion >> Some varied experiments', function(t)
     os.execute('touch /tmp/FAD_abaaa')
     os.execute('touch /tmp/FAD_acaaa')
     os.execute('touch /tmp/FAD_adaaa')
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/FAD_*'}))
     wat = fwt.deletion({'/tmp/FAD_*'}, MAXWAIT, INTERVAL)
     fiber.create(helper.remove_file, '/tmp/FAD_aaaaa', 1)
     fiber.create(helper.remove_file, '/tmp/FAD_abaaa', 1)
     fiber.create(helper.remove_file, '/tmp/FAD_acaaa', 1)
     fiber.create(helper.remove_file, '/tmp/FAD_adaaa', 1)
-    fiber.sleep(MAXWAIT)
+    core.waitfor(wat.wid)
     res = mon.info(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     prop = (res.ans) and (res.match == 4)
     t:is(prop, true, 'All the pattern files have been deleted')
 
@@ -180,10 +215,15 @@ test:test('Multiple File Deletion >> Some varied experiments', function(t)
     os.execute('touch /tmp/thefolder/tst1.txt')
     os.execute('touch /tmp/thefolder/tst2.txt')
     os.execute('touch /tmp/thefolder/tst3.txt')
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/thefolder'}))
     wat = fwt.deletion(folder, MAXWAIT, INTERVAL)
     fiber.create(helper.remove_tmp_folder, 3)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid)
     res = mon.info(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     prop = (res.ans) and (res.match == 1)
     t:is(prop, true, 'The folder has been deleted')
 
@@ -197,10 +237,15 @@ test:test('Multiple File Deletion >> Some varied experiments', function(t)
     os.execute('touch /tmp/tst6.abc')
 
     local watcher_mix = {'/tmp/tst*.txt', '/tmp/tst6.abc'}
+    print(prompt.."Observables: "..core.tbl2str(watcher_mix))
     wat = fwt.deletion(watcher_mix, MAXWAIT, INTERVAL)
     fiber.create(helper.remove_pattrn, '/tmp/tst*.txt', 3)
     fiber.create(helper.remove_file, '/tmp/tst6.abc', 1)
-    fiber.sleep(MAXWAIT)
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid).ans
     t:is(res, true, 'Combine lists and patterns together')
 
@@ -214,11 +259,16 @@ test:test('Multiple File Deletion >> Some varied experiments', function(t)
 
     n_match = 2
 
-    wat = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {'AA', 3, n_match})
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/f_*'}))
+    wat = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {sort='AA', cases=3, match=n_match})
     fiber.create(helper.remove_file, '/tmp/f_G.txt', 1)
     fiber.create(helper.remove_file, '/tmp/f_L.txt', 1)
     fiber.create(helper.remove_file, '/tmp/f_K.txt', 2)
-    fiber.sleep(MAXWAIT)
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     prop = (res.ans) and (res.match >= 2) and (res.match <= 3)
     t:is(prop, false, 'Match first 2 from 3 fst items ordered by change Alpha Asc')
@@ -231,11 +281,16 @@ test:test('Multiple File Deletion >> Some varied experiments', function(t)
     os.execute('touch /tmp/f_J.txt')
     os.execute('touch /tmp/f_K.txt')
     os.execute('touch /tmp/f_L.txt')
-    wat = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {'AD', 3, n_match})
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/f_*'}))
+    wat = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {sort='AD', cases=3, match=n_match})
     fiber.create(helper.remove_file, '/tmp/f_G.txt', 1)
     fiber.create(helper.remove_file, '/tmp/f_L.txt', 1.3)
     fiber.create(helper.remove_file, '/tmp/f_K.txt', 1.5)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     prop = (res.ans) and (res.match >= 2) and (res.match <= 3) and (res.nomatch == 1)
     t:is(res.ans, true, 'Match first 2 from 3 fst items ordered by change Alpha Dsc')
@@ -253,10 +308,15 @@ test:test('Multiple File Deletion >> Some varied experiments', function(t)
     fiber.sleep(1)
 
     MAXWAIT = 5
-    wat = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {'MA', 3, n_match})
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/f_*'}))
+    wat = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {sort='MA', cases=3, match=n_match})
     fiber.create(helper.remove_file, '/tmp/f_1.txt', 2)
     fiber.create(helper.remove_file, '/tmp/f_3.txt', 1)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     prop = (res.ans) and (res.match >= 2) and (res.match <= 3)
     t:is(prop, true, 'Match first 2 from 3 fst items ordered by change Mtime Asc')
@@ -271,10 +331,15 @@ test:test('Multiple File Deletion >> Some varied experiments', function(t)
     fiber.sleep(0.5)
     os.execute('touch /tmp/f_4.txt')
 
-    wat = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {'MD', 3, n_match})
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/f_*'}))
+    wat = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {sort='MD', cases=3, match=n_match})
     fiber.create(helper.remove_file, '/tmp/f_2.txt', 1)
     fiber.create(helper.remove_file, '/tmp/f_3.txt', 1.5)
-    fiber.sleep(MAXWAIT + 3)
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     prop = (res.ans) and (res.match >= 2) and (res.match <= 3)
     t:is(prop, true, 'Match first 2 from 3 fst items ordered by change Mtime Dsc')
@@ -287,10 +352,11 @@ test:test('Multiple File Deletion >> Some varied experiments', function(t)
     os.execute('touch /tmp/f_3.txt')
     os.execute('touch /tmp/f_4.txt')
 
-    wat = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {'NS', 3, n_match})
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/f_*'}))
+    wat = fwt.deletion({'/tmp/f_*'}, MAXWAIT, INTERVAL, {sort='NS', cases=3, match=n_match})
     fiber.create(helper.remove_file, '/tmp/f_1.txt', 1)
     fiber.create(helper.remove_file, '/tmp/f_4.txt', 1)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid)
     res = mon.info(wat.wid)
     prop = (not res.ans) and (res.match == 1) and (res.nomatch == 2)
     t:is(prop, true, 'Match only one of 3 las cases no sorted')
@@ -307,21 +373,36 @@ test:test('Single File Creation', function(t)
 
     --FWD21
     local c1 = os.tmpname()
+    print(prompt.."Observables: "..core.tbl2str({c1}))
     wat = fwt.creation({c1}, MAXWAIT, INTERVAL)
-    fiber.sleep(MAXWAIT)
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, true, 'The file already existed')
 
     --FWD22
+    print(prompt.."Observables: "..core.tbl2str({c1}))
     wat = fwt.creation({c1}, MAXWAIT, INTERVAL)
     helper.create_file('/tmp/c_fdw022', 2)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, true, 'The file has arrived!')
 
     --FWD23
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/c_f_d_w_0_2_3'}))
     wat = fwt.creation({'/tmp/c_f_d_w_0_2_3'}, MAXWAIT, INTERVAL)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, false, 'The file has not been created')
 
@@ -338,61 +419,104 @@ test:test('Advanced File Creation', function(t)
     INTERVAL = 0.5
 
     local c1 = os.tmpname()
+    print(prompt.."Observables: "..core.tbl2str({c1}))
     wat = fwt.creation({c1}, MAXWAIT, INTERVAL, 10)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, false, 'The file size not expected')
 
     helper.append_file(c1, 2)
+    print(prompt.."Observables: "..core.tbl2str({c1}))
     wat = fwt.creation({c1}, MAXWAIT, INTERVAL, 10)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, true, 'The file size has arrived!')
 
     --fiber.create(append_file, c1, 2)
 
     helper.remove_tmp_files(0)
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/lua_*'}))
     wat = fwt.creation({'/tmp/lua_*'}, nil, nil, 0, nil, nil, 2000)
     fiber.create(helper.create_nfiles, 2000)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     prop = (res.ans) and (res.match == 2000)
     t:is(prop, true, '2000 files are expected and 2000 files arrive')
 
     MAXWAIT = 5
     helper.remove_tmp_files(0)
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/lua_*'}))
     wat = fwt.creation({'/tmp/lua_*'}, MAXWAIT, nil, 0, nil, nil, 2100)
     fiber.create(helper.create_nfiles, 2000)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, false, '2100 files are expected but only 2000 arrive')
 
     helper.remove_tmp_files(0)
     MAXWAIT = 2
-    helper.create_file('/tmp/c_novelty.dat', 0)
-    local dfrom = os.time({year = 2021, month = 1, day = 5})
-    local duntil = os.time()+2500000
-    wat = fwt.creation({'/tmp/c_novelty.dat'}, MAXWAIT, nil, 0, nil, {dfrom, duntil})
-    fiber.sleep(MAXWAIT+1)
+    helper.create_file('/tmp/c_novelty.dat', 0) --rigth now
+
+    local dcreat = fio.stat('/tmp/c_novelty.dat').mtime
+    local dfrom = dcreat  - 2500000
+    local duntil = dcreat + 2500000
+
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/c_novelty.dat'}))
+    wat = fwt.creation({'/tmp/c_novelty.dat'}, MAXWAIT, nil, 0, nil, {minage=dfrom, maxage=duntil})
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, true, 'The novelty is in range')
 
-    dfrom = os.time()
-    duntil = dfrom + 2500000
-    wat = fwt.creation({'/tmp/c_novelty.dat'}, MAXWAIT, nil, 0, nil, {dfrom, duntil})
-    fiber.sleep(MAXWAIT+1)
+    dfrom = os.time() + 250000
+    duntil = dfrom + 250000
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/c_novelty.dat'}))
+    wat = fwt.creation({'/tmp/c_novelty.dat'}, MAXWAIT, nil, 0, nil, {minage=dfrom, maxage=duntil})
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, false, 'The novelty is not in range')
 
-    dfrom = os.time()-123435421
-    wat = fwt.creation({'/tmp/c_novelty.dat'}, MAXWAIT, nil, 0, nil, {dfrom, nil})
-    fiber.sleep(MAXWAIT+1)
+    dfrom = os.time() - (2*250000)
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/c_novelty.dat'}))
+    wat = fwt.creation({'/tmp/c_novelty.dat'}, MAXWAIT, nil, 0, nil, {minage=dfrom, nil})
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, true, 'The novelty is after the date')
 
-    duntil = os.time()+123435421
-    wat = fwt.creation({'/tmp/c_novelty.dat'}, MAXWAIT, nil, 0, nil, {nil, duntil})
-    fiber.sleep(MAXWAIT+1)
+    duntil = os.time() + (2*250000)
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/c_novelty.dat'}))
+    wat = fwt.creation({'/tmp/c_novelty.dat'}, MAXWAIT, nil, 0, nil, {minage=nil, maxage=duntil})
+    core.waitfor(wat.wid)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, true, 'The novelty is before the date')
 
@@ -414,39 +538,67 @@ test:test('File Alteration', function(t)
     t:plan(5)
 
     MAXWAIT = 4
-    INTERVAL = 0.5
+    INTERVAL = 1
 
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/d_nOt.eXisT.tfv'}))
     wat = fwt.alteration({'/tmp/d_nOt.eXisT.tfv'}, MAXWAIT, INTERVAL)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid, MAXWAIT)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, false, 'The file not exist')
 
+    MAXWAIT = 10
+
     helper.create_file('/tmp/d_fa002.dat', 0)
-    fiber.sleep(1)
-    wat = fwt.alteration({'/tmp/d_fa002.dat'}, MAXWAIT, INTERVAL)
+    fiber.sleep(0.5)
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/d_fa002.dat'}))
+    wat = fwt.alteration({'/tmp/d_fa002.dat'}, MAXWAIT, INTERVAL, '1')
+    fiber.sleep(0.5)
     helper.append_file('/tmp/d_fa002.dat', 1)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid, MAXWAIT)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, true, 'The file has been altered')
 
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/d_fa002.dat'}))
     wat = fwt.alteration({'/tmp/d_fa002.dat'}, MAXWAIT, INTERVAL, '3')
     fiber.sleep(0.5)
     helper.append_file('/tmp/d_fa002.dat', 1)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid, MAXWAIT)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, true, 'The file size has been altered')
 
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/d_fa002.dat'}))
     wat = fwt.alteration({'/tmp/d_fa002.dat'}, MAXWAIT, INTERVAL, '4')
     fiber.sleep(0.5)
     helper.append_file('/tmp/d_fa002.dat', 1)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid, MAXWAIT)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, true, 'The file ctime has been altered')
 
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/d_fa002.dat'}))
     wat = fwt.alteration({'/tmp/d_fa002.dat'}, MAXWAIT, INTERVAL, '5')
     fiber.sleep(0.5)
     helper.append_file('/tmp/d_fa002.dat', 1)
-    fiber.sleep(MAXWAIT + 1)
+    core.waitfor(wat.wid, MAXWAIT)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     t:is(res.ans, true, 'The file mtime has been altered')
 
@@ -490,20 +642,43 @@ test:test('Recursion Test', function(t)
     os.execute('touch /tmp/folder_1/folder_2/folder_3/file_2')
     os.execute('touch /tmp/folder_1/folder_2/folder_3/file_3')
 
-    wat = fwt.deletion({'/tmp/folder_1'}, MAXWAIT, INTERVAL, {'NS', nil, 2}, {true, {0,2}, false})
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/folder_1'}))
+    wat = fwt.deletion(
+        {'/tmp/folder_1'},
+        MAXWAIT,
+        INTERVAL,
+        {
+            sort='NS',
+            cases=nil,
+            match=2
+        },
+        {
+            recursive=true,
+            levels={0,2},
+            hidden=false
+        }
+    )
     fiber.sleep(2)
     os.execute('rm /tmp/folder_1/file_1')
     os.execute('rm /tmp/folder_1/folder_2/folder_3/file_1')
-    fiber.sleep(MAXWAIT)
+    core.waitfor(wat.wid, MAXWAIT)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     prop = (res.ans==true) and (res.match==2)
     t:is(prop, true, 'Recursive two levels watcher, 2 arbitrary deletion is delected')
 
     os.execute('touch /tmp/folder_1/file_1')
     MAXWAIT = 3
-    wat = fwt.deletion({'/tmp/folder_1'}, MAXWAIT, INTERVAL, nil, {true, {0}, false})
+    wat = fwt.deletion({'/tmp/folder_1'}, MAXWAIT, INTERVAL, nil, {recursive=true, levels={0}, hidden=false})
     helper.remove_file('/tmp/folder_1/file_1', 1)
-    fiber.sleep(MAXWAIT+1)
+    core.waitfor(wat.wid, MAXWAIT)
+    lst = mon.list(wat.wid)
+    for i=1,#lst do
+        print(prompt..core.tbl2str(lst[i]))
+    end
     res = mon.info(wat.wid)
     prop = (res.ans==false) and (res.match==1)
     t:is(prop, true, 'Recursive relative level zero for deletion, only one deletion')
