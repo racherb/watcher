@@ -2,7 +2,6 @@
 
 package.path = package.path .. ';/home/rhernandez/lucy/prj/dev/watcher/src/?.lua'
 
-local box = require('box')
 local color = require('ansicolors')
 
 local WATCHER = require('types.file').WATCHER
@@ -14,11 +13,12 @@ local core = require('watcher').core
 local string = require('string')
 
 local cli = {
-    title = "The Watcher Commandline",
+    title = "The Watcher command line interface",
     tag = "watcher",
     slogan = 'Watcher for better Observability',
     description = "Watcher",
-    version = "0.1.1",
+    version = "watcher-0.1.1",
+    target = "Linux-x86_64-Release",
     author = "Raciel Hernandez B.",
     path = "/path/to/folder/contains/this/file",
     help = true,
@@ -49,6 +49,7 @@ local help = {}
 
 --[[emojis and icons
     ✔
+    🐣
     ❌
     ✅
     🔐
@@ -587,6 +588,8 @@ flags_lst['--flags']        = 'f'
 flags_lst['-f']             = 'f'
 flags_lst['--defaults']     = 'd'
 flags_lst['-d']             = 'd'
+--flags_lst['-not-save']      = 'x'
+--flags_lst['-ns']            = 'x'
 flags_lst['--maxwait']      = 'maxwait'
 flags_lst['--interval']     = 'interval'
 flags_lst['--minsize']      = 'minsize'
@@ -614,7 +617,7 @@ local defaults = {
     minsize = 0,
     sort = WATCHER.NO_SORT,
     cases = 0,
-    match = nil,
+    match = 0,
     recursive = false,
     levels = {0},
     hidden = false,
@@ -812,8 +815,6 @@ local function parser()
             _sort = wargs[i+1]
         elseif flags_lst[wargs[i]]=='cases' then
             _cases = wargs[i+1]
-        elseif flags_lst[wargs[i]]=='match' then
-            _match = wargs[i+1]
         elseif flags_lst[wargs[i]]=='recursive' then
             _recursive = wargs[i+1]
         elseif flags_lst[wargs[i]]=='levels' then
@@ -928,7 +929,6 @@ local function parser()
                 wcoll[#wcoll+1] = nw
             end
             if _deletion then
-                print(_ignore)
                 local nw = command.new(WATCHER.FILE_DELETION, _cargs[1])
                 wcoll[#wcoll+1] = nw
             end
@@ -1002,42 +1002,53 @@ local function parser()
                 local winf = mon.info(wid)
                 local kind = winf.kind
                 if not winf.err then
-                    local parms
+                    local parms, cparms
                     if kind == WATCHER.FILE_CREATION then
                         parms = {
-                            _maxwait,
-                            _interval,
-                            _minsize,
-                            {
-                                _frecuency,
-                                _iterations
+                            maxwait = tonumber(_maxwait),
+                            interval = tonumber(_interval),
+                            minsize = tonumber(_minsize),
+                            stability = {
+                                frecuency = tonumber(_frecuency),
+                                iterations = tonumber(_iterations)
                             },
-                            {
-                                _minage,
-                                _maxage
+                            novelty = {
+                                minage = tonumber(_minage),
+                                maxage = tonumber(_maxage)
                             },
-                            _match
+                            match = tonumber(_match)
                         }
+                        cparms = {}
                     elseif kind == WATCHER.FILE_DELETION then
                         parms = {
-                            _maxwait,
-                            _interval,
-                            _sort,
-                            _cases,
-                            _match
+                            maxwait = tonumber(_maxwait),
+                            interval = tonumber(_interval),
+                            sort =_sort,
+                            cases = tonumber(_cases),
+                            match = tonumber(_match)
+                        }
+                        cparms = {
+                            recursion = _recursive,
+                            deep = _levels,
+                            hidden = _hidden,
+                            ignored = _ignore
                         }
                     elseif kind == WATCHER.FILE_ALTERATION then
                         parms = {
-                            _maxwait,
-                            _interval,
-                            _awhat,
-                            _match
+                            maxwait = tonumber(_maxwait),
+                            interval = tonumber(_interval),
+                            awhat = _awhat,
+                            match = tonumber(_match)
 
                         }
-                    else
-                        parms = {nil, nil, nil, nil, nil, nil, nil, nil}
+                        cparms = {
+                            recursion = _recursive,
+                            deep = _levels,
+                            hidden = _hidden,
+                            ignored = _ignore
+                        }
                     end
-                    local run_ans = core.run(wid, parms)
+                    local run_ans = core.run(wid, parms, cparms)
                     print(table.concat({
                         'Watcher is ',
                         run_ans.stt,
@@ -1045,7 +1056,7 @@ local function parser()
                         run_ans.fid
                     }, ''))
                     print('Estimated maximum time for this execution: '.._maxwait..'s')
-                    core.waitfor(wid)
+                    core.waitfor(wid, parms.maxwait)
                 else
                     --TODO: Normalizar exito code para el error
                     print(winf.err)
