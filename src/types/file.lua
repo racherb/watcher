@@ -46,6 +46,7 @@ WATCHER.INFINITY_DATE = 99999999999 --arbitrary infinity date
 local FILE = {}
 
 FILE.NOT_YET_CREATED = '_'                  --The file has not yet been created
+FILE.FILE_ALREADY_EXISTED = 'A'             --The file already existed
 FILE.FILE_PATTERN = 'P'                     --This is a file pattern
 FILE.HAS_BEEN_CREATED = 'C'                 --The file has been created
 FILE.IS_NOT_NOVELTY = 'N'                   --The file is not an expected novelty
