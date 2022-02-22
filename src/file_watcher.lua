@@ -599,7 +599,8 @@ local function bulk_file_creation(
             end
         end
         --Exit as soon as posible
-        if db_awatcher.match(wid)>=nmatch then
+        local actual_match = db_awatcher.match(wid)
+        if (nmatch==0 and actual_match > nmatch) or (nmatch~=0 and actual_match >= nmatch) then
             break
         end
         fib_sleep(interval)
