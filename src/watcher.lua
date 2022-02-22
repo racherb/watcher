@@ -9,6 +9,22 @@
 -- @copyright Raciel Hernández 2019
 --
 
+if package.setsearchroot ~= nil then
+    package.setsearchroot()
+else
+    -- Workaround for rocks loading in tarantool 1.10
+    local fio = require('fio')
+    local app_dir = fio.abspath(fio.dirname(arg[0]))
+    package.path = app_dir .. '/?.lua;' .. package.path
+    package.path = app_dir .. '/?/init.lua;' .. package.path
+    package.path = app_dir .. '/.rocks/share/tarantool/?.lua;' .. package.path
+    package.path = app_dir .. '/.rocks/share/tarantool/?/init.lua;' .. package.path
+    package.cpath = app_dir .. '/?.so;' .. package.cpath
+    package.cpath = app_dir .. '/?.dylib;' .. package.cpath
+    package.cpath = app_dir .. '/.rocks/lib/tarantool/?.so;' .. package.cpath
+    package.cpath = app_dir .. '/.rocks/lib/tarantool/?.dylib;' .. package.cpath
+end
+
 local strict = require('strict')
 local fiber = require('fiber')
 local errno = require('errno')
@@ -189,6 +205,13 @@ local function run_watcher(
         _watcher = watcher
     end
 
+    local rec_match --rectificate match
+    if wparms.match==0 then
+        rec_match = #_watcher.list
+    else
+        rec_match = wparms.match
+    end
+
     if _watcher.ans and _watcher.ans == true then
         if _watcher.kind == WATCHER.FILE_DELETION then
             local fib = fiber.create(
@@ -220,7 +243,7 @@ local function run_watcher(
                 wparms.minsize,
                 wparms.stability,
                 wparms.novelty,
-                wparms.match
+                rec_match
             )
             if fib then
                 fib:name(string.format('FWC-%s', tostring(_watcher.wid)))
@@ -511,15 +534,17 @@ local function wait_for_watcher(wid, timeout)
     local ini = clock_realtime64()
 
     while waiting do
-        fiber.sleep(0.25)
+        fiber.sleep(0.1)
         watcher = awa:select(wid)
-
-        if watcher[1][5] ~=0 then
+        if watcher[1][5] ~= 0 then
             waiting = false
         end
         if ((clock_realtime64() - ini)/1e9 > _timeout) then
             print('timeout')
-            return {wid = wid, err = 'timeout'}
+            return {
+                wid = wid,
+                err = 'timeout'
+            }
         end
     end
 
