@@ -43,6 +43,7 @@ local function create_spaces()
         return false
     else
         log.info('The watchables scheme has been successfully created')
+
         box.space.watchables:create_index(
             'wat_uk',
             {
@@ -295,7 +296,7 @@ local function del(
     local sel = s:select(wid)
 
     for _,v in pairs(sel) do
-        s:delete({wid, v[3]})
+        s:delete({wid, v[2]})
     end
 
     return box_space_awatcher:delete(wid)
@@ -388,7 +389,7 @@ local function close(
 
     local result
 
-    if match(wid, _kind) >= _dmatch then
+    if _dmatch~=0 and match(wid, _kind) >= _dmatch then
         result = true
     else
         result = false
