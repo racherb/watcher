@@ -6,7 +6,7 @@ local color = require('ansicolors')
 
 local WATCHER = require('types.file').WATCHER
 local STATE = require('types.file').STATE
-local fwt = require('watcher').file
+local fwa = require('watcher').file
 local mon = require('watcher').monit
 local core = require('watcher').core
 
@@ -357,8 +357,8 @@ function help.flags(theme, scope)
         '\t --help,        -h \t Help for watcher',
         '\t --version,     -V \t Show watcher version',
         '\t --no-color,    -n \t No colorize output',
+        '\t --no-save,     -x \t Does not save watcher run data',
         '\t --verbose,     -v \t Enable verbose logging',
-        '\t --path,        -p \t Set absolute path for watcher',
         '\t --interactive, -i \t Enable interactive mode',
         '\t --defaults,    -d \t Defaults values',
         '',
@@ -574,6 +574,8 @@ end
 local flags_lst = {}
 flags_lst['--no-color']     = 'n'
 flags_lst['-n']             = 'n'
+flags_lst['--no-save']      = 'x'
+flags_lst['-x']             = 'x'
 flags_lst['--version']      = 'V'
 flags_lst['-V']             = 'V'
 flags_lst['--help']         = 'h'
@@ -588,8 +590,6 @@ flags_lst['--flags']        = 'f'
 flags_lst['-f']             = 'f'
 flags_lst['--defaults']     = 'd'
 flags_lst['-d']             = 'd'
---flags_lst['-not-save']      = 'x'
---flags_lst['-ns']            = 'x'
 flags_lst['--maxwait']      = 'maxwait'
 flags_lst['--interval']     = 'interval'
 flags_lst['--minsize']      = 'minsize'
@@ -619,10 +619,14 @@ local defaults = {
     cases = 0,
     match = 0,
     recursive = false,
+    frecuency = WATCHER.CHECK_INTERVAL,
+    iterations = WATCHER.ITERATIONS,
+    minage = 0,
+    maxage = WATCHER.INFINITY_DATE,
     levels = {0},
     hidden = false,
-    awhat = 1,
-    ignore = {''},
+    awhat = '1',
+    ignore = '', --{''},
     forever = 9e10
 }
 
@@ -634,8 +638,9 @@ cmd_lst["info"]             = 'info'
 cmd_lst["file"]             = 'file'
 cmd_lst["name"]             = 'name'
 cmd_lst["list"]             = 'list'
-cmd_lst["ls"]               = 'ls'  --alias for command list
-cmd_lst["rm"]               = 'rm'  --remove watcher
+cmd_lst["ls"]               = 'ls'   --alias for command list
+cmd_lst["rm"]               = 'rm'   --remove watcher
+cmd_lst["exec"]             = 'exec' --execute (new+run)
 
 local _theme = 'default'
 local _interactive = false
@@ -643,6 +648,7 @@ local _version = false
 local _verbose = false
 local _robot = false
 local _nocolor
+local _nosave
 local _help
 local _flags
 local _defaults
@@ -651,10 +657,10 @@ local _cargs = {}
 local _maxwait = defaults.maxwait
 local _interval = defaults.interval
 local _minsize = defaults.minsize
-local _frecuency
-local _iterations
-local _minage
-local _maxage
+local _frecuency = nil
+local _iterations = nil
+local _minage = defaults.minage
+local _maxage = defaults.maxage
 local _sort = defaults.sort
 local _cases = defaults.cases
 local _match = defaults.match
@@ -775,6 +781,8 @@ local function parser()
         if flags_lst[wargs[i]]=='n' or os.getenv ("NO_COLOR") then
             _nocolor = 'nocolor'
             _theme = 'nocolor'
+        elseif flags_lst[wargs[i]]=='x' then
+            _nosave = true
         elseif flags_lst[wargs[i]]=='V' then
             _version = true
         elseif flags_lst[wargs[i]]=='f' then
@@ -849,6 +857,8 @@ local function parser()
                 _command = 'list'
             elseif cmd_lst[wargs[i]]=='rm' then
                 _command = 'rm'
+            elseif cmd_lst[wargs[i]]=='exec' then
+                _command = 'exec'
             else
                 --Capture args
                 if _command then
@@ -1002,53 +1012,35 @@ local function parser()
                 local winf = mon.info(wid)
                 local kind = winf.kind
                 if not winf.err then
-                    local parms, cparms
+                    local cparms = {}
+                    cparms.recursion = _recursive
+                    cparms.levels = _levels
+                    cparms.hidden = _hidden
+                    cparms.ignored = _ignore
+                    local wparms = {}
+                    wparms.maxwait = tonumber(_maxwait)
+                    wparms.interval = tonumber(_interval)
+                    wparms.match = tonumber(_match)
                     if kind == WATCHER.FILE_CREATION then
-                        parms = {
-                            maxwait = tonumber(_maxwait),
-                            interval = tonumber(_interval),
-                            minsize = tonumber(_minsize),
-                            stability = {
-                                frecuency = tonumber(_frecuency),
-                                iterations = tonumber(_iterations)
-                            },
-                            novelty = {
-                                minage = tonumber(_minage),
-                                maxage = tonumber(_maxage)
-                            },
-                            match = tonumber(_match)
-                        }
-                        cparms = {}
+                        wparms.minsize = tonumber(_minsize)
+                        wparms.match = tonumber(_match)
+                        local stability = {}
+                        if _frecuency then
+                            stability.frecuency = tonumber(_frecuency)
+                            stability.iterations = tonumber(_iterations)
+                            wparms.stability = stability
+                        end
+                        local novelty = {}
+                        novelty.minage = tonumber(_minage)
+                        novelty.maxage = tonumber(_maxage)
+                        wparms.novelty = novelty
                     elseif kind == WATCHER.FILE_DELETION then
-                        parms = {
-                            maxwait = tonumber(_maxwait),
-                            interval = tonumber(_interval),
-                            sort =_sort,
-                            cases = tonumber(_cases),
-                            match = tonumber(_match)
-                        }
-                        cparms = {
-                            recursion = _recursive,
-                            deep = _levels,
-                            hidden = _hidden,
-                            ignored = _ignore
-                        }
+                        wparms.sort = _sort
+                        wparms.cases = tonumber(_cases)
                     elseif kind == WATCHER.FILE_ALTERATION then
-                        parms = {
-                            maxwait = tonumber(_maxwait),
-                            interval = tonumber(_interval),
-                            awhat = _awhat,
-                            match = tonumber(_match)
-
-                        }
-                        cparms = {
-                            recursion = _recursive,
-                            deep = _levels,
-                            hidden = _hidden,
-                            ignored = _ignore
-                        }
+                        wparms.what = _awhat
                     end
-                    local run_ans = core.run(wid, parms, cparms)
+                    local run_ans = core.run(wid, wparms, cparms)
                     print(table.concat({
                         'Watcher is ',
                         run_ans.stt,
@@ -1056,7 +1048,8 @@ local function parser()
                         run_ans.fid
                     }, ''))
                     print('Estimated maximum time for this execution: '.._maxwait..'s')
-                    core.waitfor(wid, parms.maxwait)
+                    local cwf = core.waitfor(wid, wparms.maxwait)
+                    print('File watcher ended')
                 else
                     --TODO: Normalizar exito code para el error
                     print(winf.err)
@@ -1064,6 +1057,50 @@ local function parser()
             else
                 --TODO: Normalizar exito code para el error
                 print('The name:tag does not exist')
+            end
+        elseif _command == 'exec' and #(_cargs) == 1 then
+            local wlist = core.string2wlist(_cargs[1])
+            if _creation then
+                local fwc = fwa.creation(
+                    wlist,
+                    tonumber(_maxwait),
+                    tonumber(_interval),
+                    tonumber(_minsize),
+                    nil, --TODO: Remediate stability
+                    --[[,{
+                        frecuency = tonumber(_frecuency),
+                        iterations = tonumber(_iterations)
+                    },
+                    ]]
+                    {
+                        minage = _minage,
+                        maxage = _maxage
+                    },
+                    _match,
+                    {
+                        recursion = _recursive,
+                        levels = _levels,
+                        hidden = _hidden,
+                    },
+                    core.string2wlist(_ignore)
+                )
+                local wf_exec = core.waitfor(fwc.wid)
+                print(wf_exec.wid)
+                print(wf_exec.ans)
+                print(wf_exec.time)
+                if _nosave then
+                    local wid = get_wid(wf_exec.wid)
+                    if not command.remove(wid) then
+                        print('No se ha podido olvidar la data')
+                    end
+                end
+            elseif _alteration then
+                local fwal = fwa.alteration(wlist)
+                core.waitfor(fwal.wid)
+            elseif _deletion then
+                local fwd = fwa.deletion(wlist)
+                core.waitfor(fwd.wid)
+
             end
         elseif _command == 'info' and #(_cargs) == 1 then
             local wid = get_wid(_cargs[1])
@@ -1087,7 +1124,7 @@ local function parser()
                     print('Watcher could not be deleted or no longer exists')
                 end
             else
-                --TODO: Normalizar exito code para el error
+                --TODO: Normalizar exit code para el error
                 print('The name:tag does not exist')
             end
         elseif _command == 'file' then
