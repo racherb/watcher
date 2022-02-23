@@ -14,7 +14,7 @@ local OUTPUT = require('types.file').OUTPUT
 local sanity_check = {}
 
 local function validate_wlist(wlist)
-    if (wlist) and (type(wlist)=='table') and (#wlist~=0) then
+    if wlist and type(wlist)=='table' and #wlist~=0 then
         return {
             ans = true,
             msg = 'okay'
@@ -28,7 +28,7 @@ local function validate_wlist(wlist)
 end
 
 local function validate_maxwait(maxwait)
-    if (maxwait) and (type(maxwait)=='number') and (maxwait > 0) then
+    if maxwait and type(maxwait)=='number' and maxwait > 0 then
         return {
             ans = true,
             msg = 'okay'
@@ -42,7 +42,7 @@ local function validate_maxwait(maxwait)
 end
 
 local function validate_interval(interval, maxwait)
-    if (interval) and (type(interval)=='number') and (interval > 0) then
+    if interval and type(interval)=='number' and interval > 0 then
         if maxwait and maxwait > interval then
             return {
                 ans = true,
@@ -63,7 +63,7 @@ local function validate_interval(interval, maxwait)
 end
 
 local function validate_minsize(size)
-    if (size) and (type(size)=='number') and (size >= 0) then
+    if size and type(size)=='number' and size >= 0 then
         return {
             ans = true,
             msg = 'okay'
@@ -77,9 +77,9 @@ local function validate_minsize(size)
 end
 
 local function validate_stability(stability)
-    if (stability) and (type(stability)=='table') and (#stability~=0) then
-        if (stability[1]) and (type(stability[1])=='number') and (stability[1]>0) then
-            if (stability[2]) and (type(stability[2])=='number') and (stability[2]>0) then
+    if stability and type(stability)=='table' then
+        if type(stability.frecuency)=='number' and stability.frecuency > 0 then
+            if stability.iterations and type(stability.iterations)=='number' and stability.iterations > 0 then
                 return {
                     ans = true,
                     msg = 'okay'
