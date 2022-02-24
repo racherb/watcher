@@ -1,3 +1,19 @@
+watcher (0.2.3-0-g1277cb1) stable; urgency=medium
+
+  * Command line interface
+  * Non-color command line support according to no-color.org
+  * New functionality for naming watchers
+  * New functionality for watcher deletion
+  * New functionality "string2wlist" to convert a file list string to an internally used table type.
+  * The "sleep" functionality is exposed at the module level
+  * You can now ignore files from the list to be watched
+  * Functionalities "deduplicate" and "consolidate" are now exposed at module level
+  * The run watcher procedure can now receive a watcher parameter or by its watcher id
+  * Watcher status standardization
+  * Code refactoring and other small changes
+
+ -- Raciel Hernández <racherb@protonmail.com>  Tue, 23 Feb 2022 23:09:11 +0400
+
 watcher (0.2.2-1-g0e40729) stable; urgency=medium
 
   * Small code refactoring for better performance and issues fixed
