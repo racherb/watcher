@@ -9,21 +9,16 @@
 -- @copyright Raciel Hernández 2019
 --
 
-if package.setsearchroot ~= nil then
-    package.setsearchroot()
-else
-    -- Workaround for rocks loading in tarantool 1.10
-    local fio = require('fio')
-    local app_dir = fio.abspath(fio.dirname(arg[0]))
-    package.path = app_dir .. '/?.lua;' .. package.path
-    package.path = app_dir .. '/?/init.lua;' .. package.path
-    package.path = app_dir .. '/.rocks/share/tarantool/?.lua;' .. package.path
-    package.path = app_dir .. '/.rocks/share/tarantool/?/init.lua;' .. package.path
-    package.cpath = app_dir .. '/?.so;' .. package.cpath
-    package.cpath = app_dir .. '/?.dylib;' .. package.cpath
-    package.cpath = app_dir .. '/.rocks/lib/tarantool/?.so;' .. package.cpath
-    package.cpath = app_dir .. '/.rocks/lib/tarantool/?.dylib;' .. package.cpath
-end
+local fio = require('fio')
+local app_dir = fio.abspath(fio.dirname(arg[0]))
+package.path = app_dir .. '/?.lua;' .. package.path
+package.path = app_dir .. '/?/init.lua;' .. package.path
+package.path = app_dir .. '/.rocks/share/tarantool/?.lua;' .. package.path
+package.path = app_dir .. '/.rocks/share/tarantool/?/init.lua;' .. package.path
+package.cpath = app_dir .. '/?.so;' .. package.cpath
+package.cpath = app_dir .. '/?.dylib;' .. package.cpath
+package.cpath = app_dir .. '/.rocks/lib/tarantool/?.so;' .. package.cpath
+package.cpath = app_dir .. '/.rocks/lib/tarantool/?.dylib;' .. package.cpath
 
 local strict = require('strict')
 local fiber = require('fiber')
