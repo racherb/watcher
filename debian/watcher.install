@@ -5,4 +5,5 @@ src/plugins/*.lua usr/share/watcher/plugins/
 cli/watcher usr/share/watcher/
 .rocks/share/tarantool/avro_schema/* usr/share/watcher/.rocks/share/tarantool/avro_schema/
 .rocks/lib/tarantool/avro_schema_rt_c.so usr/share/watcher/.rocks/lib/tarantool/
+../../../../.luarocks/share/lua/5.1/ansicolors.lua usr/share/watcher/.rocks/lib/tarantool/
 
