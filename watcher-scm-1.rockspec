@@ -39,7 +39,8 @@ build = {
       ["watcher.plugins.default"] = "src/plugins/default.lua",
       ["watcher.types.file"]      = "src/types/file.lua",
       ["watcher.util"]            = "src/util.lua",
-      ["watcher.watcher"]         = "src/watcher.lua"
+      ["watcher.watcher"]         = "src/watcher.lua",
+      ["watcher.cli"]             = "cli/watcher-cli.lua"
    },
    install = {
        bin = {
