@@ -1,3 +1,9 @@
+watcher (0.2.3-7-g2fa6164) stable; urgency=medium
+
+ * "ansicolors" dependency added
+
+ -- Raciel Hernández <racherb@protonmail.com>  Thu, 25 Feb 2022 23:05:21 +0400
+
 watcher (0.2.3-0-g1277cb1) stable; urgency=medium
 
   * Command line interface

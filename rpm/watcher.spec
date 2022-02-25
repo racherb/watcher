@@ -57,6 +57,9 @@ rm -rf %{buildroot}
 %license LICENSE
 
 %changelog
+* Thu Feb 25 2022 Raciel Hernandez <racherb@protonmail.com> v0.2.3-7
+- "ansicolors" dependency added
+
 * Tue Feb 23 2022 Raciel Hernandez <racherb@protonmail.com> v0.2.3-0
 - Command line interface
 - Non-color command line support according to no-color.org
