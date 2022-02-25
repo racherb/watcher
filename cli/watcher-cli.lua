@@ -1,6 +1,7 @@
 #!/usr/bin/env tarantool
 
-package.path = package.path .. ';/home/rhernandez/lucy/prj/dev/watcher/src/?.lua'
+local watcher_path = os.getenv('WATCHER_PATH')..'/src/?.lua'
+package.path = package.path .. ';'..watcher_path
 
 local color = require('ansicolors')
 
@@ -20,7 +21,6 @@ local cli = {
     version = "watcher-0.1.1",
     target = "Linux-x86_64-Release",
     author = "Raciel Hernandez B.",
-    path = "/path/to/folder/contains/this/file",
     help = true,
     color = true,
     release = '20211228'
