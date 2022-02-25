@@ -1,13 +1,18 @@
 #!/usr/bin/env tarantool
+
+local watcher_path = os.getenv('WATCHER_PATH')..'/src/?.lua'
+package.path = package.path .. ';'..watcher_path
+
 local tap = require('tap')
 local fiber = require('fiber')
-local helper = require('helper')
 local fio = require('fio')
 
-package.path = package.path .. ';/home/rhernandez/lucy/prj/dev/watcher/src/?.lua'
+
 local fwt = require('watcher').file
 local mon = require('watcher').monit
 local core = require('watcher').core
+
+local helper = require('helper')
 
 local prompt = '    > '
 
