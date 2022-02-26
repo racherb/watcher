@@ -1,6 +1,6 @@
 #!/usr/bin/env tarantool
 
-local watcher_path = os.getenv('WATCHER_PATH')..'/src/?.lua'
+local watcher_path = os.getenv('WATCHER_PATH')..'src/?.lua'
 package.path = package.path .. ';'..watcher_path
 
 local tap = require('tap')
