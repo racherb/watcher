@@ -41,17 +41,6 @@ local prompt = 'watcher>'
 
 strict.on()
 
---[[
-local FW_DEFAULT = {
-    PREFIX = 'FW',
-    ACTION = 'CREATION',
-    MAXWAIT = 60,
-    INTERVAL = 0.5,
-    CHECK_INTERVAL = 0.5,
-    ITERATIONS = 10
-}
-]]
-
 local BULK_CAPACITY = 1e6
 
 -- Add the last date of file modification
@@ -488,7 +477,7 @@ local function bulk_file_creation(
     nmatch
 )
 
-    fib_sleep(0.1)
+    --fib_sleep(0.1)
     local fio_lexists = fio.path.lexists
     local fio_lstat = fio.lstat
 
