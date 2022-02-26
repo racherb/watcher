@@ -1,6 +1,6 @@
 #!/usr/bin/env tarantool
 
-local watcher_path = os.getenv('WATCHER_PATH')..'/src/?.lua'
+local watcher_path = os.getenv('WATCHER_PATH')..'src/?.lua'
 package.path = package.path .. ';'..watcher_path
 
 local color = require('ansicolors')
@@ -916,8 +916,6 @@ local function parser()
         print(color(help.defaults('general', _theme)))
     end
 
-    --print((_cargs[1]))
-
     if _command and _interactive then
         print('Ejecutando el comando '.._command..' en modo interactivo')
         io.write('Hello, what is your name? ')
@@ -1016,7 +1014,7 @@ local function parser()
                     cparms.recursion = _recursive
                     cparms.levels = _levels
                     cparms.hidden = _hidden
-                    cparms.ignored = _ignore
+                    cparms.ignored = core.string2wlist(_ignore)
                     local wparms = {}
                     wparms.maxwait = tonumber(_maxwait)
                     wparms.interval = tonumber(_interval)
