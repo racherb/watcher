@@ -72,18 +72,14 @@ local function create_watcher(
 )
 
     local cwlist
-    if wkind == WATCHER.FILE_CREATION then
-        cwlist = ut.deduplicate(wlist)
-    else
-        local _cparm = cparm or {recursion = false, levels = {0}, hidden = false, ignored = {''}}
-        cwlist = fwa.consolidate(
-            wlist,
-            _cparm.recursion,
-            _cparm.levels,
-            _cparm.hidden,
-            _cparm.ignored
-        )
-    end
+    local _cparm = cparm or {recursion = false, levels = {0}, hidden = false, ignored = {''}}
+    cwlist = fwa.consolidate(
+        wlist,
+        _cparm.recursion,
+        _cparm.levels,
+        _cparm.hidden,
+        _cparm.ignored
+    )
 
     if #cwlist==0 then
         return {
@@ -173,23 +169,20 @@ local function run_watcher(
         local winf = info(watcher)
         local wlist = string2wlist(winf.what)
         local cwlist
-        if winf.kind == WATCHER.FILE_CREATION then
-            cwlist = ut.deduplicate(wlist)
-        else
-            local _cparm = cparm or {
-                recursion = false,
-                levels = {0},
-                hidden = false,
-                ignored = {''}
-            }
-            cwlist = fwa.consolidate(
-                wlist,
-                _cparm.recursion,
-                _cparm.levels,
-                _cparm.hidden,
-                _cparm.ignored
-            )
-        end
+        local _cparm = cparm or {
+            recursion = false,
+            levels = {0},
+            hidden = false,
+            ignored = {''}
+        }
+        cwlist = fwa.consolidate(
+            wlist,
+            _cparm.recursion,
+            _cparm.levels,
+            _cparm.hidden,
+            _cparm.ignored
+        )
+
         local wconst = {}
         wconst.wid = watcher
         wconst.list = cwlist
@@ -584,7 +577,6 @@ core.start = db.start
 core.name = db_awatcher.name
 core.widbyname = db_awatcher.widbn
 core.remove = db_awatcher.del
-core.deduplicate = ut.deduplicate
 core.consolidate = fwa.consolidate
 core.string2wlist = string2wlist
 core.sleep = fiber.sleep
