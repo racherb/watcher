@@ -78,7 +78,8 @@ local function create_watcher(
         _cparm.recursion,
         _cparm.levels,
         _cparm.hidden,
-        _cparm.ignored
+        _cparm.ignored,
+        wkind
     )
 
     if #cwlist==0 then
@@ -168,13 +169,14 @@ local function run_watcher(
     if type(watcher)~='table' then
         local winf = info(watcher)
         local wlist = string2wlist(winf.what)
-        local cwlist
         local _cparm = cparm or {
             recursion = false,
             levels = {0},
             hidden = false,
-            ignored = {''}
+            ignored = {''},
+            winf.kind
         }
+        local cwlist
         cwlist = fwa.consolidate(
             wlist,
             _cparm.recursion,
@@ -193,7 +195,7 @@ local function run_watcher(
         _watcher = watcher
     end
 
-    local rec_match --rectificate match
+    local rec_match --rectificate match TODO:Rectificar tambien cuando la lista contiene patrones *
     if wparms.match==0 then
         rec_match = #_watcher.list
     else
