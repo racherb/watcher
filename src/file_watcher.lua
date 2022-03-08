@@ -377,7 +377,8 @@ local function consolidate(
     recursion,
     levels,
     hidden,
-    ignored
+    ignored,
+    kind
 )
     local _recursion = recursion or false
     local _levels = levels or {0}
@@ -390,14 +391,18 @@ local function consolidate(
     for _,v in pairs(_wlist) do
         if v ~= '' and not ut.is_val_of(_ignored, v) then
             if string_find(v, '*') then
-                local pattern_result = fio_glob(v)
-                --Merge pattern items result with t
-                if #pattern_result~=0 then
-                    for _,nv in ipairs(pattern_result) do
-                        t[#t+1] = nv
-                    end
+                if kind == WATCHER.FILE_CREATION then
+                    t[#t+1] = v --pattern
                 else
-                    t[#t+1] = v
+                    local pattern_result = fio_glob(v)
+                    --Merge pattern items result with t
+                    if #pattern_result~=0 then
+                        for _,nv in ipairs(pattern_result) do
+                            t[#t+1] = nv
+                        end
+                    else
+                        t[#t+1] = v
+                    end
                 end
             else
                 if (_recursion==true) and fio_is_dir(v) then
@@ -417,6 +422,39 @@ local function consolidate(
     else
         return {}
     end
+end
+
+-- All input watchables have been founded?
+local function  all_witems_founded(
+    wlist,
+    flist)
+
+    wlist[0] = #wlist
+    flist[0] = #flist
+
+    for i=1,wlist[0] do
+        local fitems = 0
+        local w_item = wlist[i]
+        for j=1,flist[0] do
+            local f_item = flist[j]
+            if not string_find(w_item, '*') then
+                if w_item==f_item then
+                    fitems = fitems + 1
+                    break
+                end
+            else
+                local from = (f_item):find(w_item)
+                if from==1 then
+                    fitems = fitems + 1
+                    break
+                end
+            end
+        end
+        if fitems==0 then
+            return false
+        end
+    end
+    return true
 end
 
 -- Determines if a file is stable in relation to its size and layout
@@ -485,8 +523,6 @@ local function bulk_file_creation(
 
     local nfy = bulk --not_found_yet
     local fnd = {}   --founded
-    local nff = 0
-    local nfp = 0
 
     local ch_cff = fiber.channel(BULK_CAPACITY)
 
@@ -558,7 +594,6 @@ local function bulk_file_creation(
                 if fio_lexists(v) then
                     fnd[#fnd+1]=v
                     nfy[k] = nil
-                    nff = nff + 1
                     if stability or minsize or novelty then
                         ch_cff:put(v, 0)
                     else
@@ -574,13 +609,13 @@ local function bulk_file_creation(
                     for _,u in pairs(pit) do
                         if not ut.is_val_of(fnd, u) then
                             fnd[#fnd+1]=u
-                            nfp = nfp + 1
                             if stability or minsize or novelty then
                                 db_awatcher.add(wid, u)
                                 ch_cff:put(u, 0)
                             else
-                                db_awatcher.put(wid, u, true, FILE.HAS_BEEN_CREATED)
-                                print(prompt..'FILE_HAS_BEEN_CREATED:' ..u)
+                                if db_awatcher.put(wid, u, true, FILE.HAS_BEEN_CREATED) == true then
+                                    print(prompt..'FILE_HAS_BEEN_CREATED:' ..u)
+                                end
                             end
                         end
                     end
@@ -589,7 +624,8 @@ local function bulk_file_creation(
         end
         --Exit as soon as posible
         local actual_match = db_awatcher.match(wid)
-        if (nmatch==0 and actual_match > nmatch) or (nmatch~=0 and actual_match >= nmatch) then
+        if ((nmatch==0 and actual_match > nmatch) or (nmatch~=0 and actual_match >= nmatch)) and
+             all_witems_founded(bulk, fnd) then
             break
         end
         fib_sleep(interval)
@@ -850,5 +886,6 @@ return {
     creation = file_creation,
     alteration = file_alteration,
     consolidate = consolidate,
-    recursive = recursive_tree
+    recursive = recursive_tree,
+    bfc = bulk_file_creation
 }
