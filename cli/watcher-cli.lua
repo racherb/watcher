@@ -4,6 +4,7 @@ local watcher_path = os.getenv('WATCHER_PATH')..'src/?.lua'
 package.path = package.path .. ';'..watcher_path
 
 local color = require('ansicolors')
+local fiber = require('fiber')
 
 local WATCHER = require('types.file').WATCHER
 local STATE = require('types.file').STATE
@@ -47,8 +48,25 @@ local logo = {
 local style = {}
 local help = {}
 
+local stop_spinner = false
+
+local function show_spinner(txt)
+    stop_spinner = false
+    local spin_seq = {'⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'}
+    local nbck = string.rep('\b', string.len(txt))
+    while not stop_spinner == true do
+        for i=1,#spin_seq do
+            io.write(txt)
+            io.write(color('%{bright yellow}'..spin_seq[i]..nbck..'\b%{reset}'))
+            io.flush()
+            core.sleep(0.1)
+        end
+    end
+end
+
 --[[emojis and icons
     ✔
+    ✖
     🐣
     ❌
     ✅
@@ -288,10 +306,9 @@ function help.tostar(theme)
         '',
         style.prompt(
             'watcher',
-            ' -i',
             ' new',
             '',
-            ' #This allows you to create a new watcher specification in interactive mode',
+            ' #This allows you to create a new watcher specification',
             theme),
         '',
     }
@@ -333,9 +350,7 @@ function help.commands(theme)
         style.syntax('watcher', ' nomatch', '\t Gets the list of items not detected by watcher', theme),
         style.syntax('watcher', ' config', '\t Set watcher configuration', theme),
         style.syntax('watcher', ' name', '\t\t Name a watcher', theme),
-        '',
         style.syntax('watcher', ' env', '\t\t Environment', theme),
-        style.syntax('watcher', ' file', '\t\t File Watcher', theme),
         '',
         style.ident(
             ' To get help on how to run a specific command, run:',
@@ -359,7 +374,7 @@ function help.flags(theme, scope)
         '\t --no-color,    -n \t No colorize output',
         '\t --no-save,     -x \t Does not save watcher run data',
         '\t --verbose,     -v \t Enable verbose logging',
-        '\t --interactive, -i \t Enable interactive mode',
+        --'\t --interactive, -i \t Enable interactive mode',
         '\t --defaults,    -d \t Defaults values',
         '',
         '\t --FILE_CREATION   \t Watcher for file creation',
@@ -517,15 +532,6 @@ local wargs = {...}
 
 local command = {}
 
-function command.new(kind, list)
-    local wlist = core.string2wlist(list)
-    return core.create(wlist, kind)
-end
-
-function command.run(watcher, parms)
-    return core.run(watcher, parms)
-end
-
 --If wid is nil then list awatchers
 --else list watchablesf
 function command.list(wid)
@@ -580,8 +586,8 @@ flags_lst['--version']      = 'V'
 flags_lst['-V']             = 'V'
 flags_lst['--help']         = 'h'
 flags_lst['-h']             = 'h'
-flags_lst['--interactive']  = 'i'
-flags_lst['-i']             = 'i'
+--flags_lst['--interactive']  = 'i'
+--flags_lst['-i']             = 'i'
 flags_lst['--verbose']      = 'v'
 flags_lst['-v']             = 'v'
 flags_lst['--robot']        = 'r'
@@ -643,7 +649,7 @@ cmd_lst["rm"]               = 'rm'   --remove watcher
 cmd_lst["exec"]             = 'exec' --execute (new+run)
 
 local _theme = 'default'
-local _interactive = false
+--local _interactive = false
 local _version = false
 local _verbose = false
 local _robot = false
@@ -793,8 +799,8 @@ local function parser()
             _verbose = true
         elseif flags_lst[wargs[i]]=='r' then
             _robot = true
-        elseif flags_lst[wargs[i]]=='i' then
-            _interactive = true
+        --elseif flags_lst[wargs[i]]=='i' then
+        --    _interactive = true
         elseif flags_lst[wargs[i]]=='h' then
             _help = true
         elseif flags_lst[wargs[i]]=='creation' then
@@ -916,28 +922,39 @@ local function parser()
         print(color(help.defaults('general', _theme)))
     end
 
-    if _command and _interactive then
-        print('Ejecutando el comando '.._command..' en modo interactivo')
-        io.write('Hello, what is your name? ')
-        local name = io.read()
-        io.write('Nice to meet you, ', name, '!\n')
-    --    print('Args: '..#(_cargs))
-    elseif _command and not _interactive then
+    if _command then --and not _interactive then
         if _command == 'new' and #(_cargs) == 1 then
+            local wlist = core.string2wlist(_cargs[1])
+            local cparms = {}
+            cparms.recursion = _recursive
+            cparms.levels = _levels
+            cparms.hidden = _hidden
+            cparms.ignored = core.string2wlist(_ignore)
             if _creation then
-                local wlist = core.string2wlist(_cargs[1])
                 local nw = core.create(
                     wlist,
-                    WATCHER.FILE_CREATION
+                    WATCHER.FILE_CREATION,
+                    nil,
+                    cparms
                 )
                 wcoll[#wcoll+1] = nw
             end
             if _alteration then
-                local nw = command.new(WATCHER.FILE_ALTERATION, _cargs[1])
+                local nw = core.create(
+                    wlist,
+                    WATCHER.FILE_ALTERATION,
+                    nil,
+                    cparms
+                )
                 wcoll[#wcoll+1] = nw
             end
             if _deletion then
-                local nw = command.new(WATCHER.FILE_DELETION, _cargs[1])
+                local nw = core.create(
+                    wlist,
+                    WATCHER.FILE_DELETION,
+                    nil,
+                    cparms
+                )
                 wcoll[#wcoll+1] = nw
             end
         elseif _command == 'new' and #(_cargs) == 0 then
@@ -1046,8 +1063,13 @@ local function parser()
                         run_ans.fid
                     }, ''))
                     print('Estimated maximum time for this execution: '.._maxwait..'s')
+                    if #cparms.ignored~=0 then
+                        print('Ignoring files:'.._ignore)
+                    end
+                    fiber.create(show_spinner, '..Running:')
                     local cwf = core.waitfor(wid, wparms.maxwait)
-                    print('File watcher ended')
+                    stop_spinner = true
+                    print('File Watcher ended')
                 else
                     --TODO: Normalizar exito code para el error
                     print(winf.err)
@@ -1064,7 +1086,7 @@ local function parser()
                     tonumber(_maxwait),
                     tonumber(_interval),
                     tonumber(_minsize),
-                    nil, --TODO: Remediate stability
+                    nil, --TODO: Remediate stability parm
                     --[[,{
                         frecuency = tonumber(_frecuency),
                         iterations = tonumber(_iterations)
@@ -1074,7 +1096,7 @@ local function parser()
                         minage = _minage,
                         maxage = _maxage
                     },
-                    _match,
+                    tonumber(_match),
                     {
                         recursion = _recursive,
                         levels = _levels,
@@ -1082,7 +1104,9 @@ local function parser()
                     },
                     core.string2wlist(_ignore)
                 )
+                fiber.create(show_spinner, '..Running:')
                 local wf_exec = core.waitfor(fwc.wid)
+                stop_spinner = true
                 print(wf_exec.wid)
                 print(wf_exec.ans)
                 print(wf_exec.time)
@@ -1093,11 +1117,28 @@ local function parser()
                     end
                 end
             elseif _alteration then
-                local fwal = fwa.alteration(wlist)
+                local fwal = fwa.alteration(
+                    wlist,
+                    tonumber(_maxwait),
+                    tonumber(_interval),
+                    _awhat,
+                    tonumber(_match),
+                    {
+                        recursion = _recursive,
+                        levels = _levels,
+                        hidden = _hidden,
+                    },
+                    core.string2wlist(_ignore)
+
+                )
+                fiber.create(show_spinner, '..Running:')
                 core.waitfor(fwal.wid)
+                stop_spinner = true
             elseif _deletion then
                 local fwd = fwa.deletion(wlist)
+                fiber.create(show_spinner, '..Running:')
                 core.waitfor(fwd.wid)
+                stop_spinner = true
 
             end
         elseif _command == 'info' and #(_cargs) == 1 then
@@ -1128,8 +1169,8 @@ local function parser()
         elseif _command == 'file' then
             print('File FILE FILE')
         end
-    elseif not _command then
-        print('You must specify a command')
+    --elseif not _command then
+    --    print('You must specify a command')
     end
 
     --Sumarize output for watcher file
