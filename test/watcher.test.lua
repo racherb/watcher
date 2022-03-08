@@ -24,7 +24,7 @@ local INTERVAL
 local pini = os.time()
 local test = tap.test('test-file-watcher')
 
-test:plan(8)
+test:plan(9)
 
 --Plan 1
 test:test('Single File Deletion >> The File Does Not Exist', function(t)
@@ -633,9 +633,8 @@ end)
 --Plan 8
 test:test('Recursion Test', function(t)
 
-    t:plan(2)
+    t:plan(5)
 
-    --FWD08
     MAXWAIT = 4
     INTERVAL = 0.5
 
@@ -688,7 +687,105 @@ test:test('Recursion Test', function(t)
     prop = (res.ans==false) and (res.match==1)
     t:is(prop, true, 'Recursive relative level zero for deletion, only one deletion')
 
-    --os.execute('rm - rf /tmp/file_1')
+    os.execute('touch /tmp/w_AAAA')
+    os.execute('touch /tmp/w_ABAA')
+    os.execute('touch /tmp/w_APAA')
+
+    wat = fwt.deletion(
+        {'/tmp/w_AAAA', '/tmp/w_ABAA', '/tmp/w_APAA'}
+        , MAXWAIT
+        , INTERVAL
+        , nil
+        , nil
+        , {'/tmp/w_AAAA', '/tmp/w_ABAA'}
+    )
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/w_AAAA', '/tmp/w_ABAA', '/tmp/w_APAA'}))
+    print(prompt.."Ignoring: "..core.tbl2str({'/tmp/w_AAAA', '/tmp/w_ABAA'}))
+    helper.remove_file('/tmp/w_AAAA', 1)
+    helper.remove_file('/tmp/w_ABAA', 1)
+    core.waitfor(wat.wid, MAXWAIT)
+    res = mon.info(wat.wid)
+    prop = (res.ans==false) and (res.match==0) and (res.nomatch==1)
+    t:is(prop, true, 'Ignoring2 files deleted')
+
+    os.execute('touch /tmp/w_AAAA')
+    os.execute('touch /tmp/w_ABAA')
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/w_AAAA', '/tmp/w_ABAA', '/tmp/w_APAA'}))
+    print(prompt.."Ignoring: "..core.tbl2str({'/tmp/w_ABAA'}))
+
+    wat = fwt.deletion(
+        {'/tmp/w_AAAA', '/tmp/w_ABAA', '/tmp/w_APAA'}
+        , MAXWAIT
+        , INTERVAL
+        , {match = 1}
+        , nil
+        , {'/tmp/w_ABAA'}
+    )
+    helper.remove_file('/tmp/w_APAA', 1)
+    core.waitfor(wat.wid, MAXWAIT)
+    res = mon.info(wat.wid)
+    prop = (res.ans==true) and (res.match==1) and (res.nomatch==1)
+    t:is(prop, true, 'Ignoring 1 file but another is deleted')
+
+    os.execute('rm -rf /tmp/w_*')
+
+    wat = fwt.creation(
+        {'/tmp/w_AAAA', '/tmp/w_ABAA', '/tmp/w_APAA'}
+        , MAXWAIT
+        , INTERVAL
+        , nil
+        , nil
+        , nil
+        , nil
+        , nil
+        , {'/tmp/w_ABAA'}
+    )
+    os.execute('touch /tmp/w_ABAA')
+    os.execute('touch /tmp/w_AAAA')
+    core.waitfor(wat.wid, MAXWAIT)
+    res = mon.info(wat.wid)
+    prop = (res.ans==false) and (res.match==1) and (res.nomatch==1)
+    t:is(prop, true, 'Ignoring 1 file while 2 are created and 1 is expected')
+
+end)
+
+test:test('Pattern Wilcards Test', function(t)
+
+    t:plan(2)
+
+    MAXWAIT = 5
+    INTERVAL = 0.5
+
+    wat = fwt.creation(
+        {'/tmp/AA*/AAA*/AAA*/*'}
+        , MAXWAIT
+        , INTERVAL
+    )
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/AA*/AAA*/AAA*/*'}))
+
+    os.execute('mkdir -p /tmp/AAA1/AAA2/AAA3/AAA4')
+    os.execute('touch /tmp/AAA1/file_1')
+    os.execute('touch /tmp/AAA1/AAA2/file_1')
+    os.execute('touch /tmp/AAA1/AAA2/file_3')
+    os.execute('touch /tmp/AAA1/AAA2/AAA3/file_4')
+    os.execute('touch /tmp/AAA1/AAA2/AAA3/file_5')
+    os.execute('touch /tmp/AAA1/AAA2/AAA3/file_6')
+
+    core.waitfor(wat.wid, MAXWAIT)
+    res = mon.info(wat.wid)
+    prop = res.ans==true and res.match==4
+    t:is(prop, true, 'Detect 4 file creation in pattern /tmp/AA*/AAA*/AAA*/*')
+
+    wat = fwt.creation(
+        {'/tmp/AA*/AAA2/*'}
+        , MAXWAIT
+        , INTERVAL
+    )
+    print(prompt.."Observables: "..core.tbl2str({'/tmp/AA*/AAA2/*'}))
+    core.waitfor(wat.wid, MAXWAIT)
+    res = mon.info(wat.wid)
+    prop = res.ans==true and res.match==3
+    t:is(prop, true, 'Detect 3 file creation in pattern /tmp/AA*/AAA2/*')
 
 end)
 
