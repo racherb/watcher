@@ -278,8 +278,11 @@ local function put(
         local ok, tuple = wat.flatten(watchb)
 
         if ok then
-            box_space_watchables:insert(tuple)
-            return true, object
+            if pcall(function () box_space_watchables:insert(tuple) end) then
+                return true, object
+            else
+                return false, tuple
+            end
         else
             return false, tuple
         end
