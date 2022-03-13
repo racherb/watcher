@@ -499,7 +499,8 @@ local function file_alteration(
         OUTPUT.NOTHING_FOR_WATCH
     )
 
-    local _match = nmatch or nfiles
+    local _match = nmatch or 0
+    if _match==0 then _match = nfiles end
 
     --Run the watcher for specific params
    return run_watcher(
