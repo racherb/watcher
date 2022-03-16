@@ -15,23 +15,22 @@ local core = require('watcher').core
 local string = require('string')
 
 local cli = {
-    title = "The Watcher command line interface",
+    title = "The Watcher Command Line Interface",
     tag = "watcher",
     slogan = 'Watcher for better Observability',
     description = "Watcher",
     version = "watcher-0.1.1",
+    stability = 'Experimental',
     target = "Linux-x86_64-Release",
     author = "Raciel Hernandez B.",
-    help = true,
-    color = true,
     release = '20211228'
 }
 
 local logo_color = {
     "                   _       _               ",
     "    __      ____ _| |_ ___| |__   ___ _ __ ",
-    "    \\ \\ /\\ / / _` | __/ __| '_ \\ / _ \\ '__| \t The Watcher Commandline",
-    "     \\ V  V / (_| | || (__| | | |  __/ |   \t %{dim}version-"..cli.version.."%{reset green bright}",
+    "    \\ \\ /\\ / / _` | __/ __| '_ \\ / _ \\ '__| \t "..cli.title,
+    "     \\ V  V / (_| | || (__| | | |  __/ |   \t %{dim}"..cli.version.."%{reset green bright}",
     "      \\_/\\_/ \\__,_|\\__\\___|_| |_|\\___|_|   \t %{dim}MIT License",
     "       %{white}Watcher for better Observability"
 }
@@ -39,8 +38,8 @@ local logo_color = {
 local logo = {
     "                   _       _               ",
     "    __      ____ _| |_ ___| |__   ___ _ __ ",
-    "    \\ \\ /\\ / / _` | __/ __| '_ \\ / _ \\ '__| \t The Watcher Commandline",
-    "     \\ V  V / (_| | || (__| | | |  __/ |   \t version: "..cli.version,
+    "    \\ \\ /\\ / / _` | __/ __| '_ \\ / _ \\ '__| \t "..cli.title,
+    "     \\ V  V / (_| | || (__| | | |  __/ |   \t "..cli.version,
     "      \\_/\\_/ \\__,_|\\__\\___|_| |_|\\___|_|   \t MIT License",
     "       Watcher for better Observability"
 }
@@ -306,6 +305,7 @@ function help.tostar(theme)
         '',
         style.prompt(
             'watcher',
+            '',
             ' new',
             '',
             ' #This allows you to create a new watcher specification',
@@ -348,9 +348,9 @@ function help.commands(theme)
         style.syntax('watcher', ' rm', '\t\t Removes a given watcher', theme),
         style.syntax('watcher', ' match', '\t\t Gets the list of items detected by watcher', theme),
         style.syntax('watcher', ' nomatch', '\t Gets the list of items not detected by watcher', theme),
-        style.syntax('watcher', ' config', '\t Set watcher configuration', theme),
+        --style.syntax('watcher', ' config', '\t Set watcher configuration', theme),
         style.syntax('watcher', ' name', '\t\t Name a watcher', theme),
-        style.syntax('watcher', ' env', '\t\t Environment', theme),
+        --style.syntax('watcher', ' env', '\t\t Environment', theme),
         '',
         style.ident(
             ' To get help on how to run a specific command, run:',
@@ -500,7 +500,7 @@ function help.defaults(scope, theme)
         defaults[#defaults+1] = style.defaults('levels', '"{0}"', 'Referred to the root directory', theme)
         defaults[#defaults+1] = style.defaults('hidden', 'false', 'false for ignore hidden files', theme)
         defaults[#defaults+1] = style.defaults('awhat', '1', 'Value of 1 indicates: check for any file alteration', theme)
-        defaults[#defaults+1] = style.defaults('ignore', '', 'Empty value: cDo not ignore any cases', theme)
+        defaults[#defaults+1] = style.defaults('ignore', '', 'Empty value: Do not ignore any cases', theme)
     end
 
     defaults[#defaults+1] = ''
@@ -617,6 +617,8 @@ flags_lst['--FILE_CREATION']   = 'creation'
 flags_lst['--FILE_DELETION']   = 'deletion'
 flags_lst['--FILE_ALTERATION'] = 'alteration'
 
+flags_lst['--CHECK_STABILITY'] = 'c_s'
+
 local defaults = {
     maxwait = WATCHER.MAXWAIT,
     interval = WATCHER.INTERVAL,
@@ -678,6 +680,7 @@ local _ignore = defaults.ignore
 local _creation
 local _alteration
 local _deletion
+local _check_stability = false
 
 local wcoll = {} --Watchers collection
 
@@ -694,6 +697,10 @@ local function translate(term)
         return 'completed'
     elseif term==STATE.UNSTARTED then
         return 'unstarted'
+    elseif term=='0' then
+        return 'NO_ALTERATION'
+    elseif term=='1' then
+        return 'ANY_ALTERATION'
     elseif term=='' then
         return '<none>'
     elseif term=='_' then
@@ -797,10 +804,12 @@ local function parser()
             _defaults = true
         elseif flags_lst[wargs[i]]=='v' then
             _verbose = true
+            print('Verbose mode is activated')
         elseif flags_lst[wargs[i]]=='r' then
             _robot = true
-        --elseif flags_lst[wargs[i]]=='i' then
-        --    _interactive = true
+        elseif flags_lst[wargs[i]]=='c_s' then
+            _check_stability = true
+            print('Enabling file stability check')
         elseif flags_lst[wargs[i]]=='h' then
             _help = true
         elseif flags_lst[wargs[i]]=='creation' then
@@ -1040,11 +1049,21 @@ local function parser()
                         wparms.minsize = tonumber(_minsize)
                         wparms.match = tonumber(_match)
                         local stability = {}
-                        if _frecuency then
-                            stability.frecuency = tonumber(_frecuency)
-                            stability.iterations = tonumber(_iterations)
-                            wparms.stability = stability
+                        if _check_stability == true then
+                            if _frecuency then
+                                stability.frecuency = tonumber(_frecuency)
+                            else
+                                stability.frecuency =defaults.frecuency
+                            end
+                            if _iterations then
+                                stability.iterations = tonumber(_iterations)
+                            else
+                                stability.iterations = defaults.iterations
+                            end
+                        else
+                            stability = nil
                         end
+                        wparms.stability = stability
                         local novelty = {}
                         novelty.minage = tonumber(_minage)
                         novelty.maxage = tonumber(_maxage)
@@ -1063,35 +1082,58 @@ local function parser()
                         run_ans.fid
                     }, ''))
                     print('Estimated maximum time for this execution: '.._maxwait..'s')
-                    if #cparms.ignored~=0 then
+                    if _verbose==true and #cparms.ignored~=0 then
                         print('Ignoring files:'.._ignore)
                     end
                     fiber.create(show_spinner, '..Running:')
                     local cwf = core.waitfor(wid, wparms.maxwait)
                     stop_spinner = true
-                    print('File Watcher ended')
+                    if cwf.err then
+                        print('An error occurred while executing the File Watcher')
+                        print('ERR:'..cwf.err)
+                        --exit code
+                    else
+                        print('The File Watcher has been successfully completed')
+                        print('Answer:'..tostring(cwf.ans))
+                    end
                 else
-                    --TODO: Normalizar exito code para el error
+                    --TODO: Normalizar exit code para el error
                     print(winf.err)
                 end
             else
                 --TODO: Normalizar exito code para el error
                 print('The name:tag does not exist')
+                --exit code
             end
         elseif _command == 'exec' and #(_cargs) == 1 then
             local wlist = core.string2wlist(_cargs[1])
             if _creation then
+                if _verbose==true then
+                    if _ignore~='' then
+                        print('Ignoring files:'.._ignore)
+                    end
+                end
+                local stability = {}
+                        if _check_stability == true then
+                            if _frecuency then
+                                stability.frecuency = tonumber(_frecuency)
+                            else
+                                stability.frecuency =defaults.frecuency
+                            end
+                            if _iterations then
+                                stability.iterations = tonumber(_iterations)
+                            else
+                                stability.iterations = defaults.iterations
+                            end
+                        else
+                            stability = nil
+                        end
                 local fwc = fwa.creation(
                     wlist,
                     tonumber(_maxwait),
                     tonumber(_interval),
                     tonumber(_minsize),
-                    nil, --TODO: Remediate stability parm
-                    --[[,{
-                        frecuency = tonumber(_frecuency),
-                        iterations = tonumber(_iterations)
-                    },
-                    ]]
+                    stability,
                     {
                         minage = _minage,
                         maxage = _maxage
@@ -1105,15 +1147,20 @@ local function parser()
                     core.string2wlist(_ignore)
                 )
                 fiber.create(show_spinner, '..Running:')
-                local wf_exec = core.waitfor(fwc.wid)
+                local wf_exec = core.waitfor(fwc.wid, tonumber(_maxwait))
                 stop_spinner = true
-                print(wf_exec.wid)
-                print(wf_exec.ans)
-                print(wf_exec.time)
+                if wf_exec.err then
+                    print('An error occurred while executing the File Watcher')
+                    print('ERR:'..wf_exec.err)
+                    --exit code
+                else
+                    print('The File Watcher has been successfully completed')
+                    print('Answer:'..tostring(wf_exec.ans))
+                end
                 if _nosave then
                     local wid = get_wid(wf_exec.wid)
                     if not command.remove(wid) then
-                        print('No se ha podido olvidar la data')
+                        print('An error occurred while trying to forget (--nosave) the data')
                     end
                 end
             elseif _alteration then
@@ -1132,14 +1179,44 @@ local function parser()
 
                 )
                 fiber.create(show_spinner, '..Running:')
-                core.waitfor(fwal.wid)
+                local wf_exec = core.waitfor(fwal.wid, tonumber(_maxwait))
                 stop_spinner = true
+                if wf_exec.err then
+                    print('An error occurred while executing the File Watcher')
+                    print('ERR:'..wf_exec.err)
+                    --exit code
+                else
+                    print('The File Watcher has been successfully completed')
+                    print('Answer:'..tostring(wf_exec.ans))
+                end
             elseif _deletion then
-                local fwd = fwa.deletion(wlist)
+                local fwd = fwa.deletion(
+                    wlist,
+                    tonumber(_maxwait),
+                    tonumber(_interval),
+                    {
+                        sort = _sort,
+                        cases = tonumber(_cases),
+                        match = tonumber(_match)
+                    },
+                    {
+                        recursive = _recursive,
+                        levels = _levels,
+                        hidden = _hidden
+                    },
+                    core.string2wlist(_ignore)
+                )
                 fiber.create(show_spinner, '..Running:')
-                core.waitfor(fwd.wid)
+                local wf_exec = core.waitfor(fwd.wid, tonumber(_maxwait))
                 stop_spinner = true
-
+                if wf_exec.err then
+                    print('An error occurred while executing the File Watcher')
+                    print('ERR:'..wf_exec.err)
+                    --exit code
+                else
+                    print('The File Watcher has been successfully completed')
+                    print('Answer:'..tostring(wf_exec.ans))
+                end
             end
         elseif _command == 'info' and #(_cargs) == 1 then
             local wid = get_wid(_cargs[1])
@@ -1209,11 +1286,11 @@ local function parser()
 
 end
 
-parser()
+if _verbose then
+    print('Verbose mode is activated')
+end
 
---if _verbose then
---    print('Modo vervose activado')
---end
+parser()
 
 --if _robot then
 --    print('Modo robot activado')
