@@ -400,21 +400,21 @@ function help.flags(theme, scope)
         flags[#flags+1] = ''
     elseif _scope == 'long' then
         flags[#flags+1] =  ''
-        flags[#flags+1] = '\t --maxwait <value>   \t Maximum wait time in seconds'
-        flags[#flags+1] = '\t --interval <value>  \t Verification interval for watcher in seconds'
-        flags[#flags+1] = '\t --minsize <value>   \t Value of the minimum expected file size'
-        flags[#flags+1] = '\t --frecuency <value>   \t Defines the frequency of checking the file once it has arrived'
-        flags[#flags+1] = '\t --iterations <value>  \t The number of iterations used to determine the stability of the file'
-        flags[#flags+1] = '\t --minage <value>   \t Date and time "from" of the novelty of the file'
-        flags[#flags+1] = '\t --maxage <value>   \t Date and time "to" of the novelty of the file'
-        flags[#flags+1] = '\t --sort <value>   \t Ordering method of the wacth list'
-        flags[#flags+1] = '\t --cases <value> \t Number of cases to observe from the wlist'
-        flags[#flags+1] = '\t --match <value> \t Number of cases expected to satisfy the search'
-        flags[#flags+1] = '\t --recursive <value> \t Boolean indicating whether or not to activate the recursive mode on directory'
-        flags[#flags+1] = '\t --levels <value> \t Numerical table indicating the levels of depth to be evaluated in the directory structure'
-        flags[#flags+1] = '\t --hidden <value> \t Boolean indicating whether hidden files will be evaluated in the recursion'
-        flags[#flags+1] = '\t --awhat <value> \t Type of file alteration to be observed'
-        flags[#flags+1] = '\t --ignore <list> \t List of cases to be ignore fron watchable list'
+        flags[#flags+1] = '\t--maxwait <value>   \t Maximum wait time in seconds'
+        flags[#flags+1] = '\t--interval <value>  \t Verification interval for watcher in seconds'
+        flags[#flags+1] = '\t--minsize <value>   \t Value of the minimum expected file size'
+        flags[#flags+1] = '\t--frecuency <value>   \t Defines the frequency of checking the file once it has arrived'
+        flags[#flags+1] = '\t--iterations <value>  \t The number of iterations used to determine the stability of file'
+        flags[#flags+1] = '\t--minage <value>   \t Date and time "from" of the novelty of the file'
+        flags[#flags+1] = '\t--maxage <value>   \t Date and time "to" of the novelty of the file'
+        flags[#flags+1] = '\t--sort <value>   \t Ordering method of the wacth list'
+        flags[#flags+1] = '\t--cases <value> \t Number of cases to observe from the wlist'
+        flags[#flags+1] = '\t--match <value> \t Number of cases expected to satisfy the search'
+        flags[#flags+1] = '\t--recursive <value> \t Boolean indicating whether or not to activate the recursive mode'
+        flags[#flags+1] = '\t--levels <value> \t Numerical table indicating the levels of depth to be evaluated in the directory structure'
+        flags[#flags+1] = '\t--hidden <value> \t Boolean indicating whether hidden files will be evaluated in the recursion'
+        flags[#flags+1] = '\t--awhat <value> \t Type of file alteration to be observed'
+        flags[#flags+1] = '\t--ignore <list> \t List of cases to be ignore fron watchable list'
         flags[#flags+1] = ''
         flags[#flags+1] = style.ident(
             ' Application context of the flags by "kind" of watcher:',
@@ -446,8 +446,14 @@ function help.flags(theme, scope)
             '🔖'
         )
         flags[#flags+1] = ''
-        flags[#flags+1] = style.prompt('watcher', '', '', ' --defaults', '\t\t# Displays the default values of all the flags', theme)
-        flags[#flags+1] = style.prompt('watcher', '', '', ' --defaults <command>', '\t# Displays the default values of only the flags for the given command', theme)
+        flags[#flags+1] = style.prompt(
+            'watcher', '', '', ' --defaults', '\t\t# Displays the default values of all the flags', theme
+        )
+        flags[#flags+1] = style.prompt(
+            'watcher', '', '', ' --defaults <command>',
+            '\t# Displays the default values of only the flags for the given command',
+            theme
+        )
         flags[#flags+1] = ''
     end
 
@@ -491,15 +497,21 @@ function help.defaults(scope, theme)
         defaults[#defaults+1] = style.defaults('minsize', '0 Bytes', 'Ignore file size', theme)
         defaults[#defaults+1] = style.defaults('frecuency', '1 second', '', theme)
         defaults[#defaults+1] = style.defaults('iterations', '15', '', theme)
-        defaults[#defaults+1] = style.defaults('minage', '0', 'Expected minimum age of the novelty of the file. Zero ignores the minimum age', theme)
-        defaults[#defaults+1] = style.defaults('maxage', '0', 'Expected maximum age of the novelty of the file. Zero ignores the maximum age', theme)
+        defaults[#defaults+1] = style.defaults(
+            'minage', '0', 'Expected minimum age of the novelty of the file. Zero ignores the minimum age', theme
+        )
+        defaults[#defaults+1] = style.defaults(
+            'maxage', '0', 'Expected maximum age of the novelty of the file. Zero ignores the maximum age', theme
+        )
         defaults[#defaults+1] = style.defaults('match', '0', 'Zero is referring to all files detected', theme)
         defaults[#defaults+1] = style.defaults('sort', "\t'NS'", 'NS means "No sort" for watcher list', theme)
         defaults[#defaults+1] = style.defaults('cases', '0', 'Zero for check all files in the list', theme)
         defaults[#defaults+1] = style.defaults('recursion', 'false', 'Recursive mode is off', theme)
         defaults[#defaults+1] = style.defaults('levels', '"{0}"', 'Referred to the root directory', theme)
         defaults[#defaults+1] = style.defaults('hidden', 'false', 'false for ignore hidden files', theme)
-        defaults[#defaults+1] = style.defaults('awhat', '1', 'Value of 1 indicates: check for any file alteration', theme)
+        defaults[#defaults+1] = style.defaults(
+            'awhat', '1', 'Value of 1 indicates: check for any file alteration', theme
+        )
         defaults[#defaults+1] = style.defaults('ignore', '', 'Empty value: Do not ignore any cases', theme)
     end
 
@@ -900,7 +912,9 @@ local function parser()
                             or(_awhat and wargs[i-1]=='--awhat' and _awhat == wargs[i])
                             or(_awhat and wargs[i-1]=='--ignore' and _ignore== wargs[i])
                         ) then
-                            print(color('%{bright red}ERR7001: %{reset}Invalid entry. The command "'.. wargs[i]..'" is unknown'))
+                            print(color(
+                                '%{bright red}ERR7001: %{reset}Invalid entry. The command "'.. wargs[i]..'" is unknown')
+                            )
                             print(color('%{bright}   HINT: %{reset dim}Some of the available commands are:%{green dim} new, run, mon, info, match, nomatch, ..'))
                             print(color('%{bright}   HINT: %{reset dim}Run %{green dim}watcher --help%{reset} for help'))
                             os.exit(7001)
