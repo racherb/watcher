@@ -167,11 +167,11 @@ local function bulk_file_deletion(
     local fio_exists = fio.path.lexists
     local ini = os_time()
     local notdelyet = bulk
+    notdelyet[0] = #notdelyet
     while (os_time() - ini) < maxwait do
-        for i=1,#notdelyet do
+        for i=1,notdelyet[0] do
             local file = notdelyet[i]
-            if not file then break end
-            if not fio_exists(file) then
+            if file and not fio_exists(file) then
                 db_awatcher.upd(
                     wid, file, true, FILE.DELETED
                 )
@@ -208,9 +208,10 @@ local function bulk_file_alteration(
 
     local ini = os_time()
     local not_alter_yet = bulk
+    not_alter_yet [0] = #not_alter_yet
     local is_over = false
     while (os_time() - ini) < maxwait do
-        for i=1,#not_alter_yet do
+        for i=1,not_alter_yet[0] do
             if not_alter_yet[i] then
                 local file = not_alter_yet[i][1]
                 local attr = not_alter_yet[i][2]
@@ -321,7 +322,7 @@ local function recursive_tree(
     --[[optional]] levels,
     --[[optional]] shidden
 )
-    local _levels = levels or {0}          --zero for all directory levels
+    local _levels = levels or {0}      --zero for current directory levels
     local _shidden = shidden or false  --false for ignore the hidden files and folders
 
     table.sort(_levels) --Sort _levels
@@ -389,7 +390,7 @@ local function consolidate(
 
     local t = {}
     for _,v in pairs(_wlist) do
-        if v ~= '' and not ut.is_val_of(_ignored, v) then
+        if v ~= '' and not ut.is_val_of(_ignored, v) then --and not ut.is_pat_of(_ignored, v)
             if string_find(v, '*') then
                 if kind == WATCHER.FILE_CREATION then
                     t[#t+1] = v --pattern
@@ -886,6 +887,5 @@ return {
     creation = file_creation,
     alteration = file_alteration,
     consolidate = consolidate,
-    recursive = recursive_tree,
-    bfc = bulk_file_creation
+    recursive = recursive_tree
 }
