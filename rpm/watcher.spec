@@ -57,10 +57,28 @@ rm -rf %{buildroot}
 %license LICENSE
 
 %changelog
-* Thu Feb 25 2022 Raciel Hernandez <racherb@protonmail.com> v0.2.3-7
+* Tue Mar 15 2022 Raciel Hernandez <racherb@protonmail.com> v0.2.4-1-e6c5e8f
+- Add stability check and other small changes
+- Pass stability only if it comes as a parameter
+- Add spinner for wait in to command line
+- Add new test plan
+- Add WATCHER_PATH
+- Correction for bulk file deletion
+- Correction for math when is zero
+- Consolidate by watcher kind
+- Unify wlist consolidate
+- File name correction
+- Convert ignore list to table
+- Add ref to module watcher-cli
+
+* Thu Feb 26 2022 Raciel Hernandez <racherb@protonmail.com> v0.2.3-12-ga58e484
+- Fix issue #15 "Bad argument #1 to 'pairs' (table expected, got string)"
+- Convert "ignore" string list input to table in command line interface.
+
+* Thu Feb 25 2022 Raciel Hernandez <racherb@protonmail.com> v0.2.3-7-g2fa6164
 - "ansicolors" dependency added
 
-* Tue Feb 23 2022 Raciel Hernandez <racherb@protonmail.com> v0.2.3-0
+* Tue Feb 23 2022 Raciel Hernandez <racherb@protonmail.com> v0.2.3-0-g1277cb1
 - Command line interface
 - Non-color command line support according to no-color.org
 - New functionality for naming watchers
@@ -73,7 +91,7 @@ rm -rf %{buildroot}
 - Watcher status standardization
 - Code refactoring and other small changes
 
-* Wed May 12 2021 Raciel Hernandez <racherb@protonmail.com> v0.2.2-1
+* Wed May 12 2021 Raciel Hernandez <racherb@protonmail.com> v0.2.2-1-g0e40729
 - Small code refactoring for better performance and issues fixed
 - Fix issue #13 "close func not work for alteration when the file not exist #13"
 - Fix issue #12 "Monit's nomatch always returns the additional number of elements that are search patterns. #12"

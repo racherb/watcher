@@ -5,11 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.2.3-7-g2fa6164] - 2022-02-25
+## [v0.2.4-1-e6c5e8f] - 2022-03-15
+
+### Added
+
+- Add stability check and other small changes
+- Pass stability only if it comes as a parameter
+- Add spinner for wait in to command line
+- Add new test plan
+- Add WATCHER_PATH
+
+### Changed
+
+- Correction for bulk file deletion
+- Correction for math when is zero
+- Consolidate by watcher kind
+- Unify wlist consolidate
+- File name correction
+- Convert ignore list to table
+- Add ref to module watcher-cli
+
+## [v0.2.3-12-ga58e484] - 2022-02-26
 
 ### Changed
 
 - "ansicolors" dependency added
+
+### Fixed
+
+- Fix issue #15 "Bad argument #1 to 'pairs' (table expected, got string)" Convert "ignore" string list input to table in command line interface.
 
 ## [0.2.3-0-g1277cb1] - 2022-02-23
 
