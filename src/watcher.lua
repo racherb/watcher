@@ -383,10 +383,7 @@ local function file_creation(
     local sck_size = sck.size(_minsize)
     assert(sck_size.ans, sck_size.msg)
 
-    if stability then
-        local sck_stability = sck.stability(stability)
-        assert(sck_stability.ans, sck_stability.msg)
-    end
+    local _stability = stability --enable stability check only if param is passed
 
     local _minage, _maxage, _novelty
 
@@ -436,7 +433,7 @@ local function file_creation(
             maxwait = _maxwait,
             interval = _interval,
             minsize = _minsize,
-            stability = stability,
+            stability = _stability,
             novelty = _novelty,
             match = _match
          }
