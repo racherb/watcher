@@ -10,6 +10,8 @@
 ![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)
 ![GitHub top language](https://img.shields.io/github/languages/top/racherb/watcher)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/racherb/watcher)
+![deb](https://img.shields.io/badge/deb-packagecloud.io-844fec.svg)
+![rpm](https://img.shields.io/badge/rpm-packagecloud.io-844fec.svg)
 
 Watcher is an open source system to automate the detection of changes in the system, facilitating the integration of processes, workflows and the development of monitoring applications.
 
